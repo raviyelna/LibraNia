@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { ThemeProvider } from '../../contexts/ThemeContext';
 import { Sidebar } from './Sidebar';
 import { act } from 'react';
 
@@ -22,17 +23,37 @@ Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
 });
 
+// Mock matchMedia for ThemeProvider
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
+// Helper to render Sidebar with required providers
+function renderSidebar() {
+  return render(
+    <ThemeProvider>
+      <BrowserRouter>
+        <Sidebar />
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}
+
 describe('Sidebar', () => {
   beforeEach(() => {
     localStorageMock.clear();
   });
 
   it('should render sidebar in expanded state by default', () => {
-    render(
-      <BrowserRouter>
-        <Sidebar />
-      </BrowserRouter>
-    );
+    renderSidebar();
 
     expect(screen.getByText('LibraNia')).toBeInTheDocument();
     expect(screen.getByText('Home')).toBeInTheDocument();
@@ -41,11 +62,7 @@ describe('Sidebar', () => {
   });
 
   it('should collapse sidebar when toggle button is clicked', async () => {
-    render(
-      <BrowserRouter>
-        <Sidebar />
-      </BrowserRouter>
-    );
+    renderSidebar();
 
     const toggleButton = screen.getByRole('button', { name: /toggle sidebar/i });
 
@@ -62,11 +79,7 @@ describe('Sidebar', () => {
   });
 
   it('should expand sidebar when toggle button is clicked again', async () => {
-    render(
-      <BrowserRouter>
-        <Sidebar />
-      </BrowserRouter>
-    );
+    renderSidebar();
 
     const toggleButton = screen.getByRole('button', { name: /toggle sidebar/i });
 
@@ -88,11 +101,7 @@ describe('Sidebar', () => {
   });
 
   it('should persist collapsed state to localStorage', async () => {
-    render(
-      <BrowserRouter>
-        <Sidebar />
-      </BrowserRouter>
-    );
+    renderSidebar();
 
     const toggleButton = screen.getByRole('button', { name: /toggle sidebar/i });
 
@@ -108,11 +117,7 @@ describe('Sidebar', () => {
   it('should load collapsed state from localStorage on mount', () => {
     localStorageMock.setItem('sidebar-collapsed', 'true');
 
-    render(
-      <BrowserRouter>
-        <Sidebar />
-      </BrowserRouter>
-    );
+    renderSidebar();
 
     // In collapsed state, text labels should not be visible
     expect(screen.queryByText('Home')).not.toBeInTheDocument();
@@ -121,11 +126,7 @@ describe('Sidebar', () => {
   });
 
   it('should render navigation icons', () => {
-    render(
-      <BrowserRouter>
-        <Sidebar />
-      </BrowserRouter>
-    );
+    renderSidebar();
 
     // Icons should be present (lucide-react renders SVGs)
     const icons = screen.getAllByRole('img', { hidden: true });
@@ -133,11 +134,7 @@ describe('Sidebar', () => {
   });
 
   it('should render theme toggle button', () => {
-    render(
-      <BrowserRouter>
-        <Sidebar />
-      </BrowserRouter>
-    );
+    renderSidebar();
 
     const themeButton = screen.getByRole('button', { name: /toggle theme/i });
     expect(themeButton).toBeInTheDocument();
