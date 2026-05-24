@@ -111,13 +111,53 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (To be filled by roadmapper) | | |
+| APP-01 | Phase 1 | Pending |
+| APP-02 | Phase 1 | Pending |
+| APP-03 | Phase 1 | Pending |
+| APP-04 | Phase 1 | Pending |
+| APP-05 | Phase 1 | Pending |
+| KNOW-01 | Phase 2 | Pending |
+| KNOW-02 | Phase 2 | Pending |
+| KNOW-03 | Phase 2 | Pending |
+| KNOW-04 | Phase 2 | Pending |
+| KNOW-05 | Phase 2 | Pending |
+| KNOW-06 | Phase 2 | Pending |
+| KNOW-07 | Phase 2 | Pending |
+| KNOW-08 | Phase 2 | Pending |
+| KNOW-09 | Phase 2 | Pending |
+| KNOW-10 | Phase 2 | Pending |
+| AI-01 | Phase 3 | Pending |
+| AI-02 | Phase 3 | Pending |
+| AI-03 | Phase 3 | Pending |
+| AI-04 | Phase 3 | Pending |
+| AI-05 | Phase 3 | Pending |
+| AI-06 | Phase 3 | Pending |
+| AI-07 | Phase 3 | Pending |
+| AI-08 | Phase 3 | Pending |
+| AI-09 | Phase 3 | Pending |
+| AI-10 | Phase 3 | Pending |
+| CONT-01 | Phase 4 | Pending |
+| CONT-02 | Phase 4 | Pending |
+| CONT-03 | Phase 4 | Pending |
+| CONT-04 | Phase 4 | Pending |
+| CONT-05 | Phase 4 | Pending |
+| CONT-06 | Phase 4 | Pending |
+| SEM-01 | Phase 5 | Pending |
+| SEM-02 | Phase 5 | Pending |
+| SEM-03 | Phase 5 | Pending |
+| SEM-04 | Phase 5 | Pending |
+| SEM-05 | Phase 5 | Pending |
+| VIZ-01 | Phase 6 | Pending |
+| VIZ-02 | Phase 6 | Pending |
+| VIZ-03 | Phase 6 | Pending |
+| VIZ-04 | Phase 6 | Pending |
+| VIZ-05 | Phase 6 | Pending |
 
 **Coverage:**
 - v1 requirements: 41 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 41 ⚠️
+- Mapped to phases: 41 (100% coverage)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-24*
-*Last updated: 2026-05-24 after initial definition*
+*Last updated: 2026-05-24 after roadmap creation*
