@@ -1,12 +1,13 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import windowStateKeeper from 'electron-window-state';
 import Store from 'electron-store';
 import log from 'electron-log';
 import { loadConfig, saveConfig, updateConfig } from '../src/config/appConfig.js';
 import { AppConfig } from '../src/types/config.js';
 import { startServer, stopServer, ServerInstance } from './server.js';
+import { getWindowState, saveWindowState } from './windowState.js';
+import { createTray, updateTrayMode } from './tray.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,13 +24,11 @@ log.transports.console.level = 'debug';
 let mainWindow: BrowserWindow | null = null;
 let currentConfig: AppConfig;
 let serverInstance: ServerInstance | null = null;
+let tray: Tray | null = null;
 
 async function createWindow() {
-  // Restore previous window state
-  const windowState = windowStateKeeper({
-    defaultWidth: 1200,
-    defaultHeight: 800
-  });
+  // Get window state from config
+  const windowState = await getWindowState();
 
   mainWindow = new BrowserWindow({
     x: windowState.x,
@@ -46,8 +45,12 @@ async function createWindow() {
     }
   });
 
-  // Track window state changes
-  windowState.manage(mainWindow);
+  // Save window state on close
+  mainWindow.on('close', async () => {
+    if (mainWindow) {
+      await saveWindowState(mainWindow);
+    }
+  });
 
   // Load app based on mode and environment
   const isDev = !!process.env.VITE_DEV_SERVER_URL;
@@ -121,12 +124,28 @@ function registerIpcHandlers() {
     await updateConfig({ mode: newMode });
     currentConfig = await loadConfig();
     log.info('Mode switched to:', newMode);
+
+    // Update tray menu
+    if (tray && mainWindow) {
+      updateTrayMode(tray, mainWindow, newMode, handleModeSwitch);
+    }
+
     return { success: true, requiresRestart: true };
   });
 
   // Logging
   ipcMain.handle('log:error', (_event, error: { message: string; stack?: string; componentStack?: string }) => {
     log.error('Renderer error:', error);
+  });
+}
+
+// Mode switch handler for tray
+function handleModeSwitch(mode: 'desktop' | 'web') {
+  updateConfig({ mode }).then(() => {
+    log.info('Mode switched via tray to:', mode);
+    // Trigger restart via IPC would require renderer, so we'll just relaunch
+    app.relaunch();
+    app.exit(0);
   });
 }
 
@@ -138,6 +157,12 @@ app.whenReady().then(async () => {
 
   registerIpcHandlers();
   await createWindow();
+
+  // Create system tray
+  if (mainWindow) {
+    tray = createTray(mainWindow, currentConfig.mode, handleModeSwitch);
+    log.info('System tray created');
+  }
 });
 
 app.on('window-all-closed', () => {
@@ -147,6 +172,12 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', async () => {
+  // Destroy tray
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
+
   // Stop server if running
   if (serverInstance) {
     await stopServer(serverInstance);
