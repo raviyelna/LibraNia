@@ -60,7 +60,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Application
 
-- [ ] **APP-01**: Desktop app runs as native application
+- [x] **APP-01**: Desktop app runs as native application
 - [ ] **APP-02**: Desktop app can run in web-based mode
 - [ ] **APP-03**: User can switch between desktop and web mode
 - [ ] **APP-04**: App supports dark mode
@@ -111,7 +111,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| APP-01 | Phase 1 | Pending |
+| APP-01 | Phase 1 | Complete |
 | APP-02 | Phase 1 | Pending |
 | APP-03 | Phase 1 | Pending |
 | APP-04 | Phase 1 | Pending |
