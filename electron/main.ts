@@ -6,6 +6,7 @@ import Store from 'electron-store';
 import log from 'electron-log';
 import { loadConfig, saveConfig, updateConfig } from '../src/config/appConfig.js';
 import { AppConfig } from '../src/types/config.js';
+import { startServer, stopServer, ServerInstance } from './server.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,8 +22,9 @@ log.transports.console.level = 'debug';
 
 let mainWindow: BrowserWindow | null = null;
 let currentConfig: AppConfig;
+let serverInstance: ServerInstance | null = null;
 
-function createWindow() {
+async function createWindow() {
   // Restore previous window state
   const windowState = windowStateKeeper({
     defaultWidth: 1200,
@@ -47,11 +49,24 @@ function createWindow() {
   // Track window state changes
   windowState.manage(mainWindow);
 
-  // Load app
-  if (process.env.VITE_DEV_SERVER_URL) {
+  // Load app based on mode and environment
+  const isDev = !!process.env.VITE_DEV_SERVER_URL;
+  const isWebMode = currentConfig.mode === 'web';
+
+  if (isDev) {
+    // Development: Always use Vite dev server (both desktop and web mode)
+    log.info('Loading from Vite dev server:', process.env.VITE_DEV_SERVER_URL);
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
+  } else if (isWebMode) {
+    // Production web mode: Start Express server and load from it
+    log.info('Starting Express server for web mode');
+    const distPath = path.join(__dirname, '../dist');
+    serverInstance = await startServer(currentConfig.serverPort, distPath);
+    mainWindow.loadURL(`http://localhost:${serverInstance.port}`);
   } else {
+    // Production desktop mode: Load from file system
+    log.info('Loading from file system (desktop mode)');
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
@@ -101,6 +116,14 @@ function registerIpcHandlers() {
     app.exit(0);
   });
 
+  // Mode switching
+  ipcMain.handle('mode:switch', async (_event, newMode: 'desktop' | 'web') => {
+    await updateConfig({ mode: newMode });
+    currentConfig = await loadConfig();
+    log.info('Mode switched to:', newMode);
+    return { success: true, requiresRestart: true };
+  });
+
   // Logging
   ipcMain.handle('log:error', (_event, error: { message: string; stack?: string; componentStack?: string }) => {
     log.error('Renderer error:', error);
@@ -114,12 +137,20 @@ app.whenReady().then(async () => {
   log.info('Config loaded:', currentConfig);
 
   registerIpcHandlers();
-  createWindow();
+  await createWindow();
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+
+app.on('before-quit', async () => {
+  // Stop server if running
+  if (serverInstance) {
+    await stopServer(serverInstance);
+    serverInstance = null;
   }
 });
 
