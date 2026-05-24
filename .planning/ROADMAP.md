@@ -29,7 +29,7 @@
 
 Plans:
 - [x] 01-01-PLAN.md — Project initialization, Electron setup, React app scaffold (✓ Complete)
-- [ ] 01-02-PLAN.md — Theme system, navigation structure, collapsible sidebar
+- [x] 01-02-PLAN.md — Theme system, navigation structure, collapsible sidebar (✓ Complete)
 - [ ] 01-03-PLAN.md — Mode switching (desktop/web), window management, system tray
 - [ ] 01-04-PLAN.md — Error handling, logging, offline functionality
 
@@ -115,7 +115,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Application Shell | 1/4 | In progress | - |
+| 1. Foundation & Application Shell | 2/4 | In progress | - |
 | 2. Core Knowledge Management | 0/0 | Not started | - |
 | 3. AI Integration | 0/0 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |

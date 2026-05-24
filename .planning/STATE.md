@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-last_updated: "2026-05-24T16:51:17.000Z"
+last_updated: "2026-05-25T00:07:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 2
+  completed_plans: 2
+  percent: 50
 ---
 
 # State: LibraNia
@@ -32,11 +32,11 @@ progress:
 ## Current Position
 
 **Phase:** 1 - Foundation & Application Shell
-**Plan:** 01-01 (completed)
+**Plan:** 01-02 (completed)
 **Status:** In progress
-**Progress:** `[#---------] 2%` (1/4 plans in Phase 1 complete)
+**Progress:** [█████░░░░░] 50% (2/4 plans in Phase 1 complete)
 
-**Next Action:** Run `/gsd-plan-phase 1` to create plan 01-02
+**Next Action:** Run `/gsd-plan-phase 1` to create plan 01-03
 
 ---
 
@@ -45,9 +45,9 @@ progress:
 ### Velocity
 
 - **Phases completed:** 0/6
-- **Plans completed:** 1/4 (Phase 1)
-- **Average plan duration:** 15 minutes (1 plan completed)
-- **Estimated Phase 1 completion:** ~45 minutes remaining (3 plans × 15 min avg)
+- **Plans completed:** 2/4 (Phase 1)
+- **Average plan duration:** 13 minutes (2 plans completed)
+- **Estimated Phase 1 completion:** ~26 minutes remaining (2 plans × 13 min avg)
 
 ### Quality
 
@@ -76,10 +76,14 @@ progress:
 | Use vite-plugin-electron for unified build | Provides hot reload for main process and handles Electron bundling automatically | 01-01 | 2026-05-24 |
 | Defer better-sqlite3 to later plan | Electron 42 compatibility issue with V8 API changes, will add when needed | 01-01 | 2026-05-24 |
 | Tailwind v4 @theme without nested selectors | Tailwind v4 @theme blocks only accept custom properties, dark mode defined separately | 01-01 | 2026-05-24 |
+| Use TDD for theme and sidebar implementation | Ensures behavior is tested before implementation, catches regressions early | 01-02 | 2026-05-25 |
+| Theme toggle cycles through light → dark → system | Respects user's system preference as a first-class option | 01-02 | 2026-05-25 |
+| Store sidebar/theme state in localStorage | Simpler for Phase 1, will migrate to electron-store config in Plan 04 | 01-02 | 2026-05-25 |
+| Use lucide-react for icons | Lightweight (tree-shakeable), modern API, better TypeScript support | 01-02 | 2026-05-25 |
+| Defer Radix UI usage to Plan 03 | Avoid unused dependencies, install when actually needed for dialogs | 01-02 | 2026-05-25 |
 
 ### Active TODOs
 
-- [ ] Plan Phase 1 Plan 02: Theme system, navigation structure, collapsible sidebar
 - [ ] Plan Phase 1 Plan 03: Mode switching (desktop/web), window management, system tray
 - [ ] Plan Phase 1 Plan 04: Error handling, logging, offline functionality
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
@@ -111,6 +115,7 @@ None yet.
 | Phase | Plan | Started | Completed | Duration | Outcome |
 |-------|------|---------|-----------|----------|---------|
 | 1 | 01-01 | 2026-05-24T16:36:44Z | 2026-05-24T16:51:17Z | 15 min | ✓ Complete - Electron + React + Vite foundation established |
+| 1 | 01-02 | 2026-05-24T16:54:30Z | 2026-05-25T00:07:00Z | 12 min | ✓ Complete - Theme system and collapsible sidebar with TDD |
 
 ---
 
