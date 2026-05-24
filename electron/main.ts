@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url';
 import windowStateKeeper from 'electron-window-state';
 import Store from 'electron-store';
 import log from 'electron-log';
+import { loadConfig, saveConfig, updateConfig } from '../src/config/appConfig.js';
+import { AppConfig } from '../src/types/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +20,7 @@ log.transports.file.level = 'info';
 log.transports.console.level = 'debug';
 
 let mainWindow: BrowserWindow | null = null;
+let currentConfig: AppConfig;
 
 function createWindow() {
   // Restore previous window state
@@ -60,13 +63,19 @@ function createWindow() {
 // IPC Handlers
 function registerIpcHandlers() {
   // Config operations
-  ipcMain.handle('config:get', () => {
-    return store.store;
+  ipcMain.handle('config:get', async () => {
+    return currentConfig;
   });
 
-  ipcMain.handle('config:set', (_event, key: string, value: any) => {
-    store.set(key, value);
+  ipcMain.handle('config:set', async (_event, updates: Partial<AppConfig>) => {
+    await saveConfig(updates);
+    currentConfig = await loadConfig();
     return { success: true };
+  });
+
+  ipcMain.handle('config:update', async (_event, updates: Partial<AppConfig>) => {
+    currentConfig = await updateConfig(updates);
+    return currentConfig;
   });
 
   // Window operations
@@ -99,7 +108,11 @@ function registerIpcHandlers() {
 }
 
 // App lifecycle
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Load config on startup
+  currentConfig = await loadConfig();
+  log.info('Config loaded:', currentConfig);
+
   registerIpcHandlers();
   createWindow();
 });
