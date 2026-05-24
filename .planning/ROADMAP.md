@@ -25,7 +25,13 @@
   3. User can toggle between light and dark mode
   4. Application works offline (no network required for basic functionality)
   5. Application shell displays with navigation structure ready for features
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Project initialization, Electron setup, React app scaffold
+- [ ] 01-02-PLAN.md — Theme system, navigation structure, collapsible sidebar
+- [ ] 01-03-PLAN.md — Mode switching (desktop/web), window management, system tray
+- [ ] 01-04-PLAN.md — Error handling, logging, offline functionality
 
 ---
 
@@ -109,7 +115,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Application Shell | 0/0 | Not started | - |
+| 1. Foundation & Application Shell | 0/4 | Ready for execution | - |
 | 2. Core Knowledge Management | 0/0 | Not started | - |
 | 3. AI Integration | 0/0 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |
