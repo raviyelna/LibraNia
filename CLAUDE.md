@@ -22,9 +22,9 @@ LibraNia is a personal knowledge management system that visualizes information a
 ### Desktop Framework
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| **Tauri** | 2.0+ | Desktop application framework | Smaller bundle size (3-10MB vs 120MB+ for Electron), lower memory footprint (~50MB vs 200MB+), Rust backend provides better security and performance, native system integration, supports web mode via browser target. Better for local-first apps with file system access. |
+| **Electron** | 42.x | Desktop application framework | **User decision (Phase 1):** Mature ecosystem, larger community, more plugins. Trade-off: larger bundles (120MB+ vs 3-10MB for Tauri) and higher memory (200MB+ vs 50MB) accepted for ecosystem maturity. |
 | TypeScript | 5.7+ | Type-safe development | Industry standard for large applications, catches errors at compile time, excellent IDE support, required for type-safe AI SDK integration |
-| Vite | 6.0+ | Build tool and dev server | Fast HMR, native ESM, excellent Tauri integration, optimized production builds, 10x faster than webpack-based tools |
+| Vite | 6.0+ | Build tool and dev server | Fast HMR, native ESM, excellent Electron integration via vite-plugin-electron, optimized production builds, 10x faster than webpack-based tools |
 ### Frontend Framework
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
@@ -66,12 +66,12 @@ LibraNia is a personal knowledge management system that visualizes information a
 ### Build & Packaging
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| @tauri-apps/cli | 2.x | Tauri build tooling | Official Tauri CLI, handles Rust compilation, app bundling, code signing |
-| @tauri-apps/api | 2.x | Tauri frontend API | Type-safe access to Tauri backend (file system, shell, notifications), IPC communication |
+| vite-plugin-electron | Latest | Electron + Vite integration | Unified build pipeline, hot reload for main process, automatic preload bundling |
+| electron-builder | Latest | App packaging and distribution | Cross-platform builds, code signing, auto-updates, installer generation |
 ## Alternatives Considered
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Desktop Framework | Tauri 2.0 | Electron 33 | 10-40x larger bundles (120MB+ vs 3-10MB), 4x higher memory usage (200MB+ vs 50MB), slower startup, less secure (Node.js in renderer) |
+| Desktop Framework | Electron 42 | Tauri 2.0 | **User chose Electron** for mature ecosystem and larger community. Tauri offers smaller bundles (3-10MB vs 120MB+) and lower memory (50MB vs 200MB+), but Electron's maturity was prioritized. |
 | Database | SQLite + better-sqlite3 | PostgreSQL | Overkill for local-first, requires separate server process, more complex setup |
 | Vector Search | sqlite-vec | ChromaDB | ChromaDB requires separate server, sync complexity, heavier weight for desktop app |
 | Vector Search | sqlite-vec | Vectra | Less mature, fewer optimizations, smaller community |
@@ -80,7 +80,7 @@ LibraNia is a personal knowledge management system that visualizes information a
 | 3D Visualization | react-force-graph-3d | react-three-fiber + custom | R3F requires building force simulation from scratch, react-force-graph-3d provides this out-of-box |
 | UI Components | Radix + shadcn/ui | Material-UI | MUI opinionated, heavier bundles, less customization freedom |
 | UI Components | Radix + shadcn/ui | Ant Design | Ant Design heavier, less modern styling approach |
-| Build Tool | Vite 6 | Webpack | Vite 10x faster, better DX, native ESM, excellent Tauri integration |
+| Build Tool | Vite 6 | Webpack | Vite 10x faster, better DX, native ESM, excellent Electron integration via vite-plugin-electron |
 ## Installation
 ### Core Dependencies
 # Desktop framework
@@ -95,9 +95,10 @@ LibraNia is a personal knowledge management system that visualizes information a
 # Download from: https://github.com/asg017/sqlite-vec/releases
 # Load as SQLite extension in better-sqlite3
 ## Architecture Notes
-### Tauri Architecture
-- **Frontend:** React + Vite (runs in WebView)
-- **Backend:** Rust (handles file system, SQLite, system integration)
+### Electron Architecture
+- **Main Process:** Node.js (handles file system, SQLite, window management, system integration)
+- **Renderer Process:** React + Vite (runs in Chromium, isolated via contextBridge)
+- **IPC:** contextBridge + ipcMain/ipcRenderer for secure communication
 - **IPC:** Type-safe commands via @tauri-apps/api
 - **Security:** CSP enabled, no Node.js in renderer, Rust backend sandboxed
 ### Data Flow
