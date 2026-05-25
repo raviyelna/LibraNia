@@ -93,3 +93,53 @@ export function setupFTS5(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_links_target_note_id ON links(target_note_id);
   `);
 }
+
+/**
+ * Setup FTS5 virtual table for content search
+ *
+ * Creates content_fts table for searching document text and filenames.
+ * Uses porter stemming with unicode61 tokenizer (matches notes_fts_stemmed pattern).
+ * Triggers keep FTS5 table in sync with content table changes.
+ */
+export function setupContentFTS5(db: Database.Database): void {
+  // Create FTS5 virtual table with porter stemming for content search
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS content_fts USING fts5(
+      original_filename,
+      extracted_text,
+      content='content',
+      content_rowid='rowid',
+      tokenize='porter unicode61 remove_diacritics 2'
+    );
+  `);
+
+  // Drop existing triggers to ensure clean state
+  db.exec(`DROP TRIGGER IF EXISTS content_fts_insert;`);
+  db.exec(`DROP TRIGGER IF EXISTS content_fts_update;`);
+  db.exec(`DROP TRIGGER IF EXISTS content_fts_delete;`);
+
+  // INSERT trigger - populate FTS5 when content row is inserted
+  db.exec(`
+    CREATE TRIGGER content_fts_insert AFTER INSERT ON content BEGIN
+      INSERT INTO content_fts(rowid, original_filename, extracted_text)
+      VALUES (new.rowid, new.original_filename, new.extracted_text);
+    END;
+  `);
+
+  // UPDATE trigger - update FTS5 when content row is updated
+  db.exec(`
+    CREATE TRIGGER content_fts_update AFTER UPDATE ON content BEGIN
+      INSERT INTO content_fts(content_fts, rowid, original_filename, extracted_text)
+      VALUES('delete', old.rowid, old.original_filename, old.extracted_text);
+      INSERT INTO content_fts(rowid, original_filename, extracted_text)
+      VALUES (new.rowid, new.original_filename, new.extracted_text);
+    END;
+  `);
+
+  // DELETE trigger - remove FTS5 row when content row is deleted
+  db.exec(`
+    CREATE TRIGGER content_fts_delete AFTER DELETE ON content BEGIN
+      DELETE FROM content_fts WHERE rowid = old.rowid;
+    END;
+  `);
+}
