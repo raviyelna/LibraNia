@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T15:03:39Z"
+last_updated: "2026-05-25T15:11:39Z"
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 26
-  completed_plans: 23
-  percent: 88
+  completed_plans: 24
+  percent: 92
 ---
 
 # State: LibraNia
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 4 In Progress - Content Storage & Management (3/3 plans complete)
+**Current Focus:** Phase 4 Complete - Content Storage & Management (4/4 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -31,10 +31,10 @@ progress:
 
 ## Current Position
 
-**Phase:** 4 - Content Storage & Management (IN PROGRESS)
-**Plan:** 04-03 (completed)
+**Phase:** 4 - Content Storage & Management (COMPLETE)
+**Plan:** 04-04 (completed)
 **Status:** Ready to execute Phase 5
-**Progress:** [██████████] 88%
+**Progress:** [██████████] 92%
 
 **Next Action:** Execute Phase 5 Plan 05-01 - Semantic Search Foundation
 
@@ -44,13 +44,13 @@ progress:
 
 ### Velocity
 
-- **Phases completed:** 3/6 (Phase 1, Phase 2, and Phase 3 complete)
-- **Plans completed:** 23/26 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8, Phase 4: 3/3)
-- **Average plan duration:** 7 min (23 plans completed)
+- **Phases completed:** 4/6 (Phase 1, Phase 2, Phase 3, and Phase 4 complete)
+- **Plans completed:** 24/26 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8, Phase 4: 4/4)
+- **Average plan duration:** 7 min (24 plans completed)
 - **Phase 1 total duration:** 8h 0min
 - **Phase 2 total duration:** 52 min
 - **Phase 3 total duration:** 67 min (8/8 plans)
-- **Phase 4 total duration:** 13 min (3/3 plans)
+- **Phase 4 total duration:** 16 min (4/4 plans)
 
 ### Quality
 
@@ -73,6 +73,7 @@ progress:
 
 | Decision | Rationale | Phase | Date |
 |----------|-----------|-------|------|
+| File upload uses Electron dialog API | Provides secure path selection without exposing filesystem to renderer, prevents path traversal attacks | 04-04 | 2026-05-25 |
 | Process files synchronously before database insert | Ensures data consistency - if processing fails, no orphaned files or incomplete records | 04-03 | 2026-05-25 |
 | Truncate extracted text to 100KB | Prevents FTS5 index bloat, 100KB ≈ 15,000 words covers 99% of documents | 04-03 | 2026-05-25 |
 | Use magic bytes validation (file-type) instead of extensions | File extensions are user-controlled and spoofable, magic bytes provide cryptographic verification | 04-03 | 2026-05-25 |
@@ -188,6 +189,7 @@ None yet.
 | 4 | 04-01 | 2026-05-25T14:47:01Z | 2026-05-25T14:49:27Z | 2 min | ✓ Complete - Database schema extension with content and content_tags tables, FTS5 for document search |
 | 4 | 04-02 | 2026-05-25T14:49:50Z | 2026-05-25T14:51:32Z | 2 min | ✓ Complete - File processing dependencies installed (file-type, pdf-parse, mammoth, sharp) |
 | 4 | 04-03 | 2026-05-25T14:53:39Z | 2026-05-25T15:03:39Z | 10 min | ✓ Complete - Content service with CRUD, file validation, text extraction, thumbnail generation |
+| 4 | 04-04 | 2026-05-25T15:07:15Z | 2026-05-25T15:10:19Z | 3 min | ✓ Complete - Content IPC handlers with file dialog integration, window.api.content exposure |
 
 ---
 
@@ -226,7 +228,8 @@ None yet.
 - **Plan 04-01 COMPLETE:** Database schema extension with content and content_tags tables, FTS5 virtual table for document text search. All 10 tests passing (5 schema + 5 FTS5).
 - **Plan 04-02 COMPLETE:** File processing dependencies installed (file-type, pdf-parse, mammoth, sharp). Package legitimacy verified.
 - **Plan 04-03 COMPLETE:** Content service with CRUD operations, magic bytes file validation, atomic writes, PDF/DOCX text extraction, 200x200 JPEG thumbnail generation. All 32 tests passing.
-- **PHASE 4 COMPLETE:** All 3 plans complete, all requirements (CONT-01 through CONT-06) fulfilled. Total duration: 13 minutes.
+- **Plan 04-04 COMPLETE:** Content IPC handlers with file dialog integration, window.api.content exposure. All 21 tests passing.
+- **PHASE 4 COMPLETE:** All 4 plans complete, all requirements (CONT-01 through CONT-05) fulfilled. Total duration: 16 minutes.
 
 ---
 
