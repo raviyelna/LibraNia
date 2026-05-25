@@ -9,7 +9,27 @@ vi.mock('file-type', () => ({
   fileTypeFromBuffer: vi.fn(),
 }));
 
+// Mock pdf-parse
+vi.mock('pdf-parse', () => ({
+  default: vi.fn(),
+}));
+
+// Mock mammoth
+vi.mock('mammoth', () => ({
+  default: {
+    extractRawText: vi.fn(),
+  },
+}));
+
+// Mock sharp
+vi.mock('sharp', () => ({
+  default: vi.fn(),
+}));
+
 import { fileTypeFromBuffer } from 'file-type';
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
+import sharp from 'sharp';
 import * as contentService from '../electron/services/content.service';
 
 describe('Content Service - File Validation', () => {
@@ -200,6 +220,9 @@ describe('Content Service - File Validation', () => {
       vi.spyOn(fs, 'writeFile').mockResolvedValue(undefined);
       vi.spyOn(fs, 'rename').mockResolvedValue(undefined);
 
+      // Mock text extraction
+      vi.mocked(pdfParse).mockResolvedValue({ text: 'Sample text' } as any);
+
       const inputData = {
         filePath: '/tmp/document.pdf',
         source: 'manual' as const,
@@ -224,6 +247,14 @@ describe('Content Service - File Validation', () => {
       vi.spyOn(fs, 'writeFile').mockResolvedValue(undefined);
       vi.spyOn(fs, 'rename').mockResolvedValue(undefined);
 
+      // Mock thumbnail generation
+      const mockSharp = {
+        resize: vi.fn().mockReturnThis(),
+        jpeg: vi.fn().mockReturnThis(),
+        toFile: vi.fn().mockResolvedValue(undefined),
+      };
+      vi.mocked(sharp).mockReturnValue(mockSharp as any);
+
       const inputData = {
         filePath: '/tmp/image.png',
         source: 'manual' as const,
@@ -246,6 +277,9 @@ describe('Content Service - File Validation', () => {
       vi.spyOn(fs, 'mkdir').mockResolvedValue(undefined as any);
       vi.spyOn(fs, 'writeFile').mockResolvedValue(undefined);
       vi.spyOn(fs, 'rename').mockResolvedValue(undefined);
+
+      // Mock text extraction
+      vi.mocked(pdfParse).mockResolvedValue({ text: 'Sample text' } as any);
 
       const inputData = {
         filePath: '/tmp/document.pdf',
