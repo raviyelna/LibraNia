@@ -6,6 +6,7 @@ import { Layout } from './components/Layout/Layout';
 import { Home } from './routes/Home';
 import { LibraryPage } from './routes/Library';
 import { SettingsPage } from './routes/Settings';
+import './styles/editor.css';
 
 /**
  * LibraNia Application Root
