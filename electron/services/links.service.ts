@@ -1,4 +1,4 @@
-import { eq, isNull, desc, asc, sql } from 'drizzle-orm';
+import { eq, isNull, desc, asc, sql, and } from 'drizzle-orm';
 import { notes, links } from '../database/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../database/schema';
@@ -45,7 +45,7 @@ export function parseWikiLinks(text: string): WikiLink[] {
 
 /**
  * Update links table for a note based on wiki-links in its body
- * Deletes existing links and creates new ones based on current body content
+ * Deletes existing manual links and creates new ones based on current body content
  * @param noteId Source note ID
  * @param body Note body text containing wiki-links
  * @param db Drizzle ORM instance
@@ -55,8 +55,10 @@ export async function updateNoteLinks(
   body: string,
   db: BetterSQLite3Database<typeof schema>
 ): Promise<void> {
-  // Delete existing links from this note
-  await db.delete(links).where(eq(links.source_note_id, noteId));
+  // Delete existing manual links from this note (preserve semantic links)
+  await db
+    .delete(links)
+    .where(and(eq(links.source_note_id, noteId), eq(links.link_type, 'manual')));
 
   // Parse wiki-links from body
   const wikiLinks = parseWikiLinks(body);
@@ -75,6 +77,7 @@ export async function updateNoteLinks(
         id: crypto.randomUUID(),
         source_note_id: noteId,
         target_note_id: targetNote.id,
+        link_type: 'manual',
         created_at: new Date(),
       });
     }
@@ -109,4 +112,80 @@ export async function getBacklinks(
     title: row.title,
     linkCount: Number(row.linkCount),
   }));
+}
+
+/**
+ * Create semantic links from source note to similar notes per D-11 (automatic, silent)
+ * @param sourceNoteId Source note ID
+ * @param similarNotes Array of similar notes with similarity scores
+ * @param db Drizzle ORM instance
+ */
+export async function createSemanticLinks(
+  sourceNoteId: string,
+  similarNotes: Array<{ id: string; similarity: number }>,
+  db: BetterSQLite3Database<typeof schema>
+): Promise<void> {
+  if (similarNotes.length === 0) {
+    return; // No similar notes to link
+  }
+
+  // Batch insert semantic links
+  const linkValues = similarNotes.map((note) => ({
+    id: crypto.randomUUID(),
+    source_note_id: sourceNoteId,
+    target_note_id: note.id,
+    link_type: 'semantic',
+    similarity_score: note.similarity,
+    created_at: new Date(),
+  }));
+
+  await db.insert(links).values(linkValues);
+}
+
+/**
+ * Get semantic links for note, ordered by similarity DESC
+ * @param noteId Note ID
+ * @param db Drizzle ORM instance
+ * @returns Array of semantic links with id, title, and similarity
+ */
+export async function getSemanticLinks(
+  noteId: string,
+  db: BetterSQLite3Database<typeof schema>
+): Promise<Array<{ id: string; title: string; similarity: number }>> {
+  const semanticLinks = await db
+    .select({
+      id: notes.id,
+      title: notes.title,
+      similarity: links.similarity_score,
+    })
+    .from(links)
+    .innerJoin(notes, eq(links.target_note_id, notes.id))
+    .where(
+      and(
+        eq(links.source_note_id, noteId),
+        eq(links.link_type, 'semantic'),
+        isNull(notes.deleted_at)
+      )
+    )
+    .orderBy(desc(links.similarity_score));
+
+  return semanticLinks.map((row) => ({
+    id: row.id,
+    title: row.title,
+    similarity: row.similarity || 0,
+  }));
+}
+
+/**
+ * Delete all semantic links for note (used before rediscovery per D-10)
+ * @param noteId Note ID
+ * @param db Drizzle ORM instance
+ */
+export async function deleteSemanticLinks(
+  noteId: string,
+  db: BetterSQLite3Database<typeof schema>
+): Promise<void> {
+  await db
+    .delete(links)
+    .where(and(eq(links.source_note_id, noteId), eq(links.link_type, 'semantic')));
 }
