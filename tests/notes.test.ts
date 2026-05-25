@@ -397,4 +397,81 @@ describe('Notes Service', () => {
       expect(deletedNotes).toEqual([]);
     });
   });
+
+  describe('wiki-link integration', () => {
+    it('should create link records when note contains wiki-links', async () => {
+      const targetNote = await createNote(
+        { title: 'Target Note', body: 'Target content' },
+        orm
+      );
+      const sourceNote = await createNote(
+        { title: 'Source Note', body: 'See [[Target Note]] for details.' },
+        orm
+      );
+
+      // Query links table directly
+      const linksResult = db
+        .prepare('SELECT * FROM links WHERE source_note_id = ?')
+        .all(sourceNote.id);
+
+      expect(linksResult).toHaveLength(1);
+      expect(linksResult[0].target_note_id).toBe(targetNote.id);
+    });
+
+    it('should update link records when note body is updated', async () => {
+      const target1 = await createNote(
+        { title: 'Target 1', body: 'Content' },
+        orm
+      );
+      const target2 = await createNote(
+        { title: 'Target 2', body: 'Content' },
+        orm
+      );
+      const sourceNote = await createNote(
+        { title: 'Source', body: 'Link to [[Target 1]].' },
+        orm
+      );
+
+      // Update to link to different note
+      await updateNote(
+        sourceNote.id,
+        { body: 'Link to [[Target 2]] instead.' },
+        orm
+      );
+
+      const linksResult = db
+        .prepare('SELECT * FROM links WHERE source_note_id = ?')
+        .all(sourceNote.id);
+
+      expect(linksResult).toHaveLength(1);
+      expect(linksResult[0].target_note_id).toBe(target2.id);
+    });
+
+    it('should not update links when only title is updated', async () => {
+      const targetNote = await createNote(
+        { title: 'Target', body: 'Content' },
+        orm
+      );
+      const sourceNote = await createNote(
+        { title: 'Source', body: 'Link to [[Target]].' },
+        orm
+      );
+
+      // Count links before update
+      const linksBefore = db
+        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ?')
+        .get(sourceNote.id) as { count: number };
+
+      // Update only title (not body)
+      await updateNote(sourceNote.id, { title: 'New Title' }, orm);
+
+      // Links should remain unchanged
+      const linksAfter = db
+        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ?')
+        .get(sourceNote.id) as { count: number };
+
+      expect(linksAfter.count).toBe(linksBefore.count);
+      expect(linksAfter.count).toBe(1);
+    });
+  });
 });
