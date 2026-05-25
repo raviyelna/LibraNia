@@ -116,7 +116,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Application Shell | 4/4 | Complete | 2026-05-25 |
-| 2. Core Knowledge Management | 2/6 | In Progress | - |
+| 2. Core Knowledge Management | 3/6 | In Progress | - |
 | 3. AI Integration | 0/0 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |
 | 5. Semantic Discovery | 0/0 | Not started | - |
@@ -140,7 +140,7 @@ Phases requiring deeper research during planning:
 Plans:
 - [x] 02-01-PLAN.md — Database foundation (better-sqlite3, Drizzle schema, FTS5 setup) (✓ Complete)
 - [x] 02-02-PLAN.md — Note CRUD services with wiki-link parsing and backlinks (✓ Complete)
-- [ ] 02-03-PLAN.md — Full-text search with FTS5 (quick nav, full-text, fuzzy)
-- [ ] 02-04-PLAN.md — Tags system with junction table and filtering
+- [x] 02-03-PLAN.md — Full-text search with FTS5 (quick nav, full-text, fuzzy) (✓ Complete)
+- [x] 02-04-PLAN.md — Tags system with junction table and filtering (✓ Complete)
 - [ ] 02-05-PLAN.md — Note editor UI (CodeMirror 6, backlinks panel, tags input, quick nav)
 - [ ] 02-06-PLAN.md — Export functionality (markdown with YAML frontmatter, JSON)
