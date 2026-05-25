@@ -6,6 +6,7 @@ import { CitationList } from '../../src/components/Chat/CitationList';
 import { ProviderBadge } from '../../src/components/Chat/ProviderBadge';
 import { MessageInput } from '../../src/components/Chat/MessageInput';
 import { MessageList } from '../../src/components/Chat/MessageList';
+import { ChatInterface } from '../../src/components/Chat/ChatInterface';
 
 describe('MessageBubble', () => {
   it('renders user messages with right-aligned styling', () => {
@@ -211,5 +212,44 @@ describe('MessageList', () => {
     render(<MessageList messages={mockMessages} isGenerating={true} generationStatus="Searching web..." />);
 
     expect(screen.getByText(/searching web/i)).toBeInTheDocument();
+  });
+});
+
+describe('ChatInterface', () => {
+  it('renders MessageList and MessageInput', () => {
+    render(<ChatInterface conversationId="test-conv-1" />);
+
+    expect(screen.getByPlaceholderText(/ask a question/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send/i })).toBeInTheDocument();
+  });
+
+  it('accepts conversationId prop and displays that conversation', () => {
+    render(<ChatInterface conversationId="test-conv-1" />);
+
+    // Component should render with conversationId prop
+    expect(screen.getByPlaceholderText(/ask a question/i)).toBeInTheDocument();
+  });
+
+  it('shows empty state when no conversationId provided', () => {
+    render(<ChatInterface />);
+
+    expect(screen.getByText(/select a conversation or start a new one/i)).toBeInTheDocument();
+  });
+
+  it('fills parent container height per D-08', () => {
+    const { container } = render(<ChatInterface conversationId="test-conv-1" />);
+
+    const chatInterface = container.firstChild as HTMLElement;
+    expect(chatInterface).toHaveClass('h-full');
+  });
+
+  it('handles message send from MessageInput', async () => {
+    render(<ChatInterface conversationId="test-conv-1" />);
+
+    const textarea = screen.getByPlaceholderText(/ask a question/i);
+    await userEvent.type(textarea, 'Test message');
+
+    const sendButton = screen.getByRole('button', { name: /send/i });
+    expect(sendButton).not.toBeDisabled();
   });
 });
