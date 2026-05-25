@@ -4,7 +4,8 @@ import { app } from 'electron';
 import { AppConfig, DEFAULT_CONFIG } from '../types/config';
 
 export function getConfigPath(): string {
-  return path.join(app.getPath('userData'), 'config.json');
+  // Store config in project root, not AppData
+  return path.join(process.cwd(), 'config.json');
 }
 
 export async function loadConfig(): Promise<AppConfig> {

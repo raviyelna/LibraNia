@@ -12,7 +12,7 @@ export default defineConfig({
         build: {
           outDir: 'dist-electron',
           rollupOptions: {
-            external: ['electron', 'better-sqlite3', 'electron-store', 'electron-log', 'electron-window-state']
+            external: ['electron', 'better-sqlite3', 'electron-store', 'electron-log', 'electron-window-state', 'express', 'node:events', 'node:path', 'node:fs', 'node:url', 'node:os']
           }
         }
       }
