@@ -30,7 +30,7 @@
 Plans:
 - [x] 01-01-PLAN.md — Project initialization, Electron setup, React app scaffold (✓ Complete)
 - [x] 01-02-PLAN.md — Theme system, navigation structure, collapsible sidebar (✓ Complete)
-- [ ] 01-03-PLAN.md — Mode switching (desktop/web), window management, system tray
+- [x] 01-03-PLAN.md — Mode switching (desktop/web), window management, system tray (✓ Complete)
 - [ ] 01-04-PLAN.md — Error handling, logging, offline functionality
 
 ---

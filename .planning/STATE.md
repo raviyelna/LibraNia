@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: In progress
-last_updated: "2026-05-25T00:07:00.000Z"
+last_updated: "2026-05-25T07:47:50.000Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
-  percent: 50
+  completed_plans: 3
+  percent: 75
 ---
 
 # State: LibraNia
@@ -32,11 +32,11 @@ progress:
 ## Current Position
 
 **Phase:** 1 - Foundation & Application Shell
-**Plan:** 01-02 (completed)
+**Plan:** 01-03 (completed)
 **Status:** In progress
-**Progress:** [█████░░░░░] 50% (2/4 plans in Phase 1 complete)
+**Progress:** [███████░░░] 75% (3/4 plans in Phase 1 complete)
 
-**Next Action:** Run `/gsd-plan-phase 1` to create plan 01-03
+**Next Action:** Run `/gsd-plan-phase 1` to create plan 01-04
 
 ---
 
@@ -45,9 +45,9 @@ progress:
 ### Velocity
 
 - **Phases completed:** 0/6
-- **Plans completed:** 2/4 (Phase 1)
-- **Average plan duration:** 13 minutes (2 plans completed)
-- **Estimated Phase 1 completion:** ~26 minutes remaining (2 plans × 13 min avg)
+- **Plans completed:** 3/4 (Phase 1)
+- **Average plan duration:** 5h 4min (3 plans completed)
+- **Estimated Phase 1 completion:** ~5h remaining (1 plan × 5h avg)
 
 ### Quality
 
@@ -81,10 +81,15 @@ progress:
 | Store sidebar/theme state in localStorage | Simpler for Phase 1, will migrate to electron-store config in Plan 04 | 01-02 | 2026-05-25 |
 | Use lucide-react for icons | Lightweight (tree-shakeable), modern API, better TypeScript support | 01-02 | 2026-05-25 |
 | Defer Radix UI usage to Plan 03 | Avoid unused dependencies, install when actually needed for dialogs | 01-02 | 2026-05-25 |
+| Use JSON config file in project root instead of AppData | Easier debugging during development, simpler path resolution | 01-03 | 2026-05-25 |
+| Atomic file writes via temp file + rename | Prevents corruption if write interrupted | 01-03 | 2026-05-25 |
+| Web mode uses Vite dev server in development, Express in production | Preserve HMR in development, serve static files in production | 01-03 | 2026-05-25 |
+| System tray keeps app running when window closed | Quick access via tray icon, common desktop app pattern | 01-03 | 2026-05-25 |
+| Mode switching requires restart | Electron architecture requires restart to switch between native window and web server modes | 01-03 | 2026-05-25 |
+| SVG icon instead of PNG | Better scaling, smaller file size, easier to edit | 01-03 | 2026-05-25 |
 
 ### Active TODOs
 
-- [ ] Plan Phase 1 Plan 03: Mode switching (desktop/web), window management, system tray
 - [ ] Plan Phase 1 Plan 04: Error handling, logging, offline functionality
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
 
@@ -116,6 +121,7 @@ None yet.
 |-------|------|---------|-----------|----------|---------|
 | 1 | 01-01 | 2026-05-24T16:36:44Z | 2026-05-24T16:51:17Z | 15 min | ✓ Complete - Electron + React + Vite foundation established |
 | 1 | 01-02 | 2026-05-24T16:54:30Z | 2026-05-25T00:07:00Z | 12 min | ✓ Complete - Theme system and collapsible sidebar with TDD |
+| 1 | 01-03 | 2026-05-25T00:13:54Z | 2026-05-25T07:47:50Z | 7h 34min | ✓ Complete - Mode switching, config management, system tray, Settings UI |
 
 ---
 
