@@ -167,8 +167,27 @@ Plans:
   4. User can view a related concepts sidebar while reading any note
   5. Semantic relationships are stored in a graph structure for efficient querying
 
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
+
+Plans:
+
+**Wave 1**
+
+- [ ] 05-01-PLAN.md — Database schema extension (embeddings table, links table with link_type)
+- [ ] 05-02-PLAN.md — Package installation and verification (@xenova/transformers, sqlite-vec)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-03-PLAN.md — Embeddings service and vector search utilities
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 05-04-PLAN.md — Notes service integration with on-save embedding generation and auto-linking
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 05-05-PLAN.md — UI components (semantic search mode, RelatedPanel, hooks)
 
 ---
 
@@ -198,7 +217,7 @@ Plans:
 | 2. Core Knowledge Management | 6/6 | Complete   | 2026-05-25 |
 | 3. AI Integration | 11/11 | Complete | 2026-05-25 |
 | 4. Content Storage & Management | 5/5 | Complete | 2026-05-25 |
-| 5. Semantic Discovery | 0/0 | Not started | - |
+| 5. Semantic Discovery | 0/5 | Not started | - |
 | 6. 3D Visualization | 0/0 | Not started | - |
 
 ---
@@ -214,7 +233,7 @@ Phases requiring deeper research during planning:
 ---
 
 *Roadmap created: 2026-05-24*
-*Last updated: 2026-05-24*
+*Last updated: 2026-05-25*
 
 Plans:
 
