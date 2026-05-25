@@ -175,7 +175,7 @@ Plans:
 **Wave 1**
 
 - [ ] 05-01-PLAN.md — Database schema extension (embeddings table, links table with link_type)
-- [ ] 05-02-PLAN.md — Package installation and verification (@xenova/transformers, sqlite-vec)
+- [x] 05-02-PLAN.md — Package installation and verification (@xenova/transformers, sqlite-vec)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -217,7 +217,7 @@ Plans:
 | 2. Core Knowledge Management | 6/6 | Complete   | 2026-05-25 |
 | 3. AI Integration | 11/11 | Complete | 2026-05-25 |
 | 4. Content Storage & Management | 5/5 | Complete | 2026-05-25 |
-| 5. Semantic Discovery | 0/5 | Not started | - |
+| 5. Semantic Discovery | 1/5 | In Progress|  |
 | 6. 3D Visualization | 0/0 | Not started | - |
 
 ---
