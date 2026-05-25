@@ -12,6 +12,13 @@ import {
 import { getAIService } from '../services/ai/ai.service';
 import { WebSearchService } from '../services/ai/websearch.service';
 import { getNoteById } from '../services/notes.service';
+import {
+  setProviderConfig,
+  getProviderConfig,
+  getAllProviderConfigs,
+  deleteProviderConfig,
+  type ProviderConfig,
+} from '../store/secure.store';
 
 /**
  * Register IPC handlers for AI and chat operations
@@ -232,6 +239,106 @@ export function registerAIHandlers(
       return { success: true };
     } catch (error) {
       logger.error('conversation:delete failed', error as Error);
+      throw error;
+    }
+  };
+
+  /**
+   * provider:setConfig - Save provider configuration
+   * Per D-24: encrypted storage via electron-store
+   */
+  handlers['provider:setConfig'] = async (data: ProviderConfig) => {
+    try {
+      logger.info('IPC: provider:setConfig', { providerId: data.id });
+      setProviderConfig(data);
+      return { success: true };
+    } catch (error) {
+      logger.error('provider:setConfig failed', error as Error);
+      throw error;
+    }
+  };
+
+  /**
+   * provider:getConfig - Retrieve provider configuration
+   */
+  handlers['provider:getConfig'] = async (data: { providerId: string }) => {
+    try {
+      logger.info('IPC: provider:getConfig', { providerId: data.providerId });
+      const config = getProviderConfig(data.providerId);
+      return config;
+    } catch (error) {
+      logger.error('provider:getConfig failed', error as Error);
+      throw error;
+    }
+  };
+
+  /**
+   * provider:getAllConfigs - Get all provider configurations
+   */
+  handlers['provider:getAllConfigs'] = async () => {
+    try {
+      logger.info('IPC: provider:getAllConfigs');
+      const configs = getAllProviderConfigs();
+      return configs;
+    } catch (error) {
+      logger.error('provider:getAllConfigs failed', error as Error);
+      throw error;
+    }
+  };
+
+  /**
+   * provider:deleteConfig - Delete provider configuration
+   */
+  handlers['provider:deleteConfig'] = async (data: { providerId: string }) => {
+    try {
+      logger.info('IPC: provider:deleteConfig', { providerId: data.providerId });
+      deleteProviderConfig(data.providerId);
+      return { success: true };
+    } catch (error) {
+      logger.error('provider:deleteConfig failed', error as Error);
+      throw error;
+    }
+  };
+
+  /**
+   * provider:validate - Validate API key
+   * Per D-05: validate API keys on save
+   * Creates provider instance directly with provided credentials (not from stored config)
+   */
+  handlers['provider:validate'] = async (data: {
+    providerId: string;
+    apiKey: string;
+    baseURL?: string;
+  }) => {
+    try {
+      logger.info('IPC: provider:validate', { providerId: data.providerId });
+
+      // Import provider classes directly for validation
+      const { ClaudeProvider } = await import('../services/ai/providers/claude.provider');
+      const { OpenAIProvider } = await import('../services/ai/providers/openai.provider');
+      const { DeepSeekProvider } = await import('../services/ai/providers/deepseek.provider');
+
+      // Create temporary provider instance with provided credentials
+      let provider;
+      switch (data.providerId) {
+        case 'claude':
+          provider = new ClaudeProvider(data.apiKey, data.baseURL);
+          break;
+        case 'openai':
+          provider = new OpenAIProvider(data.apiKey, data.baseURL);
+          break;
+        case 'deepseek':
+          provider = new DeepSeekProvider(data.apiKey, data.baseURL);
+          break;
+        default:
+          throw new Error(`Unknown provider: ${data.providerId}`);
+      }
+
+      const result = await provider.validateApiKey(data.apiKey, data.baseURL);
+
+      return result;
+    } catch (error) {
+      logger.error('provider:validate failed', error as Error);
       throw error;
     }
   };

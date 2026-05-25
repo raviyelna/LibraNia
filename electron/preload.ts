@@ -111,4 +111,14 @@ contextBridge.exposeInMainWorld('api', {
     get: (conversationId: string) => ipcRenderer.invoke('conversation:get', { conversationId }),
     delete: (conversationId: string) => ipcRenderer.invoke('conversation:delete', { conversationId }),
   },
+
+  // Provider operations
+  providers: {
+    setConfig: (config: any) => ipcRenderer.invoke('provider:setConfig', config),
+    getConfig: (providerId: string) => ipcRenderer.invoke('provider:getConfig', { providerId }),
+    getAllConfigs: () => ipcRenderer.invoke('provider:getAllConfigs'),
+    deleteConfig: (providerId: string) => ipcRenderer.invoke('provider:deleteConfig', { providerId }),
+    validate: (providerId: string, apiKey: string, baseURL?: string) =>
+      ipcRenderer.invoke('provider:validate', { providerId, apiKey, baseURL }),
+  },
 });
