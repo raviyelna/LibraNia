@@ -45,4 +45,35 @@ contextBridge.exposeInMainWorld('api', {
     getNotesByTag: (tagId: string) => ipcRenderer.invoke('tags:getNotesByTag', { tagId }),
     setForNote: (noteId: string, tagNames: string[]) => ipcRenderer.invoke('tags:setForNote', { noteId, tagNames }),
   },
+
+  // Notes operations
+  notes: {
+    create: (data: { title: string; body: string; metadata?: string }) =>
+      ipcRenderer.invoke('notes:create', data),
+    update: (data: { id: string; title?: string; body?: string; metadata?: string }) =>
+      ipcRenderer.invoke('notes:update', data),
+    delete: (id: string, hard: boolean) =>
+      ipcRenderer.invoke('notes:delete', { id, hard }),
+    restore: (id: string) =>
+      ipcRenderer.invoke('notes:restore', { id }),
+    getById: (id: string, includeDeleted?: boolean) =>
+      ipcRenderer.invoke('notes:getById', { id, includeDeleted }),
+    getAll: () =>
+      ipcRenderer.invoke('notes:getAll'),
+    getDeleted: () =>
+      ipcRenderer.invoke('notes:getDeleted'),
+  },
+
+  // Links operations
+  links: {
+    getBacklinks: (noteId: string) =>
+      ipcRenderer.invoke('links:getBacklinks', { noteId }),
+  },
+
+  // Search operations
+  search: {
+    quickNav: (query: string) => ipcRenderer.invoke('search:quickNav', { query }),
+    fullText: (query: string) => ipcRenderer.invoke('search:fullText', { query }),
+    fuzzy: (query: string) => ipcRenderer.invoke('search:fuzzy', { query }),
+  },
 });

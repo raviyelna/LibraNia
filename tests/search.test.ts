@@ -284,4 +284,26 @@ describe('Search Service', () => {
       expect(duration).toBeLessThan(100);
     });
   });
+
+  describe('IPC Handlers', () => {
+    it('should have quickNavSearch function exported', () => {
+      expect(quickNavSearch).toBeDefined();
+      expect(typeof quickNavSearch).toBe('function');
+    });
+
+    it('should have fullTextSearch function exported', () => {
+      expect(fullTextSearch).toBeDefined();
+      expect(typeof fullTextSearch).toBe('function');
+    });
+
+    it('should have fuzzySearch function exported', () => {
+      expect(fuzzySearch).toBeDefined();
+      expect(typeof fuzzySearch).toBe('function');
+    });
+
+    it('should handle errors gracefully', () => {
+      // Pass invalid database to trigger error
+      expect(() => quickNavSearch(null as any, 'test')).toThrow();
+    });
+  });
 });
