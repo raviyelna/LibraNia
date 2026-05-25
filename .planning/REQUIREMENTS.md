@@ -9,12 +9,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Knowledge Management
 
-- [ ] **KNOW-01**: User can create notes with rich text/markdown
-- [ ] **KNOW-02**: User can edit existing notes
-- [ ] **KNOW-03**: User can delete notes
+- [x] **KNOW-01**: User can create notes with rich text/markdown
+- [x] **KNOW-02**: User can edit existing notes
+- [x] **KNOW-03**: User can delete notes
 - [x] **KNOW-04**: User can search notes with full-text search (<100ms response)
-- [ ] **KNOW-05**: User can create bidirectional links between notes using [[wiki-style]] syntax
-- [ ] **KNOW-06**: User can view backlinks panel showing what links to current note
+- [x] **KNOW-05**: User can create bidirectional links between notes using [[wiki-style]] syntax
+- [x] **KNOW-06**: User can view backlinks panel showing what links to current note
 - [x] **KNOW-07**: User can add tags/labels to notes for organization
 - [x] **KNOW-08**: User can browse notes by tags
 - [x] **KNOW-09**: All notes stored locally in SQLite database
@@ -116,12 +116,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APP-03 | Phase 1 | Complete |
 | APP-04 | Phase 1 | Complete |
 | APP-05 | Phase 1 | Complete |
-| KNOW-01 | Phase 2 | Pending |
-| KNOW-02 | Phase 2 | Pending |
-| KNOW-03 | Phase 2 | Pending |
+| KNOW-01 | Phase 2 | Complete |
+| KNOW-02 | Phase 2 | Complete |
+| KNOW-03 | Phase 2 | Complete |
 | KNOW-04 | Phase 2 | Complete |
-| KNOW-05 | Phase 2 | Pending |
-| KNOW-06 | Phase 2 | Pending |
+| KNOW-05 | Phase 2 | Complete |
+| KNOW-06 | Phase 2 | Complete |
 | KNOW-07 | Phase 2 | Complete |
 | KNOW-08 | Phase 2 | Complete |
 | KNOW-09 | Phase 2 | Complete |
