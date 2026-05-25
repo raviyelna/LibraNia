@@ -1,0 +1,115 @@
+import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import { setupFTS5 } from './fts';
+import * as schema from './schema';
+
+let db: Database.Database | null = null;
+let orm: ReturnType<typeof drizzle> | null = null;
+
+/**
+ * Get the singleton database instance
+ * @returns Database instance
+ * @throws Error if database not initialized
+ */
+export function getDatabase(): Database.Database {
+  if (!db) {
+    throw new Error('Database not initialized. Call initDatabase() first.');
+  }
+  return db;
+}
+
+/**
+ * Get the Drizzle ORM instance
+ * @returns Drizzle ORM instance
+ * @throws Error if database not initialized
+ */
+export function getORM() {
+  if (!orm) {
+    throw new Error('Database not initialized. Call initDatabase() first.');
+  }
+  return orm;
+}
+
+/**
+ * Initialize the database connection and create tables
+ * @param dbPath Path to the database file
+ */
+export async function initDatabase(dbPath: string): Promise<void> {
+  // Close existing connection if any
+  if (db) {
+    db.close();
+  }
+
+  // Create new database connection
+  db = new Database(dbPath);
+
+  // Enable WAL mode for better concurrency
+  db.pragma('journal_mode = WAL');
+
+  // Enable foreign keys
+  db.pragma('foreign_keys = ON');
+
+  // Create tables using raw SQL (Drizzle migrations would be better for production)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      metadata TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      deleted_at INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS tags (
+      id TEXT PRIMARY KEY,
+      name TEXT UNIQUE NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS note_tags (
+      note_id TEXT NOT NULL,
+      tag_id TEXT NOT NULL,
+      PRIMARY KEY (note_id, tag_id),
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+      FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS links (
+      id TEXT PRIMARY KEY,
+      source_note_id TEXT NOT NULL,
+      target_note_id TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (source_note_id) REFERENCES notes(id) ON DELETE CASCADE,
+      FOREIGN KEY (target_note_id) REFERENCES notes(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS note_versions (
+      id TEXT PRIMARY KEY,
+      note_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      metadata TEXT,
+      version_number INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+    );
+  `);
+
+  // Setup FTS5 virtual tables and triggers
+  setupFTS5(db);
+
+  // Initialize Drizzle ORM
+  orm = drizzle(db, { schema });
+}
+
+/**
+ * Close the database connection
+ */
+export function closeDatabase(): void {
+  if (db) {
+    db.close();
+    db = null;
+    orm = null;
+  }
+}

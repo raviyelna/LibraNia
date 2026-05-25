@@ -12,6 +12,7 @@ import { createTray, updateTrayMode } from './tray.js';
 import type { LogEntry } from '../src/types/logger.js';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
+import { initDatabase } from './database/connection.js';
 
 // Set up crash handlers before anything else
 setupCrashHandlers();
@@ -272,6 +273,11 @@ function handleModeSwitch(mode: 'desktop' | 'web') {
 
 // App lifecycle
 app.whenReady().then(async () => {
+  // Initialize database
+  const dbPath = path.join(app.getPath('userData'), 'librania.db');
+  await initDatabase(dbPath);
+  logger.info('Database initialized at: ' + dbPath);
+
   // Load config on startup
   currentConfig = await loadConfig();
   logger.info('Config loaded');
