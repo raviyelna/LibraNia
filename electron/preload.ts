@@ -84,4 +84,31 @@ contextBridge.exposeInMainWorld('api', {
     markdown: (noteIds: string[], directory: string) => ipcRenderer.invoke('export:markdown', { noteIds, directory }),
     json: (noteIds: string[], filePath: string) => ipcRenderer.invoke('export:json', { noteIds, filePath }),
   },
+
+  // Chat operations
+  chat: {
+    send: (data: {
+      conversationId: string | null;
+      message: string;
+      providerId: string;
+      model: string;
+      useWebSearch: boolean;
+    }) => ipcRenderer.invoke('chat:send', data),
+    summarizeNote: (noteId: string) => ipcRenderer.invoke('chat:summarizeNote', { noteId }),
+    onToken: (callback: (data: { conversationId: string; token: string }) => void) => {
+      const listener = (_event: any, data: { conversationId: string; token: string }) => callback(data);
+      ipcRenderer.on('chat:token', listener);
+      return () => ipcRenderer.removeListener('chat:token', listener);
+    },
+    offToken: (callback: (data: { conversationId: string; token: string }) => void) => {
+      ipcRenderer.removeListener('chat:token', callback);
+    },
+  },
+
+  // Conversation operations
+  conversation: {
+    getAll: () => ipcRenderer.invoke('conversation:getAll'),
+    get: (conversationId: string) => ipcRenderer.invoke('conversation:get', { conversationId }),
+    delete: (conversationId: string) => ipcRenderer.invoke('conversation:delete', { conversationId }),
+  },
 });

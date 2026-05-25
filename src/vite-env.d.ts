@@ -85,6 +85,53 @@ interface ExportAPI {
   json: (noteIds: string[], filePath: string) => Promise<{ success: boolean }>;
 }
 
+interface Message {
+  id: string;
+  conversation_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  provider_id?: string;
+  model?: string;
+  created_at: Date;
+}
+
+interface Citation {
+  id: string;
+  message_id: string;
+  title: string;
+  url: string;
+  snippet?: string;
+  position: number;
+}
+
+interface Conversation {
+  id: string;
+  title: string;
+  created_at: Date;
+  updated_at: Date;
+  messages?: Message[];
+  citations?: Citation[];
+}
+
+interface ChatAPI {
+  send: (data: {
+    conversationId: string | null;
+    message: string;
+    providerId: string;
+    model: string;
+    useWebSearch: boolean;
+  }) => Promise<{ conversationId: string; messageId: string; response: string }>;
+  summarizeNote: (noteId: string) => Promise<{ summary: string }>;
+  onToken: (callback: (data: { conversationId: string; token: string }) => void) => () => void;
+  offToken: (callback: (data: { conversationId: string; token: string }) => void) => void;
+}
+
+interface ConversationAPI {
+  getAll: () => Promise<Conversation[]>;
+  get: (conversationId: string) => Promise<Conversation | null>;
+  delete: (conversationId: string) => Promise<{ success: boolean }>;
+}
+
 interface WindowAPI {
   getConfig: () => Promise<any>;
   setConfig: (key: string, value: any) => Promise<{ success: boolean }>;
@@ -100,6 +147,8 @@ interface WindowAPI {
   links: LinksAPI;
   search: SearchAPI;
   export: ExportAPI;
+  chat: ChatAPI;
+  conversation: ConversationAPI;
 }
 
 declare global {
