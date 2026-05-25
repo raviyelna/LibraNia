@@ -148,6 +148,37 @@ interface ProvidersAPI {
   validate: (providerId: string, apiKey: string, baseURL?: string) => Promise<{ valid: boolean; error?: string }>;
 }
 
+interface Content {
+  id: string;
+  file_path: string;
+  thumbnail_path: string | null;
+  mime_type: string;
+  original_filename: string;
+  file_size: number;
+  extracted_text: string | null;
+  source: 'manual' | 'ai-generated';
+  confidence_score: number | null;
+  metadata: string | null;
+  note_id: string | null;
+  message_id: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+interface ContentAPI {
+  getAll: () => Promise<Content[]>;
+  getById: (id: string) => Promise<Content | null>;
+  upload: () => Promise<{ filePath: string; canceled: boolean }>;
+  create: (data: {
+    filePath: string;
+    source: 'manual' | 'ai-generated';
+    confidence_score?: number;
+    note_id?: string;
+    message_id?: string;
+  }) => Promise<Content>;
+  delete: (id: string) => Promise<boolean>;
+}
+
 interface WindowAPI {
   getConfig: () => Promise<any>;
   setConfig: (key: string, value: any) => Promise<{ success: boolean }>;
@@ -166,6 +197,7 @@ interface WindowAPI {
   chat: ChatAPI;
   conversation: ConversationAPI;
   providers: ProvidersAPI;
+  content: ContentAPI;
 }
 
 declare global {
