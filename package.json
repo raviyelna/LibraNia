@@ -18,6 +18,7 @@
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/state": "6.6.0",
     "@codemirror/view": "^6.43.0",
+    "@mapbox/node-pre-gyp": "^2.0.3",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -32,6 +33,7 @@
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.1",
     "react-select": "^5.10.2",
+    "strip-indent": "^4.1.1",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
