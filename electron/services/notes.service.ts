@@ -2,6 +2,7 @@ import { eq, isNull, isNotNull, desc, and } from 'drizzle-orm';
 import { notes } from '../database/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../database/schema';
+import { updateNoteLinks } from './links.service';
 
 export interface CreateNoteInput {
   title: string;
@@ -51,6 +52,9 @@ export async function createNote(
     })
     .returning();
 
+  // Update links table based on wiki-links in body
+  await updateNoteLinks(note.id, note.body, db);
+
   return note as Note;
 }
 
@@ -86,6 +90,11 @@ export async function updateNote(
 
   if (!updated) {
     throw new Error(`Failed to update note with id ${id}`);
+  }
+
+  // Update links table if body was changed
+  if (data.body !== undefined) {
+    await updateNoteLinks(updated.id, updated.body, db);
   }
 
   return updated as Note;
