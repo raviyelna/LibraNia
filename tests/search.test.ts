@@ -1,7 +1,37 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
 import { setupFTS5 } from '../electron/database/fts';
-import { quickNavSearch, fullTextSearch, fuzzySearch } from '../electron/services/search.service';
+import { quickNavSearch, fullTextSearch, fuzzySearch, semanticSearch } from '../electron/services/search.service';
+
+// Mock embeddings service
+vi.mock('../electron/services/embeddings.service', () => ({
+  generateEmbedding: vi.fn(async (text: string) => {
+    // Return fake 384-dim vector based on query text
+    const vector = new Float32Array(384).fill(0.1);
+    // Add some variation based on text content for testing
+    if (text.includes('React')) vector[0] = 0.9;
+    if (text.includes('Python')) vector[1] = 0.9;
+    return vector;
+  }),
+}));
+
+// Mock vec utilities
+vi.mock('../electron/database/vec', () => ({
+  findSimilarNotes: vi.fn((db: any, noteId: string, queryVector: Float32Array, threshold: number, limit: number) => {
+    // Return sample similar notes based on query vector
+    const notes = db
+      .prepare('SELECT id, title FROM notes WHERE deleted_at IS NULL LIMIT ?')
+      .all(limit) as Array<{ id: string; title: string }>;
+
+    // Simulate similarity scores based on vector content
+    return notes.map((note, index) => ({
+      id: note.id,
+      title: note.title,
+      similarity: 0.9 - index * 0.05, // Decreasing similarity
+    }));
+  }),
+  setupVectorExtension: vi.fn(),
+}));
 
 describe('Search Service', () => {
   let db: Database.Database;
@@ -301,9 +331,69 @@ describe('Search Service', () => {
       expect(typeof fuzzySearch).toBe('function');
     });
 
+    it('should have semanticSearch function exported', () => {
+      expect(semanticSearch).toBeDefined();
+      expect(typeof semanticSearch).toBe('function');
+    });
+
     it('should handle errors gracefully', () => {
       // Pass invalid database to trigger error
       expect(() => quickNavSearch(null as any, 'test')).toThrow();
+    });
+  });
+
+  describe('Semantic Search', () => {
+    it('should generate embedding from query text', async () => {
+      const results = await semanticSearch(db, 'React components');
+
+      expect(results).toBeDefined();
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it('should return notes with similarity >= 0.7', async () => {
+      const results = await semanticSearch(db, 'programming');
+
+      // All results should have similarity >= 0.7 per D-09
+      results.forEach((result) => {
+        expect(result.similarity).toBeGreaterThanOrEqual(0.7);
+        expect(result.similarity).toBeLessThanOrEqual(1.0);
+      });
+    });
+
+    it('should exclude soft-deleted notes', async () => {
+      const results = await semanticSearch(db, 'deleted note');
+
+      // Should not include the deleted note
+      const deletedNote = results.find((r) => r.title === 'Deleted Note');
+      expect(deletedNote).toBeUndefined();
+    });
+
+    it('should order results by similarity DESC', async () => {
+      const results = await semanticSearch(db, 'test query');
+
+      if (results.length > 1) {
+        for (let i = 0; i < results.length - 1; i++) {
+          expect(results[i].similarity).toBeGreaterThanOrEqual(results[i + 1].similarity);
+        }
+      }
+    });
+
+    it('should respect limit parameter', async () => {
+      const results = await semanticSearch(db, 'test', 3);
+
+      expect(results.length).toBeLessThanOrEqual(3);
+    });
+
+    it('should return empty array for empty query', async () => {
+      const results = await semanticSearch(db, '');
+
+      expect(results).toEqual([]);
+    });
+
+    it('should return empty array for whitespace-only query', async () => {
+      const results = await semanticSearch(db, '   ');
+
+      expect(results).toEqual([]);
     });
   });
 });

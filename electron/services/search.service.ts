@@ -1,4 +1,6 @@
 import type Database from 'better-sqlite3';
+import { generateEmbedding } from './embeddings.service';
+import { findSimilarNotes } from '../database/vec';
 
 /**
  * Quick navigation search - title-only search with prefix matching
@@ -158,6 +160,49 @@ export function fuzzySearch(
     updated_at: number;
     rank: number;
   }>;
+
+  return results;
+}
+
+/**
+ * Semantic search using embeddings and vector similarity per D-07, D-09
+ * Searches by meaning rather than keywords
+ *
+ * @param db Database instance
+ * @param query Search query
+ * @param limit Maximum number of results (default: 20)
+ * @returns Array of matching notes with id, title, updated_at, and similarity
+ */
+export async function semanticSearch(
+  db: Database.Database,
+  query: string,
+  limit = 20
+): Promise<Array<{ id: string; title: string; updated_at: number; similarity: number }>> {
+  // Validate query: return empty array if query is empty
+  if (!query.trim()) {
+    return [];
+  }
+
+  // Generate embedding from query text
+  const queryEmbedding = await generateEmbedding(query);
+
+  // Use findSimilarNotes with threshold 0.7 per D-09
+  // Pass empty string for noteId since we're not excluding any note
+  const similarNotes = findSimilarNotes(db, '', queryEmbedding, 0.7, limit);
+
+  // Map results to include updated_at from notes table
+  const results = similarNotes.map((note) => {
+    const noteData = db
+      .prepare('SELECT updated_at FROM notes WHERE id = ?')
+      .get(note.id) as { updated_at: number } | undefined;
+
+    return {
+      id: note.id,
+      title: note.title,
+      updated_at: noteData?.updated_at || 0,
+      similarity: note.similarity,
+    };
+  });
 
   return results;
 }
