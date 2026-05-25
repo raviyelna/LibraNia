@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { notes, tags, noteTags, links, noteVersions } from '../electron/database/schema';
+import { notes, tags, noteTags, links, noteVersions, conversations, messages, citations } from '../electron/database/schema';
 import { setupFTS5 } from '../electron/database/fts';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
@@ -346,5 +346,171 @@ describe('Database Connection Manager', () => {
     // Clean up
     db.close();
     fs.unlinkSync(testDbPath);
+  });
+});
+
+describe('Conversation Schema', () => {
+  describe('conversations table', () => {
+    it('should export conversations table', () => {
+      expect(conversations).toBeDefined();
+    });
+
+    it('should have correct columns', () => {
+      const columns = conversations;
+      expect(columns).toHaveProperty('id');
+      expect(columns).toHaveProperty('title');
+      expect(columns).toHaveProperty('created_at');
+      expect(columns).toHaveProperty('updated_at');
+    });
+  });
+
+  describe('messages table', () => {
+    it('should export messages table', () => {
+      expect(messages).toBeDefined();
+    });
+
+    it('should have correct columns', () => {
+      const columns = messages;
+      expect(columns).toHaveProperty('id');
+      expect(columns).toHaveProperty('conversation_id');
+      expect(columns).toHaveProperty('role');
+      expect(columns).toHaveProperty('content');
+      expect(columns).toHaveProperty('provider_id');
+      expect(columns).toHaveProperty('model');
+      expect(columns).toHaveProperty('created_at');
+    });
+  });
+
+  describe('citations table', () => {
+    it('should export citations table', () => {
+      expect(citations).toBeDefined();
+    });
+
+    it('should have correct columns', () => {
+      const columns = citations;
+      expect(columns).toHaveProperty('id');
+      expect(columns).toHaveProperty('message_id');
+      expect(columns).toHaveProperty('url');
+      expect(columns).toHaveProperty('title');
+      expect(columns).toHaveProperty('snippet');
+      expect(columns).toHaveProperty('position');
+      expect(columns).toHaveProperty('created_at');
+    });
+  });
+});
+
+describe('Conversation Foreign Key Cascades', () => {
+  let db: Database.Database;
+
+  beforeEach(() => {
+    db = new Database(':memory:');
+    db.pragma('foreign_keys = ON');
+
+    db.exec(`
+      CREATE TABLE conversations (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT NOT NULL,
+        role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
+        content TEXT NOT NULL,
+        provider_id TEXT,
+        model TEXT,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE citations (
+        id TEXT PRIMARY KEY,
+        message_id TEXT NOT NULL,
+        url TEXT NOT NULL,
+        title TEXT NOT NULL,
+        snippet TEXT,
+        position INTEGER NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+      );
+    `);
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('should cascade delete messages when conversation is deleted', () => {
+    const conversationId = randomUUID();
+    const messageId = randomUUID();
+    const now = Date.now();
+
+    db.prepare(`
+      INSERT INTO conversations (id, title, created_at, updated_at)
+      VALUES (?, ?, ?, ?)
+    `).run(conversationId, 'Test Conversation', now, now);
+
+    db.prepare(`
+      INSERT INTO messages (id, conversation_id, role, content, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(messageId, conversationId, 'user', 'Test message', now);
+
+    const beforeDelete = db.prepare(`SELECT COUNT(*) as count FROM messages WHERE conversation_id = ?`).get(conversationId) as { count: number };
+    expect(beforeDelete.count).toBe(1);
+
+    db.prepare(`DELETE FROM conversations WHERE id = ?`).run(conversationId);
+
+    const afterDelete = db.prepare(`SELECT COUNT(*) as count FROM messages WHERE conversation_id = ?`).get(conversationId) as { count: number };
+    expect(afterDelete.count).toBe(0);
+  });
+
+  it('should cascade delete citations when message is deleted', () => {
+    const conversationId = randomUUID();
+    const messageId = randomUUID();
+    const citationId = randomUUID();
+    const now = Date.now();
+
+    db.prepare(`
+      INSERT INTO conversations (id, title, created_at, updated_at)
+      VALUES (?, ?, ?, ?)
+    `).run(conversationId, 'Test Conversation', now, now);
+
+    db.prepare(`
+      INSERT INTO messages (id, conversation_id, role, content, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(messageId, conversationId, 'assistant', 'Test message', now);
+
+    db.prepare(`
+      INSERT INTO citations (id, message_id, url, title, position, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(citationId, messageId, 'https://example.com', 'Example', 1, now);
+
+    const beforeDelete = db.prepare(`SELECT COUNT(*) as count FROM citations WHERE message_id = ?`).get(messageId) as { count: number };
+    expect(beforeDelete.count).toBe(1);
+
+    db.prepare(`DELETE FROM messages WHERE id = ?`).run(messageId);
+
+    const afterDelete = db.prepare(`SELECT COUNT(*) as count FROM citations WHERE message_id = ?`).get(messageId) as { count: number };
+    expect(afterDelete.count).toBe(0);
+  });
+
+  it('should enforce role enum constraint', () => {
+    const conversationId = randomUUID();
+    const messageId = randomUUID();
+    const now = Date.now();
+
+    db.prepare(`
+      INSERT INTO conversations (id, title, created_at, updated_at)
+      VALUES (?, ?, ?, ?)
+    `).run(conversationId, 'Test Conversation', now, now);
+
+    expect(() => {
+      db.prepare(`
+        INSERT INTO messages (id, conversation_id, role, content, created_at)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(messageId, conversationId, 'invalid_role', 'Test message', now);
+    }).toThrow();
   });
 });
