@@ -44,7 +44,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Semantic Discovery
 
-- [ ] **SEM-01**: System generates embeddings for all notes
+- [x] **SEM-01**: System generates embeddings for all notes
 - [ ] **SEM-02**: User can search notes by semantic meaning (not just keywords)
 - [ ] **SEM-03**: System automatically links semantically related notes
 - [ ] **SEM-04**: User can view related concepts sidebar while reading
@@ -142,7 +142,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONT-04 | Phase 4 | In Progress |
 | CONT-05 | Phase 4 | In Progress |
 | CONT-06 | Phase 4 | Complete |
-| SEM-01 | Phase 5 | Pending |
+| SEM-01 | Phase 5 | Complete |
 | SEM-02 | Phase 5 | Pending |
 | SEM-03 | Phase 5 | Pending |
 | SEM-04 | Phase 5 | Pending |
