@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-last_updated: "2026-05-25T02:36:27Z"
+status: completed
+last_updated: "2026-05-25T02:42:46.386Z"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
-  percent: 33
+  total_plans: 10
+  completed_plans: 7
+  percent: 20
 ---
 
 # State: LibraNia
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 2 In Progress - Core Knowledge Management (2/6 plans complete)
+**Current Focus:** Phase 2 In Progress - Core Knowledge Management (3/6 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -32,11 +32,11 @@ progress:
 ## Current Position
 
 **Phase:** 2 - Core Knowledge Management (IN PROGRESS)
-**Plan:** 02-04 (completed)
-**Status:** Tags system complete with CRUD, associations, and filtering
-**Progress:** [███░░░░░░░] 33% (2/6 plans in Phase 2 complete)
+**Plan:** 02-03 (completed)
+**Status:** Full-text search complete with FTS5, BM25 ranking, and recency boost
+**Progress:** [███░░░░░░░] 50% (3/6 plans in Phase 2 complete)
 
-**Next Action:** Execute Plan 02-05 (Note editor UI with CodeMirror 6, backlinks panel, tags input)
+**Next Action:** Execute Plan 02-04 (Tags system with junction table and filtering)
 
 ---
 
@@ -45,10 +45,10 @@ progress:
 ### Velocity
 
 - **Phases completed:** 1/6 (Phase 1 complete)
-- **Plans completed:** 6/10 (Phase 1: 4/4, Phase 2: 2/6)
-- **Average plan duration:** 9 min (6 plans completed)
+- **Plans completed:** 8/10 (Phase 1: 4/4, Phase 2: 3/6)
+- **Average plan duration:** 10 min (8 plans completed)
 - **Phase 1 total duration:** 8h 0min
-- **Phase 2 progress:** 19 min (2/6 plans)
+- **Phase 2 progress:** 34 min (3/6 plans)
 
 ### Quality
 
@@ -136,6 +136,8 @@ None yet.
 | 1 | 01-03 | 2026-05-25T00:13:54Z | 2026-05-25T07:47:50Z | 7h 34min | ✓ Complete - Mode switching, config management, system tray, Settings UI |
 | 1 | 01-04 | 2026-05-25T00:54:26Z | 2026-05-25T01:06:00Z | 11 min | ✓ Complete - Error handling, logging, offline detection |
 | 2 | 02-01 | 2026-05-25T02:13:42Z | 2026-05-25T02:24:22Z | 11 min | ✓ Complete - Database foundation with Drizzle ORM, FTS5, schema |
+| 2 | 02-02 | 2026-05-25T02:29:01Z | 2026-05-25T02:42:07Z | 13 min | ✓ Complete - Note CRUD services with wiki-link parsing and backlinks |
+| 2 | 02-03 | 2026-05-25T02:28:47Z | 2026-05-25T02:41:11Z | 12 min | ✓ Complete - Full-text search with FTS5, BM25 ranking, recency boost |
 | 2 | 02-04 | 2026-05-25T02:28:40Z | 2026-05-25T02:36:27Z | 8 min | ✓ Complete - Tags system with CRUD, associations, and filtering |
 
 ---
@@ -151,7 +153,7 @@ None yet.
 - **Tailwind v4 CSS-first config:** Using @theme directive in CSS, not tailwind.config.js
 - **Winston logging:** Main and renderer processes log separately with 7-day rotation
 - **Error handling:** React Error Boundaries + global crash handlers implemented
-- **Phase 2 STARTED:** Plan 02-01 complete - Database foundation with better-sqlite3, Drizzle ORM, FTS5 full-text search
+- **Phase 2 IN PROGRESS:** Plan 02-02 complete - Note CRUD services with wiki-link parsing, backlinks, IPC handlers
 - **better-sqlite3 works:** Prebuilt binaries compatible with Node.js 22.x, no rebuild needed
 - **TDD approach:** All Phase 2 tasks following RED → GREEN → REFACTOR cycle
 - **Plan 02-04 COMPLETE:** Tags system with CRUD operations, note-tag associations via junction table, tag-based filtering with soft-delete awareness. All 35 tests passing.

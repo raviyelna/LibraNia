@@ -139,7 +139,7 @@ Phases requiring deeper research during planning:
 
 Plans:
 - [x] 02-01-PLAN.md — Database foundation (better-sqlite3, Drizzle schema, FTS5 setup) (✓ Complete)
-- [ ] 02-02-PLAN.md — Note CRUD services with wiki-link parsing and backlinks
+- [x] 02-02-PLAN.md — Note CRUD services with wiki-link parsing and backlinks (✓ Complete)
 - [ ] 02-03-PLAN.md — Full-text search with FTS5 (quick nav, full-text, fuzzy)
 - [ ] 02-04-PLAN.md — Tags system with junction table and filtering
 - [ ] 02-05-PLAN.md — Note editor UI (CodeMirror 6, backlinks panel, tags input, quick nav)
