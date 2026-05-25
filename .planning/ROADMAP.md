@@ -8,7 +8,7 @@
 
 - [x] **Phase 1: Foundation & Application Shell** - Desktop app infrastructure with native and web modes (COMPLETE)
 - [x] **Phase 2: Core Knowledge Management** - Note creation, editing, search, and bidirectional linking (completed 2026-05-25)
-- [ ] **Phase 3: AI Integration** - Multi-provider AI configuration, chat interface, and research capabilities (2/7 plans complete)
+- [ ] **Phase 3: AI Integration** - Multi-provider AI configuration, chat interface, and research capabilities (4/7 plans complete)
 - [ ] **Phase 4: Content Storage & Management** - Document/image storage with rich metadata
 - [ ] **Phase 5: Semantic Discovery** - Embeddings generation, semantic search, and automatic linking
 - [ ] **Phase 6: 3D Visualization** - Interactive neural network graph visualization
@@ -78,9 +78,9 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 03-03-PLAN.md — AIProvider interface and Claude provider implementation
+- [x] 03-03-PLAN.md — AIProvider interface and Claude provider implementation (completed 2026-05-25)
 - [x] 03-04-PLAN.md — Web search service integration (completed 2026-05-25)
-- [ ] 03-07-PLAN.md — OpenAI/DeepSeek providers and AI service with retry logic
+- [x] 03-07-PLAN.md — OpenAI/DeepSeek providers and AI service with retry logic (completed 2026-05-25)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 

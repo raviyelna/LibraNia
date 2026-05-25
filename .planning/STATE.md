@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 3 In Progress - AI Integration (3/7 plans complete)
+**Current Focus:** Phase 3 In Progress - AI Integration (4/7 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -32,11 +32,11 @@ progress:
 ## Current Position
 
 **Phase:** 3 - AI Integration (IN PROGRESS)
-**Plan:** 03-03 (completed)
+**Plan:** 03-07 (completed)
 **Status:** Ready to execute next plan
-**Progress:** [███░░░░░░░] 43%
+**Progress:** [████░░░░░░] 57%
 
-**Next Action:** Execute Plan 03-04 (Web search service implementation)
+**Next Action:** Execute Plan 03-05 (IPC handlers for AI chat)
 
 ---
 
@@ -45,11 +45,11 @@ progress:
 ### Velocity
 
 - **Phases completed:** 2/6 (Phase 1 and Phase 2 complete)
-- **Plans completed:** 13/21 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 3/7)
-- **Average plan duration:** 10 min (12 plans completed)
+- **Plans completed:** 14/21 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 4/7)
+- **Average plan duration:** 9 min (13 plans completed)
 - **Phase 1 total duration:** 8h 0min
 - **Phase 2 total duration:** 52 min
-- **Phase 3 progress:** 26 min (3/7 plans)
+- **Phase 3 progress:** 29 min (4/7 plans)
 
 ### Quality
 
@@ -115,11 +115,14 @@ progress:
 | Combined Tasks 1 & 2 in Plan 03-01 | Schema definitions and table creation are tightly coupled, implemented together for atomic consistency | 03-01 | 2026-05-25 |
 | CHECK constraint for role enum | Used SQL CHECK constraint rather than application-level validation for database-level enforcement | 03-01 | 2026-05-25 |
 | CASCADE delete for conversations | Conversations cascade to messages, messages cascade to citations - ensures referential integrity | 03-01 | 2026-05-25 |
+| OpenAI SDK for both OpenAI and DeepSeek | DeepSeek API is OpenAI-compatible, eliminates need for separate SDK, reduces bundle size | 03-07 | 2026-05-25 |
+| Skip retry on 401/403 errors | Authentication errors are not transient, retrying wastes time and risks rate limiting | 03-07 | 2026-05-25 |
+| Exponential backoff: 1s, 2s, 4s delays | Per D-03 specification, balances recovery time with user patience (max 7s total wait) | 03-07 | 2026-05-25 |
 
 ### Active TODOs
 
-- [ ] Continue Phase 3: AI Integration (3/7 plans complete)
-- [ ] Execute Plan 03-05: AIProvider interface and Claude provider implementation
+- [ ] Continue Phase 3: AI Integration (4/7 plans complete)
+- [ ] Execute Plan 03-05: IPC handlers for AI chat
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
 
 ### Known Blockers
@@ -162,6 +165,7 @@ None yet.
 | 3 | 03-02 | 2026-05-25T09:53:03Z | 2026-05-25T10:05:17Z | 12 min | ✓ Complete - Encrypted API key storage with electron-store, provider config CRUD |
 | 3 | 03-03 | 2026-05-25T10:07:54Z | 2026-05-25T10:12:22Z | 4 min | ✓ Complete - AIProvider interface and Claude provider with streaming support |
 | 3 | 03-04 | 2026-05-25T10:07:51Z | 2026-05-25T10:10:40Z | 3 min | ✓ Complete - Web search integration with DuckDuckGo, citation extraction |
+| 3 | 03-07 | 2026-05-25T10:15:55Z | 2026-05-25T10:19:10Z | 3 min | ✓ Complete - OpenAI and DeepSeek providers, AI service with retry logic |
 
 ---
 
@@ -184,11 +188,14 @@ None yet.
 - **Plan 02-05 COMPLETE:** Note editor UI with CodeMirror 6, backlinks panel, tags input, quick nav. All UI components integrated.
 - **Plan 02-06 COMPLETE:** Export functionality with markdown (YAML frontmatter, wiki-link conversion) and JSON (full relationships). All 11 tests passing.
 - **PHASE 2 COMPLETE:** All 6 plans complete, all requirements (KNOW-01 through KNOW-10) fulfilled. Total duration: 52 minutes.
-- **PHASE 3 IN PROGRESS:** 3/7 plans complete (03-01, 03-02, 03-04)
+- **PHASE 3 IN PROGRESS:** 4/7 plans complete (03-01, 03-02, 03-03, 03-04, 03-07)
 - **Plan 03-01 COMPLETE:** Database schema extension with conversations, messages, citations tables. CASCADE delete, role enum constraint. All 33 tests passing.
+- **Plan 03-02 COMPLETE:** Encrypted API key storage with electron-store, provider config CRUD. All 11 tests passing.
+- **Plan 03-03 COMPLETE:** AIProvider interface and Claude provider with streaming support. All 14 tests passing.
 - **Plan 03-04 COMPLETE:** Web search integration with DuckDuckGo scraping, citation extraction, AI prompt formatting. All 11 tests passing.
+- **Plan 03-07 COMPLETE:** OpenAI and DeepSeek providers, AI service with provider factory and retry logic. All 28 tests passing.
 
 ---
 
 *State initialized: 2026-05-24*
-*Last updated: 2026-05-25 after Phase 3 Plan 03-04 completion*
+*Last updated: 2026-05-25 after Phase 3 Plan 03-07 completion*

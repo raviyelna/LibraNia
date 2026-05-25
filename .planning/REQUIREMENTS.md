@@ -22,15 +22,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### AI Integration
 
-- [ ] **AI-01**: User can configure AI provider (Claude CLI, GPT, DeepSeek)
+- [x] **AI-01**: User can configure AI provider (Claude CLI, GPT, DeepSeek)
 - [x] **AI-02**: User can set API key for each provider
 - [x] **AI-03**: User can set custom base URL for each provider (blank = default)
-- [ ] **AI-04**: User can select which model to use per provider
+- [x] **AI-04**: User can select which model to use per provider
 - [ ] **AI-05**: User can ask questions through chat interface
 - [ ] **AI-06**: AI generates answers using configured provider
 - [ ] **AI-07**: AI can generate summaries of notes
 - [ ] **AI-08**: AI researches topics using web search
-- [ ] **AI-09**: AI researches topics using model knowledge
+- [x] **AI-09**: AI researches topics using model knowledge
 - [ ] **AI-10**: AI answers include citations to sources
 
 ### Content Storage
@@ -126,15 +126,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | KNOW-08 | Phase 2 | Complete |
 | KNOW-09 | Phase 2 | Complete |
 | KNOW-10 | Phase 2 | Complete |
-| AI-01 | Phase 3 | Pending |
-| AI-02 | Phase 3 | Pending |
-| AI-03 | Phase 3 | Pending |
-| AI-04 | Phase 3 | Pending |
+| AI-01 | Phase 3 | Complete |
+| AI-02 | Phase 3 | Complete |
+| AI-03 | Phase 3 | Complete |
+| AI-04 | Phase 3 | Complete |
 | AI-05 | Phase 3 | Pending |
 | AI-06 | Phase 3 | Pending |
 | AI-07 | Phase 3 | Pending |
 | AI-08 | Phase 3 | Pending |
-| AI-09 | Phase 3 | Pending |
+| AI-09 | Phase 3 | Complete |
 | AI-10 | Phase 3 | Pending |
 | CONT-01 | Phase 4 | Pending |
 | CONT-02 | Phase 4 | Pending |
