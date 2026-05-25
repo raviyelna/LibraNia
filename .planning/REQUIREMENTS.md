@@ -15,8 +15,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **KNOW-04**: User can search notes with full-text search (<100ms response)
 - [ ] **KNOW-05**: User can create bidirectional links between notes using [[wiki-style]] syntax
 - [ ] **KNOW-06**: User can view backlinks panel showing what links to current note
-- [ ] **KNOW-07**: User can add tags/labels to notes for organization
-- [ ] **KNOW-08**: User can browse notes by tags
+- [x] **KNOW-07**: User can add tags/labels to notes for organization
+- [x] **KNOW-08**: User can browse notes by tags
 - [x] **KNOW-09**: All notes stored locally in SQLite database
 - [ ] **KNOW-10**: User can export notes to markdown/JSON format
 
@@ -122,8 +122,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | KNOW-04 | Phase 2 | Pending |
 | KNOW-05 | Phase 2 | Pending |
 | KNOW-06 | Phase 2 | Pending |
-| KNOW-07 | Phase 2 | Pending |
-| KNOW-08 | Phase 2 | Pending |
+| KNOW-07 | Phase 2 | Complete |
+| KNOW-08 | Phase 2 | Complete |
 | KNOW-09 | Phase 2 | Complete |
 | KNOW-10 | Phase 2 | Pending |
 | AI-01 | Phase 3 | Pending |

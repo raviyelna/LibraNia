@@ -116,7 +116,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Application Shell | 4/4 | Complete | 2026-05-25 |
-| 2. Core Knowledge Management | 1/6 | In Progress | - |
+| 2. Core Knowledge Management | 2/6 | In Progress | - |
 | 3. AI Integration | 0/0 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |
 | 5. Semantic Discovery | 0/0 | Not started | - |
