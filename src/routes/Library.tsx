@@ -4,13 +4,25 @@ import { NoteEditor } from '../components/Notes/NoteEditor';
 import { BacklinksPanel } from '../components/Notes/BacklinksPanel';
 import { TagsInput } from '../components/Notes/TagsInput';
 import { QuickNav } from '../components/Notes/QuickNav';
+import { ExportDialog } from '../components/Export/ExportDialog';
+import { Download } from 'lucide-react';
 
 export function LibraryPage() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   return (
     <div className="library-layout flex h-screen">
       <aside className="notes-sidebar w-64 border-r border-border overflow-y-auto">
+        <div className="p-4 border-b border-border">
+          <button
+            onClick={() => setExportDialogOpen(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/10 hover:bg-accent/20 rounded-md transition-colors"
+          >
+            <Download size={16} />
+            Export Notes
+          </button>
+        </div>
         <NotesList
           selectedNoteId={selectedNoteId || undefined}
           onSelectNote={setSelectedNoteId}
@@ -46,6 +58,11 @@ export function LibraryPage() {
       </aside>
 
       <QuickNav onNavigate={setSelectedNoteId} />
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        currentNoteId={selectedNoteId || undefined}
+      />
     </div>
   );
 }
