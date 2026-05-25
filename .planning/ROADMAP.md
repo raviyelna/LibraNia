@@ -174,7 +174,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Database schema extension (embeddings table, links table with link_type)
+- [x] 05-01-PLAN.md — Database schema extension (embeddings table, links table with link_type)
 - [x] 05-02-PLAN.md — Package installation and verification (@xenova/transformers, sqlite-vec)
 
 **Wave 2** *(blocked on Wave 1 completion)*
