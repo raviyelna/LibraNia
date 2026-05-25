@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-05-25T01:17:49.364Z"
+status: in_progress
+last_updated: "2026-05-25T02:36:27Z"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 17
+  total_plans: 6
+  completed_plans: 6
+  percent: 33
 ---
 
 # State: LibraNia
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 1 Complete - Foundation & Application Shell established
+**Current Focus:** Phase 2 In Progress - Core Knowledge Management (2/6 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -32,11 +32,11 @@ progress:
 ## Current Position
 
 **Phase:** 2 - Core Knowledge Management (IN PROGRESS)
-**Plan:** 02-01 (completed)
-**Status:** Database foundation established, ready for Plan 02-02
-**Progress:** [██░░░░░░░░] 17% (1/6 plans in Phase 2 complete)
+**Plan:** 02-04 (completed)
+**Status:** Tags system complete with CRUD, associations, and filtering
+**Progress:** [███░░░░░░░] 33% (2/6 plans in Phase 2 complete)
 
-**Next Action:** Execute Plan 02-02 (Note CRUD services with wiki-link parsing and backlinks)
+**Next Action:** Execute Plan 02-05 (Note editor UI with CodeMirror 6, backlinks panel, tags input)
 
 ---
 
@@ -45,10 +45,10 @@ progress:
 ### Velocity
 
 - **Phases completed:** 1/6 (Phase 1 complete)
-- **Plans completed:** 5/10 (Phase 1: 4/4, Phase 2: 1/6)
-- **Average plan duration:** 10 min (5 plans completed)
+- **Plans completed:** 6/10 (Phase 1: 4/4, Phase 2: 2/6)
+- **Average plan duration:** 9 min (6 plans completed)
 - **Phase 1 total duration:** 8h 0min
-- **Phase 2 progress:** 11 min (1/6 plans)
+- **Phase 2 progress:** 19 min (2/6 plans)
 
 ### Quality
 
@@ -96,10 +96,13 @@ progress:
 | Use raw SQL for table creation instead of Drizzle migrations | Simpler for Phase 2, migrations can be added later | 02-01 | 2026-05-25 |
 | Three FTS5 tables for different search modes | Provides flexibility for exact/stemmed/fuzzy search | 02-01 | 2026-05-25 |
 | Database initialized in app.whenReady before window creation | Ensures database ready before renderer process access | 02-01 | 2026-05-25 |
+| Case-sensitive tag names with duplicate prevention | Allows users to distinguish between "JavaScript" and "javascript" if needed | 02-04 | 2026-05-25 |
+| Tags created on-the-fly during addTagsToNote | Simplifies UX - users don't need to pre-create tags before using them | 02-04 | 2026-05-25 |
+| Junction table with CASCADE delete on both foreign keys | Automatically cleans up associations when tags or notes are deleted | 02-04 | 2026-05-25 |
 
 ### Active TODOs
 
-- [ ] Execute Plan 02-02: Note CRUD services with wiki-link parsing and backlinks
+- [ ] Execute Plan 02-05: Note editor UI with CodeMirror 6, backlinks panel, tags input
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
 
 ### Known Blockers
@@ -133,6 +136,7 @@ None yet.
 | 1 | 01-03 | 2026-05-25T00:13:54Z | 2026-05-25T07:47:50Z | 7h 34min | ✓ Complete - Mode switching, config management, system tray, Settings UI |
 | 1 | 01-04 | 2026-05-25T00:54:26Z | 2026-05-25T01:06:00Z | 11 min | ✓ Complete - Error handling, logging, offline detection |
 | 2 | 02-01 | 2026-05-25T02:13:42Z | 2026-05-25T02:24:22Z | 11 min | ✓ Complete - Database foundation with Drizzle ORM, FTS5, schema |
+| 2 | 02-04 | 2026-05-25T02:28:40Z | 2026-05-25T02:36:27Z | 8 min | ✓ Complete - Tags system with CRUD, associations, and filtering |
 
 ---
 
@@ -150,6 +154,7 @@ None yet.
 - **Phase 2 STARTED:** Plan 02-01 complete - Database foundation with better-sqlite3, Drizzle ORM, FTS5 full-text search
 - **better-sqlite3 works:** Prebuilt binaries compatible with Node.js 22.x, no rebuild needed
 - **TDD approach:** All Phase 2 tasks following RED → GREEN → REFACTOR cycle
+- **Plan 02-04 COMPLETE:** Tags system with CRUD operations, note-tag associations via junction table, tag-based filtering with soft-delete awareness. All 35 tests passing.
 
 ---
 
