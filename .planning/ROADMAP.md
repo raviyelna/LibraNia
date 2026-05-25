@@ -28,10 +28,6 @@
 **Plans**: 4 plans
 
 Plans:
-- [x] 01-01-PLAN.md — Project initialization, Electron setup, React app scaffold (✓ Complete)
-- [x] 01-02-PLAN.md — Theme system, navigation structure, collapsible sidebar (✓ Complete)
-- [x] 01-03-PLAN.md — Mode switching (desktop/web), window management, system tray (✓ Complete)
-- [x] 01-04-PLAN.md — Error handling, logging, offline functionality (✓ Complete)
 
 ---
 
@@ -62,8 +58,19 @@ Plans:
   4. AI can research topics using both web search and model knowledge
   5. AI-generated answers include citations to sources
   6. AI can generate summaries of existing notes
-**Plans**: TBD
+**Plans**: 8 plans
 **UI hint**: yes
+
+
+Plans:
+- [ ] 03-01-PLAN.md — Database schema for conversations, messages, and citations
+- [ ] 03-02-PLAN.md — Secure API key storage with encryption
+- [ ] 03-03-PLAN.md — AIProvider interface and Claude provider implementation
+- [ ] 03-04-PLAN.md — Web search service integration
+- [ ] 03-05-PLAN.md — Conversation service and IPC handlers for chat operations
+- [ ] 03-06-PLAN.md — AI provider settings UI with API key input and validation
+- [ ] 03-07-PLAN.md — OpenAI/DeepSeek providers and AI service with retry logic
+- [ ] 03-08-PLAN.md — IPC handler registration and renderer exposure
 
 ---
 
@@ -117,7 +124,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Application Shell | 4/4 | Complete | 2026-05-25 |
 | 2. Core Knowledge Management | 6/6 | Complete   | 2026-05-25 |
-| 3. AI Integration | 0/0 | Not started | - |
+| 3. AI Integration | 0/8 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |
 | 5. Semantic Discovery | 0/0 | Not started | - |
 | 6. 3D Visualization | 0/0 | Not started | - |
