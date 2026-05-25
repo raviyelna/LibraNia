@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, blob, real } from 'drizzle-orm/sqlite-core';
 
 /**
  * Notes table - stores user's knowledge notes
@@ -47,6 +47,8 @@ export const links = sqliteTable('links', {
   target_note_id: text('target_note_id')
     .notNull()
     .references(() => notes.id, { onDelete: 'set null' }),
+  link_type: text('link_type').notNull().default('manual'), // 'manual' for wiki-links, 'semantic' for auto-discovered
+  similarity_score: real('similarity_score'), // Cosine similarity 0.0-1.0 for semantic links only
   created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
@@ -138,3 +140,19 @@ export const contentTags = sqliteTable('content_tags', {
 }, (table) => ({
   pk: { columns: [table.content_id, table.tag_id] },
 }));
+
+/**
+ * Embeddings table - stores 384-dimensional vectors for semantic search
+ */
+export const embeddings = sqliteTable('embeddings', {
+  id: text('id').primaryKey(),
+  note_id: text('note_id')
+    .notNull()
+    .unique()
+    .references(() => notes.id, { onDelete: 'cascade' }),
+  vector: blob('vector', { mode: 'buffer' }).notNull(), // 384 float32 values = 1536 bytes
+  model: text('model').notNull().default('all-MiniLM-L6-v2'),
+  dimensions: integer('dimensions').notNull().default(384),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
