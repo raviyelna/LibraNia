@@ -23,8 +23,8 @@ Requirements for initial release. Each maps to roadmap phases.
 ### AI Integration
 
 - [ ] **AI-01**: User can configure AI provider (Claude CLI, GPT, DeepSeek)
-- [ ] **AI-02**: User can set API key for each provider
-- [ ] **AI-03**: User can set custom base URL for each provider (blank = default)
+- [x] **AI-02**: User can set API key for each provider
+- [x] **AI-03**: User can set custom base URL for each provider (blank = default)
 - [ ] **AI-04**: User can select which model to use per provider
 - [ ] **AI-05**: User can ask questions through chat interface
 - [ ] **AI-06**: AI generates answers using configured provider
