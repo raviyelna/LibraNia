@@ -14,6 +14,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/state": "6.6.0",
@@ -29,13 +30,15 @@
     "electron-window-state": "^5.0.3",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.460.0",
+    "openai": "^6.39.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.1",
     "react-select": "^5.10.2",
     "strip-indent": "^4.1.1",
     "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@electron/rebuild": "^3.7.2",
