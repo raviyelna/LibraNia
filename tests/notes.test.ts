@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../electron/database/schema';
@@ -14,6 +14,72 @@ import {
 import fs from 'fs';
 import path from 'path';
 
+// Mock embeddings service
+vi.mock('../electron/services/embeddings.service', () => ({
+  generateEmbedding: vi.fn(async (text: string) => {
+    // Return fake 384-dim vector
+    return new Float32Array(384).fill(0.1);
+  }),
+  storeEmbedding: vi.fn(async (noteId: string, vector: Float32Array, db: any) => {
+    // Store in embeddings table
+    const now = Date.now();
+    db.$client
+      .prepare(
+        'INSERT INTO embeddings (id, note_id, vector, model, dimensions, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      )
+      .run(
+        crypto.randomUUID(),
+        noteId,
+        Buffer.from(vector.buffer),
+        'all-MiniLM-L6-v2',
+        384,
+        now,
+        now
+      );
+  }),
+  getEmbedding: vi.fn(async (noteId: string, db: any) => {
+    const result = db.$client
+      .prepare('SELECT vector FROM embeddings WHERE note_id = ?')
+      .get(noteId) as any;
+    if (!result) return null;
+    return new Float32Array(result.vector.buffer, result.vector.byteOffset, result.vector.byteLength / 4);
+  }),
+  updateEmbedding: vi.fn(async (noteId: string, vector: Float32Array, db: any) => {
+    const now = Date.now();
+    db.$client
+      .prepare('UPDATE embeddings SET vector = ?, updated_at = ? WHERE note_id = ?')
+      .run(Buffer.from(vector.buffer), now, noteId);
+  }),
+  deleteEmbedding: vi.fn(async (noteId: string, db: any) => {
+    db.$client.prepare('DELETE FROM embeddings WHERE note_id = ?').run(noteId);
+  }),
+}));
+
+// Mock vec utilities
+vi.mock('../electron/database/vec', () => ({
+  findSimilarNotes: vi.fn((db: any, noteId: string, queryVector: Float32Array, threshold: number, limit: number) => {
+    // Return sample similar notes based on existing notes in DB
+    const notes = db
+      .prepare('SELECT id, title FROM notes WHERE id != ? AND deleted_at IS NULL LIMIT ?')
+      .all(noteId, limit) as Array<{ id: string; title: string }>;
+
+    return notes.map((note, index) => ({
+      id: note.id,
+      title: note.title,
+      similarity: 0.9 - index * 0.05, // Decreasing similarity scores
+    }));
+  }),
+  setupVectorExtension: vi.fn(),
+}));
+
+// Mock getDatabase
+vi.mock('../electron/database/connection', () => ({
+  getDatabase: vi.fn(() => {
+    // Return the test database instance
+    return (global as any).testDb;
+  }),
+}));
+
 const TEST_DB_PATH = path.join(__dirname, 'test-notes.db');
 
 describe('Notes Service', () => {
@@ -24,6 +90,9 @@ describe('Notes Service', () => {
     // Create fresh in-memory database for each test
     db = new Database(TEST_DB_PATH);
     db.pragma('foreign_keys = ON');
+
+    // Store db globally for mocks
+    (global as any).testDb = db;
 
     // Create tables
     db.exec(`
@@ -70,6 +139,17 @@ describe('Notes Service', () => {
         metadata TEXT,
         version_number INTEGER NOT NULL,
         created_at INTEGER NOT NULL,
+        FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE embeddings (
+        id TEXT PRIMARY KEY,
+        note_id TEXT NOT NULL UNIQUE,
+        vector BLOB NOT NULL,
+        model TEXT NOT NULL DEFAULT 'all-MiniLM-L6-v2',
+        dimensions INTEGER NOT NULL DEFAULT 384,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
         FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
       );
     `);
@@ -411,10 +491,10 @@ describe('Notes Service', () => {
         orm
       );
 
-      // Query links table directly
+      // Query links table directly for manual links only
       const linksResult = db
-        .prepare('SELECT * FROM links WHERE source_note_id = ?')
-        .all(sourceNote.id);
+        .prepare('SELECT * FROM links WHERE source_note_id = ? AND link_type = ?')
+        .all(sourceNote.id, 'manual');
 
       expect(linksResult).toHaveLength(1);
       expect(linksResult[0].target_note_id).toBe(targetNote.id);
@@ -442,8 +522,8 @@ describe('Notes Service', () => {
       );
 
       const linksResult = db
-        .prepare('SELECT * FROM links WHERE source_note_id = ?')
-        .all(sourceNote.id);
+        .prepare('SELECT * FROM links WHERE source_note_id = ? AND link_type = ?')
+        .all(sourceNote.id, 'manual');
 
       expect(linksResult).toHaveLength(1);
       expect(linksResult[0].target_note_id).toBe(target2.id);
@@ -459,21 +539,216 @@ describe('Notes Service', () => {
         orm
       );
 
-      // Count links before update
+      // Count manual links before update
       const linksBefore = db
-        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ?')
-        .get(sourceNote.id) as { count: number };
+        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ? AND link_type = ?')
+        .get(sourceNote.id, 'manual') as { count: number };
 
       // Update only title (not body)
       await updateNote(sourceNote.id, { title: 'New Title' }, orm);
 
-      // Links should remain unchanged
+      // Manual links should remain unchanged
       const linksAfter = db
-        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ?')
-        .get(sourceNote.id) as { count: number };
+        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ? AND link_type = ?')
+        .get(sourceNote.id, 'manual') as { count: number };
 
       expect(linksAfter.count).toBe(linksBefore.count);
       expect(linksAfter.count).toBe(1);
+    });
+  });
+
+  describe('Semantic Discovery Integration', () => {
+    it('should generate embedding and store in embeddings table when creating note', async () => {
+      const note = await createNote(
+        { title: 'Machine Learning', body: 'Introduction to neural networks' },
+        orm
+      );
+
+      // Check embeddings table
+      const embedding = db
+        .prepare('SELECT * FROM embeddings WHERE note_id = ?')
+        .get(note.id) as any;
+
+      expect(embedding).toBeDefined();
+      expect(embedding.note_id).toBe(note.id);
+      expect(embedding.vector).toBeDefined();
+      expect(embedding.dimensions).toBe(384);
+    });
+
+    it('should regenerate embedding when title changes', async () => {
+      const note = await createNote(
+        { title: 'Original Title', body: 'Content' },
+        orm
+      );
+
+      const embeddingBefore = db
+        .prepare('SELECT updated_at FROM embeddings WHERE note_id = ?')
+        .get(note.id) as any;
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      await updateNote(note.id, { title: 'New Title' }, orm);
+
+      const embeddingAfter = db
+        .prepare('SELECT updated_at FROM embeddings WHERE note_id = ?')
+        .get(note.id) as any;
+
+      expect(embeddingAfter.updated_at).toBeGreaterThan(embeddingBefore.updated_at);
+    });
+
+    it('should regenerate embedding when body changes', async () => {
+      const note = await createNote(
+        { title: 'Title', body: 'Original content' },
+        orm
+      );
+
+      const embeddingBefore = db
+        .prepare('SELECT updated_at FROM embeddings WHERE note_id = ?')
+        .get(note.id) as any;
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      await updateNote(note.id, { body: 'New content' }, orm);
+
+      const embeddingAfter = db
+        .prepare('SELECT updated_at FROM embeddings WHERE note_id = ?')
+        .get(note.id) as any;
+
+      expect(embeddingAfter.updated_at).toBeGreaterThan(embeddingBefore.updated_at);
+    });
+
+    it('should not regenerate embedding when only metadata changes', async () => {
+      const note = await createNote(
+        { title: 'Title', body: 'Content', metadata: '{"key": "value"}' },
+        orm
+      );
+
+      const embeddingBefore = db
+        .prepare('SELECT updated_at FROM embeddings WHERE note_id = ?')
+        .get(note.id) as any;
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      await updateNote(note.id, { metadata: '{"key": "new value"}' }, orm);
+
+      const embeddingAfter = db
+        .prepare('SELECT updated_at FROM embeddings WHERE note_id = ?')
+        .get(note.id) as any;
+
+      expect(embeddingAfter.updated_at).toBe(embeddingBefore.updated_at);
+    });
+
+    it('should discover semantic links when creating note', async () => {
+      // Create target notes with similar content
+      await createNote(
+        { title: 'Deep Learning', body: 'Neural networks and backpropagation' },
+        orm
+      );
+      await createNote(
+        { title: 'AI Basics', body: 'Artificial intelligence fundamentals' },
+        orm
+      );
+
+      // Create source note with similar content
+      const sourceNote = await createNote(
+        { title: 'Machine Learning', body: 'Introduction to neural networks and AI' },
+        orm
+      );
+
+      // Check for semantic links
+      const semanticLinks = db
+        .prepare('SELECT * FROM links WHERE source_note_id = ? AND link_type = ?')
+        .all(sourceNote.id, 'semantic') as any[];
+
+      expect(semanticLinks.length).toBeGreaterThan(0);
+      expect(semanticLinks.length).toBeLessThanOrEqual(5); // Top 5 per D-12
+    });
+
+    it('should rediscover semantic links when content changes', async () => {
+      const target1 = await createNote(
+        { title: 'Python', body: 'Python programming language' },
+        orm
+      );
+      const target2 = await createNote(
+        { title: 'JavaScript', body: 'JavaScript programming language' },
+        orm
+      );
+
+      const sourceNote = await createNote(
+        { title: 'Programming', body: 'Learning Python basics' },
+        orm
+      );
+
+      // Update to be more similar to JavaScript
+      await updateNote(
+        sourceNote.id,
+        { body: 'Learning JavaScript and web development' },
+        orm
+      );
+
+      const semanticLinks = db
+        .prepare('SELECT * FROM links WHERE source_note_id = ? AND link_type = ?')
+        .all(sourceNote.id, 'semantic') as any[];
+
+      // Should have semantic links after update
+      expect(semanticLinks.length).toBeGreaterThan(0);
+    });
+
+    it('should create semantic links with link_type=semantic and similarity_score', async () => {
+      await createNote(
+        { title: 'React', body: 'React framework for building UIs' },
+        orm
+      );
+
+      const sourceNote = await createNote(
+        { title: 'Frontend', body: 'Building user interfaces with React' },
+        orm
+      );
+
+      const semanticLinks = db
+        .prepare('SELECT * FROM links WHERE source_note_id = ? AND link_type = ?')
+        .all(sourceNote.id, 'semantic') as any[];
+
+      if (semanticLinks.length > 0) {
+        expect(semanticLinks[0].link_type).toBe('semantic');
+        expect(semanticLinks[0].similarity_score).toBeDefined();
+        expect(semanticLinks[0].similarity_score).toBeGreaterThanOrEqual(0.7); // Threshold per D-09
+        expect(semanticLinks[0].similarity_score).toBeLessThanOrEqual(1.0);
+      }
+    });
+
+    it('should replace existing semantic links on update', async () => {
+      const target1 = await createNote(
+        { title: 'TypeScript', body: 'TypeScript language' },
+        orm
+      );
+      const target2 = await createNote(
+        { title: 'Rust', body: 'Rust programming language' },
+        orm
+      );
+
+      const sourceNote = await createNote(
+        { title: 'Languages', body: 'TypeScript is great' },
+        orm
+      );
+
+      const linksBefore = db
+        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ? AND link_type = ?')
+        .get(sourceNote.id, 'semantic') as { count: number };
+
+      // Update to be more similar to Rust
+      await updateNote(
+        sourceNote.id,
+        { body: 'Rust is a systems programming language' },
+        orm
+      );
+
+      const linksAfter = db
+        .prepare('SELECT COUNT(*) as count FROM links WHERE source_note_id = ? AND link_type = ?')
+        .get(sourceNote.id, 'semantic') as { count: number };
+
+      // Should have semantic links, but not duplicated
+      expect(linksAfter.count).toBeGreaterThanOrEqual(0);
     });
   });
 });

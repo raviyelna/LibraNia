@@ -2,7 +2,10 @@ import { eq, isNull, isNotNull, desc, and } from 'drizzle-orm';
 import { notes } from '../database/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../database/schema';
-import { updateNoteLinks } from './links.service';
+import { updateNoteLinks, createSemanticLinks, deleteSemanticLinks } from './links.service';
+import { generateEmbedding, storeEmbedding, updateEmbedding, getEmbedding } from './embeddings.service';
+import { findSimilarNotes } from '../database/vec';
+import { getDatabase } from '../database/connection';
 
 export interface CreateNoteInput {
   title: string;
@@ -55,6 +58,16 @@ export async function createNote(
   // Update links table based on wiki-links in body
   await updateNoteLinks(note.id, note.body, db);
 
+  // Generate embedding and discover semantic links per D-01, D-10
+  const text = `${note.title} ${note.body}`; // Combined per D-03
+  const embedding = await generateEmbedding(text);
+  await storeEmbedding(note.id, embedding, db);
+
+  // Discover semantic links (top 5, threshold 0.7 per D-09, D-12)
+  const rawDb = getDatabase();
+  const similar = findSimilarNotes(rawDb, note.id, embedding, 0.7, 5);
+  await createSemanticLinks(note.id, similar, db);
+
   return note as Note;
 }
 
@@ -95,6 +108,26 @@ export async function updateNote(
   // Update links table if body was changed
   if (data.body !== undefined) {
     await updateNoteLinks(updated.id, updated.body, db);
+  }
+
+  // Regenerate embedding if title or body changed per D-01
+  if (data.title !== undefined || data.body !== undefined) {
+    const text = `${updated.title} ${updated.body}`;
+    const embedding = await generateEmbedding(text);
+
+    // Update or create embedding
+    const existing = await getEmbedding(updated.id, db);
+    if (existing) {
+      await updateEmbedding(updated.id, embedding, db);
+    } else {
+      await storeEmbedding(updated.id, embedding, db);
+    }
+
+    // Rediscover semantic links per D-10
+    await deleteSemanticLinks(updated.id, db); // Remove old semantic links
+    const rawDb = getDatabase();
+    const similar = findSimilarNotes(rawDb, updated.id, embedding, 0.7, 5);
+    await createSemanticLinks(updated.id, similar, db);
   }
 
   return updated as Note;
