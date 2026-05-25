@@ -15,10 +15,17 @@ interface FullTextSearchResult {
   score: number;
 }
 
-type SearchMode = 'quickNav' | 'fullText' | 'fuzzy';
+interface SemanticSearchResult {
+  id: string;
+  title: string;
+  updated_at: number;
+  similarity: number;
+}
+
+type SearchMode = 'quickNav' | 'fullText' | 'fuzzy' | 'semantic';
 
 export function useSearch() {
-  const [results, setResults] = useState<SearchResult[] | FullTextSearchResult[]>([]);
+  const [results, setResults] = useState<SearchResult[] | FullTextSearchResult[] | SemanticSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
 
   const search = useCallback(async (query: string, mode: SearchMode = 'quickNav') => {
@@ -40,6 +47,9 @@ export function useSearch() {
           break;
         case 'fuzzy':
           data = await window.api.search.fuzzy(query);
+          break;
+        case 'semantic':
+          data = await window.api.search.semantic(query);
           break;
       }
 
