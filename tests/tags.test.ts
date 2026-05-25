@@ -32,6 +32,11 @@ import {
   getTagById,
   deleteTag,
   renameTag,
+  addTagsToNote,
+  removeTagFromNote,
+  getNoteTags,
+  getNotesByTag,
+  setNoteTags,
 } from '../electron/services/tags.service';
 import * as connectionModule from '../electron/database/connection';
 
@@ -224,6 +229,183 @@ describe('Tags Service - CRUD Operations', () => {
       // Verify association still exists
       const associations = db.prepare('SELECT * FROM note_tags WHERE tag_id = ?').all(tag.id);
       expect(associations).toHaveLength(1);
+    });
+  });
+
+  describe('Note-Tag Associations', () => {
+    beforeEach(() => {
+      // Create test notes
+      db.exec(`
+        INSERT INTO notes (id, title, body, created_at, updated_at)
+        VALUES
+          ('note-1', 'First Note', 'Body 1', ${Date.now()}, ${Date.now()}),
+          ('note-2', 'Second Note', 'Body 2', ${Date.now()}, ${Date.now()}),
+          ('note-3', 'Third Note', 'Body 3', ${Date.now()}, ${Date.now()});
+      `);
+    });
+
+    describe('addTagsToNote', () => {
+      it('should create tags and associate them with note', async () => {
+        const tagIds = await addTagsToNote('note-1', ['javascript', 'typescript']);
+
+        expect(tagIds).toHaveLength(2);
+
+        // Verify tags created
+        const allTags = await getAllTags();
+        expect(allTags).toHaveLength(2);
+
+        // Verify associations created
+        const noteTags = db.prepare('SELECT * FROM note_tags WHERE note_id = ?').all('note-1');
+        expect(noteTags).toHaveLength(2);
+      });
+
+      it('should reuse existing tags', async () => {
+        await createTag('javascript');
+        const tagIds = await addTagsToNote('note-1', ['javascript', 'typescript']);
+
+        expect(tagIds).toHaveLength(2);
+
+        // Should only have 2 tags total (javascript reused)
+        const allTags = await getAllTags();
+        expect(allTags).toHaveLength(2);
+      });
+
+      it('should ignore duplicate associations', async () => {
+        await addTagsToNote('note-1', ['javascript']);
+        await addTagsToNote('note-1', ['javascript']); // Add same tag again
+
+        const noteTags = db.prepare('SELECT * FROM note_tags WHERE note_id = ?').all('note-1');
+        expect(noteTags).toHaveLength(1); // Should still be 1
+      });
+
+      it('should allow same tag on multiple notes', async () => {
+        await addTagsToNote('note-1', ['javascript']);
+        await addTagsToNote('note-2', ['javascript']);
+
+        const note1Tags = await getNoteTags('note-1');
+        const note2Tags = await getNoteTags('note-2');
+
+        expect(note1Tags).toHaveLength(1);
+        expect(note2Tags).toHaveLength(1);
+        expect(note1Tags[0].name).toBe('javascript');
+        expect(note2Tags[0].name).toBe('javascript');
+      });
+    });
+
+    describe('removeTagFromNote', () => {
+      it('should remove tag association from note', async () => {
+        const tagIds = await addTagsToNote('note-1', ['javascript', 'typescript']);
+        await removeTagFromNote('note-1', tagIds[0]);
+
+        const noteTags = await getNoteTags('note-1');
+        expect(noteTags).toHaveLength(1);
+        expect(noteTags[0].name).toBe('typescript');
+      });
+
+      it('should not affect other notes with same tag', async () => {
+        const tagIds = await addTagsToNote('note-1', ['javascript']);
+        await addTagsToNote('note-2', ['javascript']);
+
+        await removeTagFromNote('note-1', tagIds[0]);
+
+        const note1Tags = await getNoteTags('note-1');
+        const note2Tags = await getNoteTags('note-2');
+
+        expect(note1Tags).toHaveLength(0);
+        expect(note2Tags).toHaveLength(1);
+      });
+    });
+
+    describe('getNoteTags', () => {
+      it('should return all tags for a note ordered by name', async () => {
+        await addTagsToNote('note-1', ['zebra', 'apple', 'mango']);
+
+        const tags = await getNoteTags('note-1');
+
+        expect(tags).toHaveLength(3);
+        expect(tags[0].name).toBe('apple');
+        expect(tags[1].name).toBe('mango');
+        expect(tags[2].name).toBe('zebra');
+      });
+
+      it('should return empty array for note with no tags', async () => {
+        const tags = await getNoteTags('note-1');
+        expect(tags).toEqual([]);
+      });
+    });
+
+    describe('getNotesByTag', () => {
+      it('should return all notes with specific tag', async () => {
+        const tag = await createTag('javascript');
+        await addTagsToNote('note-1', ['javascript']);
+        await addTagsToNote('note-2', ['javascript']);
+        await addTagsToNote('note-3', ['typescript']); // Different tag
+
+        const notes = await getNotesByTag(tag.id);
+
+        expect(notes).toHaveLength(2);
+        expect(notes.map(n => n.id)).toContain('note-1');
+        expect(notes.map(n => n.id)).toContain('note-2');
+        expect(notes.map(n => n.id)).not.toContain('note-3');
+      });
+
+      it('should exclude soft-deleted notes', async () => {
+        const tag = await createTag('javascript');
+        await addTagsToNote('note-1', ['javascript']);
+        await addTagsToNote('note-2', ['javascript']);
+
+        // Soft delete note-2
+        db.exec(`UPDATE notes SET deleted_at = ${Date.now()} WHERE id = 'note-2'`);
+
+        const notes = await getNotesByTag(tag.id);
+
+        expect(notes).toHaveLength(1);
+        expect(notes[0].id).toBe('note-1');
+      });
+
+      it('should return notes ordered by updated_at DESC', async () => {
+        const tag = await createTag('javascript');
+        const now = Date.now();
+
+        // Update notes with different timestamps
+        db.exec(`UPDATE notes SET updated_at = ${now - 2000} WHERE id = 'note-1'`);
+        db.exec(`UPDATE notes SET updated_at = ${now - 1000} WHERE id = 'note-2'`);
+        db.exec(`UPDATE notes SET updated_at = ${now} WHERE id = 'note-3'`);
+
+        await addTagsToNote('note-1', ['javascript']);
+        await addTagsToNote('note-2', ['javascript']);
+        await addTagsToNote('note-3', ['javascript']);
+
+        const notes = await getNotesByTag(tag.id);
+
+        expect(notes).toHaveLength(3);
+        expect(notes[0].id).toBe('note-3'); // Most recent
+        expect(notes[1].id).toBe('note-2');
+        expect(notes[2].id).toBe('note-1'); // Oldest
+      });
+    });
+
+    describe('setNoteTags', () => {
+      it('should replace all tags on a note', async () => {
+        await addTagsToNote('note-1', ['javascript', 'typescript']);
+        await setNoteTags('note-1', ['react', 'vue']);
+
+        const tags = await getNoteTags('note-1');
+
+        expect(tags).toHaveLength(2);
+        expect(tags.map(t => t.name)).toContain('react');
+        expect(tags.map(t => t.name)).toContain('vue');
+        expect(tags.map(t => t.name)).not.toContain('javascript');
+        expect(tags.map(t => t.name)).not.toContain('typescript');
+      });
+
+      it('should remove all tags when empty array provided', async () => {
+        await addTagsToNote('note-1', ['javascript', 'typescript']);
+        await setNoteTags('note-1', []);
+
+        const tags = await getNoteTags('note-1');
+        expect(tags).toHaveLength(0);
+      });
     });
   });
 });
