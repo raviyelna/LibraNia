@@ -46,7 +46,7 @@ Plans:
   4. User can create bidirectional links using [[wiki-style]] syntax and view backlinks panel
   5. User can organize notes with tags and browse by tag
   6. User can export their entire knowledge base to markdown or JSON format
-**Plans**: TBD
+**Plans**: 6 plans
 **UI hint**: yes
 
 ---
@@ -116,7 +116,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Application Shell | 4/4 | Complete | 2026-05-25 |
-| 2. Core Knowledge Management | 0/0 | Not started | - |
+| 2. Core Knowledge Management | 0/6 | Not started | - |
 | 3. AI Integration | 0/0 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |
 | 5. Semantic Discovery | 0/0 | Not started | - |
@@ -136,3 +136,11 @@ Phases requiring deeper research during planning:
 
 *Roadmap created: 2026-05-24*
 *Last updated: 2026-05-24*
+
+Plans:
+- [ ] 02-01-PLAN.md — Database foundation (better-sqlite3, Drizzle schema, FTS5 setup)
+- [ ] 02-02-PLAN.md — Note CRUD services with wiki-link parsing and backlinks
+- [ ] 02-03-PLAN.md — Full-text search with FTS5 (quick nav, full-text, fuzzy)
+- [ ] 02-04-PLAN.md — Tags system with junction table and filtering
+- [ ] 02-05-PLAN.md — Note editor UI (CodeMirror 6, backlinks panel, tags input, quick nav)
+- [ ] 02-06-PLAN.md — Export functionality (markdown with YAML frontmatter, JSON)
