@@ -183,7 +183,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-04-PLAN.md — Notes service integration with on-save embedding generation and auto-linking
+- [x] 05-04-PLAN.md — Notes service integration with on-save embedding generation and auto-linking
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
