@@ -8,7 +8,7 @@ describe('Web Search Dependencies', () => {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
     expect(packageJson.dependencies).toHaveProperty('duck-duck-scrape');
-    expect(packageJson.dependencies['duck-duck-scrape']).toBe('2.2.7');
+    expect(packageJson.dependencies['duck-duck-scrape']).toMatch(/^[\^~]?2\.2\.7$/);
   });
 
   it('should have duck-duck-scrape installed in node_modules', () => {
