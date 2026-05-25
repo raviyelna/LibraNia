@@ -179,7 +179,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-03-PLAN.md — Embeddings service and vector search utilities
+- [x] 05-03-PLAN.md — Embeddings service and vector search utilities
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
