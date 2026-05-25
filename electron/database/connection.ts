@@ -79,6 +79,8 @@ export async function initDatabase(dbPath: string): Promise<void> {
       id TEXT PRIMARY KEY,
       source_note_id TEXT NOT NULL,
       target_note_id TEXT NOT NULL,
+      link_type TEXT NOT NULL DEFAULT 'manual',
+      similarity_score REAL,
       created_at INTEGER NOT NULL,
       FOREIGN KEY (source_note_id) REFERENCES notes(id) ON DELETE CASCADE,
       FOREIGN KEY (target_note_id) REFERENCES notes(id) ON DELETE SET NULL
@@ -149,6 +151,17 @@ export async function initDatabase(dbPath: string): Promise<void> {
       PRIMARY KEY (content_id, tag_id),
       FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE,
       FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS embeddings (
+      id TEXT PRIMARY KEY,
+      note_id TEXT NOT NULL UNIQUE,
+      vector BLOB NOT NULL,
+      model TEXT NOT NULL DEFAULT 'all-MiniLM-L6-v2',
+      dimensions INTEGER NOT NULL DEFAULT 384,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
     );
   `);
 
