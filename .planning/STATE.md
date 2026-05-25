@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T10:12:22.000Z"
+last_updated: "2026-05-25T11:27:09.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 21
-  completed_plans: 13
-  percent: 48
+  completed_plans: 14
+  percent: 52
 ---
 
 # State: LibraNia
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 3 Complete - AI Integration (7/7 plans complete)
+**Current Focus:** Phase 3 Complete - AI Integration (8/8 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -32,9 +32,9 @@ progress:
 ## Current Position
 
 **Phase:** 3 - AI Integration (COMPLETE)
-**Plan:** 03-10 (completed)
+**Plan:** 03-11 (completed)
 **Status:** Phase 3 complete, ready for Phase 4
-**Progress:** [███████░░░] 67%
+**Progress:** [████████░░] 67%
 
 **Next Action:** Begin Phase 4 - Content Management
 
@@ -45,11 +45,11 @@ progress:
 ### Velocity
 
 - **Phases completed:** 3/6 (Phase 1, Phase 2, and Phase 3 complete)
-- **Plans completed:** 17/21 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 7/7)
-- **Average plan duration:** 8 min (17 plans completed)
+- **Plans completed:** 18/21 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8)
+- **Average plan duration:** 8 min (18 plans completed)
 - **Phase 1 total duration:** 8h 0min
 - **Phase 2 total duration:** 52 min
-- **Phase 3 total duration:** 59 min (7/7 plans)
+- **Phase 3 total duration:** 67 min (8/8 plans)
 
 ### Quality
 
@@ -72,6 +72,9 @@ progress:
 
 | Decision | Rationale | Phase | Date |
 |----------|-----------|-------|------|
+| Used MessageSquare icon from lucide-react for Chat navigation link | Consistent with existing icon usage pattern | 03-11 | 2026-05-25 |
+| Placed Chat link between Library and Settings in navigation order | Logical grouping: content → chat → settings | 03-11 | 2026-05-25 |
+| Added matchMedia mock to global test setup | DRY principle, benefits all tests that render ThemeContext | 03-11 | 2026-05-25 |
 | Token listener cleanup handled per-request in sendMessage | Prevents memory leaks and cross-conversation token mixing by removing listeners immediately after each request completes | 03-10 | 2026-05-25 |
 | Combined useChat hook provides both send and summarize operations | Simplifies component integration while maintaining separation of concerns | 03-10 | 2026-05-25 |
 | Streaming content accumulated in state for real-time UI updates | Enables real-time token display in message bubbles, content resets on each new message | 03-10 | 2026-05-25 |
@@ -206,9 +209,10 @@ None yet.
 - **Plan 03-07 COMPLETE:** OpenAI and DeepSeek providers, AI service with provider factory and retry logic. All 28 tests passing.
 - **Plan 03-08 COMPLETE:** IPC integration with AI handlers registered in main process, chat and conversation APIs exposed to renderer via contextBridge with TypeScript types.
 - **Plan 03-10 COMPLETE:** React hooks for chat operations (useSendMessage, useSummarizeNote, useChat) with streaming token accumulation and conversation CRUD hooks (useConversations, useConversation, useDeleteConversation). All 14 tests passing.
-- **PHASE 3 COMPLETE:** All 7 plans complete, all requirements (AI-01 through AI-10) fulfilled. Total duration: 59 minutes.
+- **Plan 03-11 COMPLETE:** Chat route with conversation list sidebar, navigation link in Sidebar, route registration in App.tsx. Added conversation:create IPC handler (missing from prior plans). All 12 tests passing.
+- **PHASE 3 COMPLETE:** All 8 plans complete, all requirements (AI-01 through AI-10) fulfilled. Total duration: 67 minutes.
 
 ---
 
 *State initialized: 2026-05-24*
-*Last updated: 2026-05-25 after Phase 3 Plan 03-10 completion*
+*Last updated: 2026-05-25 after Phase 3 Plan 03-11 completion*

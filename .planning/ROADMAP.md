@@ -98,7 +98,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 03-11-PLAN.md — Chat route integration with navigation and conversation list
+- [x] 03-11-PLAN.md — Chat route integration with navigation and conversation list (completed 2026-05-25)
 
 ---
 
