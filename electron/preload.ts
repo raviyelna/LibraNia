@@ -68,6 +68,8 @@ contextBridge.exposeInMainWorld('api', {
   links: {
     getBacklinks: (noteId: string) =>
       ipcRenderer.invoke('links:getBacklinks', { noteId }),
+    getSemanticLinks: (noteId: string) =>
+      ipcRenderer.invoke('links:getSemanticLinks', { noteId }),
   },
 
   // Search operations
@@ -75,6 +77,7 @@ contextBridge.exposeInMainWorld('api', {
     quickNav: (query: string) => ipcRenderer.invoke('search:quickNav', { query }),
     fullText: (query: string) => ipcRenderer.invoke('search:fullText', { query }),
     fuzzy: (query: string) => ipcRenderer.invoke('search:fuzzy', { query }),
+    semantic: (query: string) => ipcRenderer.invoke('search:semantic', { query }),
   },
 
   // Export operations
