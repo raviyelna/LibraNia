@@ -1,11 +1,11 @@
 {
-  "mode": "desktop",
-  "theme": "system",
+  "mode": "web",
+  "theme": "dark",
   "windowBounds": {
     "x": 112,
     "y": 289,
     "width": 1200,
     "height": 800
   },
-  "serverPort": 3000
+  "serverPort": 5000
 }
