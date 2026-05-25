@@ -104,3 +104,37 @@ export const citations = sqliteTable('citations', {
   position: integer('position').notNull(),
   created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
+
+/**
+ * Content table - stores documents and images with metadata
+ */
+export const content = sqliteTable('content', {
+  id: text('id').primaryKey(),
+  file_path: text('file_path').notNull(),
+  thumbnail_path: text('thumbnail_path'),
+  mime_type: text('mime_type').notNull(),
+  original_filename: text('original_filename').notNull(),
+  file_size: integer('file_size').notNull(),
+  extracted_text: text('extracted_text'),
+  source: text('source').notNull(),
+  confidence_score: integer('confidence_score', { mode: 'number' }), // Using integer for SQLite compatibility; store as 0-100 instead of 0.0-1.0
+  metadata: text('metadata'),
+  note_id: text('note_id').references(() => notes.id, { onDelete: 'set null' }),
+  message_id: text('message_id').references(() => messages.id, { onDelete: 'cascade' }),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+/**
+ * Content-Tags junction table - many-to-many relationship
+ */
+export const contentTags = sqliteTable('content_tags', {
+  content_id: text('content_id')
+    .notNull()
+    .references(() => content.id, { onDelete: 'cascade' }),
+  tag_id: text('tag_id')
+    .notNull()
+    .references(() => tags.id, { onDelete: 'cascade' }),
+}, (table) => ({
+  pk: { columns: [table.content_id, table.tag_id] },
+}));
