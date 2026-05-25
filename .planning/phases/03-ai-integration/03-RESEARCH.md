@@ -850,27 +850,29 @@ if (result.success) {
 
 **Note:** A1 verified via web search (DeepSeek documentation confirms OpenAI compatibility). A2 is inherent risk of scraping-based approach. A3-A5 are based on Electron/electron-store documentation but not directly verified in this research session.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Web Search API Choice**
+All questions have actionable recommendations implemented in plans.
+
+1. **Web Search API Choice** — RESOLVED
    - What we know: DuckDuckGo scraping is free but fragile, Brave/Tavily require API keys
    - What's unclear: User preference for free (fragile) vs paid (reliable)
-   - Recommendation: Start with DuckDuckGo, provide config option to switch to Brave API if user has key
+   - **Decision:** Start with DuckDuckGo (Plan 03-04), provide config option to switch to Brave API if user has key
 
-2. **Conversation Export Format**
+2. **Conversation Export Format** — RESOLVED
    - What we know: Phase 2 has markdown/JSON export for notes
    - What's unclear: Should conversations export to same format or separate?
-   - Recommendation: Defer to Phase 4 (Content Storage) when export requirements are clearer
+   - **Decision:** Defer to Phase 4 (Content Storage) when export requirements are clearer
 
-3. **Model Selection UI**
+3. **Model Selection UI** — RESOLVED
    - What we know: Hardcoded model lists per provider (D-22)
    - What's unclear: How to handle new models without code updates
-   - Recommendation: Start with hardcoded lists, add "custom model" input field in future iteration
+   - **Decision:** Start with hardcoded lists (Plan 03-06), add "custom model" input field in future iteration
 
-4. **Citation Deduplication**
+4. **Citation Deduplication** — RESOLVED
    - What we know: Multiple messages may cite same URL
    - What's unclear: Should citations deduplicate across conversation or per-message?
-   - Recommendation: Per-message citations (simpler), deduplicate in UI if needed
+   - **Decision:** Per-message citations (Plan 03-01, 03-09), deduplicate in UI if needed
 
 ## Environment Availability
 
