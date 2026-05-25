@@ -64,3 +64,43 @@ export const noteVersions = sqliteTable('note_versions', {
   version_number: integer('version_number').notNull(),
   created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
+
+/**
+ * Conversations table - stores AI chat conversations
+ */
+export const conversations = sqliteTable('conversations', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+/**
+ * Messages table - stores individual messages in conversations
+ */
+export const messages = sqliteTable('messages', {
+  id: text('id').primaryKey(),
+  conversation_id: text('conversation_id')
+    .notNull()
+    .references(() => conversations.id, { onDelete: 'cascade' }),
+  role: text('role').notNull(),
+  content: text('content').notNull(),
+  provider_id: text('provider_id'),
+  model: text('model'),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+/**
+ * Citations table - stores source citations for AI responses
+ */
+export const citations = sqliteTable('citations', {
+  id: text('id').primaryKey(),
+  message_id: text('message_id')
+    .notNull()
+    .references(() => messages.id, { onDelete: 'cascade' }),
+  url: text('url').notNull(),
+  title: text('title').notNull(),
+  snippet: text('snippet'),
+  position: integer('position').notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});

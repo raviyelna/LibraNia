@@ -94,6 +94,35 @@ export async function initDatabase(dbPath: string): Promise<void> {
       created_at INTEGER NOT NULL,
       FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS conversations (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS messages (
+      id TEXT PRIMARY KEY,
+      conversation_id TEXT NOT NULL,
+      role TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
+      content TEXT NOT NULL,
+      provider_id TEXT,
+      model TEXT,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS citations (
+      id TEXT PRIMARY KEY,
+      message_id TEXT NOT NULL,
+      url TEXT NOT NULL,
+      title TEXT NOT NULL,
+      snippet TEXT,
+      position INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+    );
   `);
 
   // Setup FTS5 virtual tables and triggers
