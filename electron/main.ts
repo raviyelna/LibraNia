@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import Store from 'electron-store';
 import { logger } from './logger.js';
+import { setupCrashHandlers } from './crashHandler.js';
 import { loadConfig, saveConfig, updateConfig } from '../src/config/appConfig.js';
 import { AppConfig } from '../src/types/config.js';
 import { startServer, stopServer, ServerInstance } from './server.js';
@@ -11,6 +12,9 @@ import { createTray, updateTrayMode } from './tray.js';
 import type { LogEntry } from '../src/types/logger.js';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
+
+// Set up crash handlers before anything else
+setupCrashHandlers();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,135 +49,214 @@ let serverInstance: ServerInstance | null = null;
 let tray: Tray | null = null;
 
 async function createWindow() {
-  // Get window state from config
-  const windowState = await getWindowState();
+  try {
+    // Get window state from config
+    const windowState = await getWindowState();
 
-  mainWindow = new BrowserWindow({
-    x: windowState.x,
-    y: windowState.y,
-    width: windowState.width,
-    height: windowState.height,
-    minWidth: 800,
-    minHeight: 600,
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      preload: path.join(__dirname, 'preload.js')
+    mainWindow = new BrowserWindow({
+      x: windowState.x,
+      y: windowState.y,
+      width: windowState.width,
+      height: windowState.height,
+      minWidth: 800,
+      minHeight: 600,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+        preload: path.join(__dirname, 'preload.js')
+      }
+    });
+
+    // Save window state on close
+    mainWindow.on('close', async () => {
+      if (mainWindow) {
+        await saveWindowState(mainWindow);
+      }
+    });
+
+    // Handle window load failures
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+      logger.error('Window failed to load', new Error(`Code: ${errorCode}, Description: ${errorDescription}`));
+    });
+
+    // Load app based on mode and environment
+    const isDev = !!process.env.VITE_DEV_SERVER_URL;
+    const isWebMode = currentConfig.mode === 'web';
+
+    if (isDev) {
+      // Development: Always use Vite dev server (both desktop and web mode)
+      logger.info('Loading from Vite dev server: ' + process.env.VITE_DEV_SERVER_URL);
+      await mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+      mainWindow.webContents.openDevTools();
+    } else if (isWebMode) {
+      // Production web mode: Start Express server and load from it
+      logger.info('Starting Express server for web mode');
+      try {
+        const distPath = path.join(__dirname, '../dist');
+        serverInstance = await startServer(currentConfig.serverPort, distPath);
+        await mainWindow.loadURL(`http://localhost:${serverInstance.port}`);
+      } catch (error) {
+        logger.error('Failed to start server, falling back to desktop mode', error as Error);
+        // Fall back to desktop mode
+        await mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+      }
+    } else {
+      // Production desktop mode: Load from file system
+      logger.info('Loading from file system (desktop mode)');
+      await mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
     }
-  });
 
-  // Save window state on close
-  mainWindow.on('close', async () => {
-    if (mainWindow) {
-      await saveWindowState(mainWindow);
-    }
-  });
-
-  // Load app based on mode and environment
-  const isDev = !!process.env.VITE_DEV_SERVER_URL;
-  const isWebMode = currentConfig.mode === 'web';
-
-  if (isDev) {
-    // Development: Always use Vite dev server (both desktop and web mode)
-    logger.info('Loading from Vite dev server: ' + process.env.VITE_DEV_SERVER_URL);
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    mainWindow.webContents.openDevTools();
-  } else if (isWebMode) {
-    // Production web mode: Start Express server and load from it
-    logger.info('Starting Express server for web mode');
-    const distPath = path.join(__dirname, '../dist');
-    serverInstance = await startServer(currentConfig.serverPort, distPath);
-    mainWindow.loadURL(`http://localhost:${serverInstance.port}`);
-  } else {
-    // Production desktop mode: Load from file system
-    logger.info('Loading from file system (desktop mode)');
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.on('closed', () => {
+      mainWindow = null;
+    });
+  } catch (error) {
+    logger.error('Failed to create window', error as Error);
+    throw error;
   }
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
 }
 
 // IPC Handlers
 function registerIpcHandlers() {
   // Config operations
   ipcMain.handle('config:get', async () => {
-    return currentConfig;
+    try {
+      return { success: true, data: currentConfig };
+    } catch (error) {
+      logger.error('IPC config:get failed', error as Error);
+      return { success: false, error: (error as Error).message };
+    }
   });
 
   ipcMain.handle('config:set', async (_event, updates: Partial<AppConfig>) => {
-    await saveConfig(updates);
-    currentConfig = await loadConfig();
-    return { success: true };
+    try {
+      await saveConfig(updates);
+      currentConfig = await loadConfig();
+      return { success: true };
+    } catch (error) {
+      logger.error('IPC config:set failed', error as Error);
+      return { success: false, error: (error as Error).message };
+    }
   });
 
   ipcMain.handle('config:update', async (_event, updates: Partial<AppConfig>) => {
-    currentConfig = await updateConfig(updates);
-    return currentConfig;
+    try {
+      currentConfig = await updateConfig(updates);
+      return { success: true, data: currentConfig };
+    } catch (error) {
+      logger.error('IPC config:update failed', error as Error);
+      return { success: false, error: (error as Error).message };
+    }
   });
 
   // Window operations
   ipcMain.handle('window:minimize', () => {
-    mainWindow?.minimize();
+    try {
+      mainWindow?.minimize();
+      return { success: true };
+    } catch (error) {
+      logger.error('IPC window:minimize failed', error as Error);
+      return { success: false, error: (error as Error).message };
+    }
   });
 
   ipcMain.handle('window:maximize', () => {
-    if (mainWindow?.isMaximized()) {
-      mainWindow.unmaximize();
-    } else {
-      mainWindow?.maximize();
+    try {
+      if (mainWindow?.isMaximized()) {
+        mainWindow.unmaximize();
+      } else {
+        mainWindow?.maximize();
+      }
+      return { success: true };
+    } catch (error) {
+      logger.error('IPC window:maximize failed', error as Error);
+      return { success: false, error: (error as Error).message };
     }
   });
 
   ipcMain.handle('window:close', () => {
-    mainWindow?.close();
+    try {
+      mainWindow?.close();
+      return { success: true };
+    } catch (error) {
+      logger.error('IPC window:close failed', error as Error);
+      return { success: false, error: (error as Error).message };
+    }
   });
 
   // App operations
   ipcMain.handle('app:restart', () => {
-    app.relaunch();
-    app.exit(0);
+    try {
+      app.relaunch();
+      app.exit(0);
+    } catch (error) {
+      logger.error('IPC app:restart failed', error as Error);
+      return { success: false, error: (error as Error).message };
+    }
   });
 
   // Mode switching
   ipcMain.handle('mode:switch', async (_event, newMode: 'desktop' | 'web') => {
-    await updateConfig({ mode: newMode });
-    currentConfig = await loadConfig();
-    logger.info('Mode switched to: ' + newMode);
+    try {
+      await updateConfig({ mode: newMode });
+      currentConfig = await loadConfig();
+      logger.info('Mode switched to: ' + newMode);
 
-    // Update tray menu
-    if (tray && mainWindow) {
-      updateTrayMode(tray, mainWindow, newMode, handleModeSwitch);
+      // Update tray menu
+      if (tray && mainWindow) {
+        updateTrayMode(tray, mainWindow, newMode, handleModeSwitch);
+      }
+
+      return { success: true, requiresRestart: true };
+    } catch (error) {
+      logger.error('IPC mode:switch failed', error as Error);
+      return { success: false, error: (error as Error).message };
     }
-
-    return { success: true, requiresRestart: true };
   });
 
   // Logging - renderer process logs
   ipcMain.on('log:write', (_event, entry: LogEntry) => {
-    // Write renderer logs to separate file
-    rendererLogger.log({
-      level: entry.level,
-      message: entry.message,
-      stack: entry.stack
-    });
+    try {
+      // Write renderer logs to separate file
+      rendererLogger.log({
+        level: entry.level,
+        message: entry.message,
+        stack: entry.stack
+      });
+    } catch (error) {
+      logger.error('IPC log:write failed', error as Error);
+    }
   });
 
   ipcMain.handle('log:error', (_event, error: { message: string; stack?: string; componentStack?: string }) => {
-    logger.error('Renderer error: ' + error.message, error.stack ? new Error(error.stack) : undefined);
+    try {
+      logger.error('Renderer error: ' + error.message, error.stack ? new Error(error.stack) : undefined);
+      return { success: true };
+    } catch (err) {
+      logger.error('IPC log:error failed', err as Error);
+      return { success: false, error: (err as Error).message };
+    }
   });
 
   // Logs directory operations
   ipcMain.handle('logs:open', async () => {
-    const logsPath = path.join(app.getPath('userData'), 'logs');
-    await shell.openPath(logsPath);
+    try {
+      const logsPath = path.join(app.getPath('userData'), 'logs');
+      await shell.openPath(logsPath);
+      return { success: true };
+    } catch (error) {
+      logger.error('IPC logs:open failed', error as Error);
+      return { success: false, error: (error as Error).message };
+    }
   });
 
   // App reload
   ipcMain.on('app:reload', () => {
-    mainWindow?.reload();
+    try {
+      mainWindow?.reload();
+    } catch (error) {
+      logger.error('IPC app:reload failed', error as Error);
+    }
   });
 }
 
@@ -229,3 +312,22 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+// Process monitoring - log memory and CPU usage periodically
+setInterval(() => {
+  const memoryUsage = process.memoryUsage();
+  const cpuUsage = process.cpuUsage();
+
+  // Log memory usage in MB
+  const memoryMB = Math.round(memoryUsage.heapUsed / 1024 / 1024);
+  logger.debug(`Memory usage: ${memoryMB}MB (heap used)`);
+
+  // Warn if memory usage exceeds 500MB (potential memory leak)
+  if (memoryUsage.heapUsed > 500 * 1024 * 1024) {
+    logger.warn(`High memory usage detected: ${memoryMB}MB - potential memory leak`);
+  }
+
+  // Log CPU usage (user + system time in microseconds)
+  const cpuSeconds = (cpuUsage.user + cpuUsage.system) / 1000000;
+  logger.debug(`CPU usage: ${cpuSeconds.toFixed(2)}s (cumulative)`);
+}, 5 * 60 * 1000); // Every 5 minutes
