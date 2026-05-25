@@ -14,6 +14,8 @@ import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { initDatabase } from './database/connection.js';
 import { registerTagsHandlers } from './ipc/tags.handlers.js';
+import { registerSearchHandlers } from './ipc/search.handlers.js';
+import { registerNotesHandlers } from './ipc/notes.handlers.js';
 
 // Set up crash handlers before anything else
 setupCrashHandlers();
@@ -285,7 +287,9 @@ app.whenReady().then(async () => {
   logger.info('App ready, mode: ' + currentConfig.mode);
 
   registerIpcHandlers();
+  registerNotesHandlers();
   registerTagsHandlers();
+  registerSearchHandlers();
   await createWindow();
 
   // Create system tray

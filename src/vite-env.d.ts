@@ -37,6 +37,47 @@ interface TagsAPI {
   setForNote: (noteId: string, tagNames: string[]) => Promise<boolean>;
 }
 
+interface NotesAPI {
+  create: (data: { title: string; body: string; metadata?: string }) => Promise<Note>;
+  update: (data: { id: string; title?: string; body?: string; metadata?: string }) => Promise<Note>;
+  delete: (id: string, hard: boolean) => Promise<{ success: boolean }>;
+  restore: (id: string) => Promise<Note>;
+  getById: (id: string, includeDeleted?: boolean) => Promise<Note | null>;
+  getAll: () => Promise<Note[]>;
+  getDeleted: () => Promise<Note[]>;
+}
+
+interface Backlink {
+  id: string;
+  title: string;
+  linkCount: number;
+}
+
+interface LinksAPI {
+  getBacklinks: (noteId: string) => Promise<Backlink[]>;
+}
+
+interface SearchResult {
+  id: string;
+  title: string;
+  updated_at: number;
+  rank: number;
+}
+
+interface FullTextSearchResult {
+  id: string;
+  title: string;
+  snippet: string;
+  updated_at: number;
+  score: number;
+}
+
+interface SearchAPI {
+  quickNav: (query: string) => Promise<SearchResult[]>;
+  fullText: (query: string) => Promise<FullTextSearchResult[]>;
+  fuzzy: (query: string) => Promise<SearchResult[]>;
+}
+
 interface WindowAPI {
   getConfig: () => Promise<any>;
   setConfig: (key: string, value: any) => Promise<{ success: boolean }>;
@@ -48,6 +89,9 @@ interface WindowAPI {
   restartApp: () => Promise<void>;
   logError: (error: { message: string; stack?: string; componentStack?: string }) => Promise<void>;
   tags: TagsAPI;
+  notes: NotesAPI;
+  links: LinksAPI;
+  search: SearchAPI;
 }
 
 declare global {
