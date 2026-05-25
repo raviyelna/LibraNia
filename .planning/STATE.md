@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T13:09:49.447Z"
+last_updated: "2026-05-25T14:49:27Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 26
-  completed_plans: 21
-  percent: 50
+  completed_plans: 22
+  percent: 52
 ---
 
 # State: LibraNia
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 3 Complete - AI Integration (8/8 plans complete)
+**Current Focus:** Phase 4 In Progress - Content Storage & Management (1/3 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -31,12 +31,12 @@ progress:
 
 ## Current Position
 
-**Phase:** 3 - AI Integration (COMPLETE)
-**Plan:** 03-11 (completed)
+**Phase:** 4 - Content Storage & Management (IN PROGRESS)
+**Plan:** 04-01 (completed)
 **Status:** Ready to execute
-**Progress:** [████████░░] 67%
+**Progress:** [█████████░] 69%
 
-**Next Action:** Begin Phase 4 - Content Management
+**Next Action:** Execute Phase 4 Plan 04-02 - Content File Operations
 
 ---
 
@@ -45,11 +45,12 @@ progress:
 ### Velocity
 
 - **Phases completed:** 3/6 (Phase 1, Phase 2, and Phase 3 complete)
-- **Plans completed:** 18/21 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8)
-- **Average plan duration:** 8 min (18 plans completed)
+- **Plans completed:** 22/26 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8, Phase 4: 1/3)
+- **Average plan duration:** 7 min (22 plans completed)
 - **Phase 1 total duration:** 8h 0min
 - **Phase 2 total duration:** 52 min
 - **Phase 3 total duration:** 67 min (8/8 plans)
+- **Phase 4 total duration:** 2 min (1/3 plans)
 
 ### Quality
 
@@ -72,6 +73,8 @@ progress:
 
 | Decision | Rationale | Phase | Date |
 |----------|-----------|-------|------|
+| FTS5 UPDATE trigger uses 'delete' command followed by INSERT | FTS5 external content tables don't support direct UPDATE, must use special 'delete' command to remove old entry then INSERT new entry | 04-01 | 2026-05-25 |
+| confidence_score stored as integer (0-100) instead of real (0.0-1.0) | Better SQLite compatibility, avoids floating-point precision issues | 04-01 | 2026-05-25 |
 | Used MessageSquare icon from lucide-react for Chat navigation link | Consistent with existing icon usage pattern | 03-11 | 2026-05-25 |
 | Placed Chat link between Library and Settings in navigation order | Logical grouping: content → chat → settings | 03-11 | 2026-05-25 |
 | Added matchMedia mock to global test setup | DRY principle, benefits all tests that render ThemeContext | 03-11 | 2026-05-25 |
@@ -129,7 +132,7 @@ progress:
 
 ### Active TODOs
 
-- [ ] Begin Phase 4: Content Management
+- [ ] Execute Phase 4 Plan 04-02: Content File Operations
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
 
 ### Known Blockers
@@ -177,6 +180,8 @@ None yet.
 | 3 | 03-06 | 2026-05-25T10:37:06Z | 2026-05-25T10:57:06Z | 20 min | ✓ Complete - AI provider settings UI with API key input, model selection, and validation |
 | 3 | 03-08 | 2026-05-25T10:36:29Z | 2026-05-25T10:40:03Z | 4 min | ✓ Complete - IPC integration: AI handlers registered, chat APIs exposed to renderer |
 | 3 | 03-10 | 2026-05-25T11:13:14Z | 2026-05-25T11:16:19Z | 3 min | ✓ Complete - React hooks for chat operations with streaming support and conversation CRUD |
+| 3 | 03-11 | 2026-05-25T11:16:30Z | 2026-05-25T11:20:45Z | 4 min | ✓ Complete - Chat route with conversation list sidebar, navigation link |
+| 4 | 04-01 | 2026-05-25T14:47:01Z | 2026-05-25T14:49:27Z | 2 min | ✓ Complete - Database schema extension with content and content_tags tables, FTS5 for document search |
 
 ---
 
@@ -211,8 +216,10 @@ None yet.
 - **Plan 03-10 COMPLETE:** React hooks for chat operations (useSendMessage, useSummarizeNote, useChat) with streaming token accumulation and conversation CRUD hooks (useConversations, useConversation, useDeleteConversation). All 14 tests passing.
 - **Plan 03-11 COMPLETE:** Chat route with conversation list sidebar, navigation link in Sidebar, route registration in App.tsx. Added conversation:create IPC handler (missing from prior plans). All 12 tests passing.
 - **PHASE 3 COMPLETE:** All 8 plans complete, all requirements (AI-01 through AI-10) fulfilled. Total duration: 67 minutes.
+- **PHASE 4 IN PROGRESS:** 1/3 plans complete (04-01)
+- **Plan 04-01 COMPLETE:** Database schema extension with content and content_tags tables, FTS5 virtual table for document text search. All 10 tests passing (5 schema + 5 FTS5).
 
 ---
 
 *State initialized: 2026-05-24*
-*Last updated: 2026-05-25 after Phase 3 Plan 03-11 completion*
+*Last updated: 2026-05-25 after Phase 4 Plan 04-01 completion*
