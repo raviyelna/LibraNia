@@ -31,12 +31,12 @@ progress:
 
 ## Current Position
 
-**Phase:** 1 - Foundation & Application Shell (COMPLETE)
-**Plan:** 01-04 (completed)
-**Status:** Phase 1 complete, ready for Phase 2
-**Progress:** [██████████] 100% (4/4 plans in Phase 1 complete)
+**Phase:** 2 - Core Knowledge Management (IN PROGRESS)
+**Plan:** 02-01 (completed)
+**Status:** Database foundation established, ready for Plan 02-02
+**Progress:** [██░░░░░░░░] 17% (1/6 plans in Phase 2 complete)
 
-**Next Action:** Run `/gsd-plan-phase 2` to begin Phase 2 (Core Knowledge Management)
+**Next Action:** Execute Plan 02-02 (Note CRUD services with wiki-link parsing and backlinks)
 
 ---
 
@@ -45,9 +45,10 @@ progress:
 ### Velocity
 
 - **Phases completed:** 1/6 (Phase 1 complete)
-- **Plans completed:** 4/4 (Phase 1)
-- **Average plan duration:** 2h 0min (4 plans completed)
+- **Plans completed:** 5/10 (Phase 1: 4/4, Phase 2: 1/6)
+- **Average plan duration:** 10 min (5 plans completed)
 - **Phase 1 total duration:** 8h 0min
+- **Phase 2 progress:** 11 min (1/6 plans)
 
 ### Quality
 
@@ -91,10 +92,14 @@ progress:
 | 7-day log retention | Balance between debugging history and disk space usage | 01-04 | 2026-05-25 |
 | Continue running on unhandledRejection | Promise rejections shouldn't crash the app | 01-04 | 2026-05-25 |
 | Relaunch on uncaughtException | Uncaught exceptions indicate critical failure, safest to restart | 01-04 | 2026-05-25 |
+| Better-sqlite3 prebuilt binaries work with Node.js 22.x | No rebuild needed, simplifies build process | 02-01 | 2026-05-25 |
+| Use raw SQL for table creation instead of Drizzle migrations | Simpler for Phase 2, migrations can be added later | 02-01 | 2026-05-25 |
+| Three FTS5 tables for different search modes | Provides flexibility for exact/stemmed/fuzzy search | 02-01 | 2026-05-25 |
+| Database initialized in app.whenReady before window creation | Ensures database ready before renderer process access | 02-01 | 2026-05-25 |
 
 ### Active TODOs
 
-- [ ] Begin Phase 2: Core Knowledge Management
+- [ ] Execute Plan 02-02: Note CRUD services with wiki-link parsing and backlinks
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
 
 ### Known Blockers
@@ -127,6 +132,7 @@ None yet.
 | 1 | 01-02 | 2026-05-24T16:54:30Z | 2026-05-25T00:07:00Z | 12 min | ✓ Complete - Theme system and collapsible sidebar with TDD |
 | 1 | 01-03 | 2026-05-25T00:13:54Z | 2026-05-25T07:47:50Z | 7h 34min | ✓ Complete - Mode switching, config management, system tray, Settings UI |
 | 1 | 01-04 | 2026-05-25T00:54:26Z | 2026-05-25T01:06:00Z | 11 min | ✓ Complete - Error handling, logging, offline detection |
+| 2 | 02-01 | 2026-05-25T02:13:42Z | 2026-05-25T02:24:22Z | 11 min | ✓ Complete - Database foundation with Drizzle ORM, FTS5, schema |
 
 ---
 
@@ -141,6 +147,9 @@ None yet.
 - **Tailwind v4 CSS-first config:** Using @theme directive in CSS, not tailwind.config.js
 - **Winston logging:** Main and renderer processes log separately with 7-day rotation
 - **Error handling:** React Error Boundaries + global crash handlers implemented
+- **Phase 2 STARTED:** Plan 02-01 complete - Database foundation with better-sqlite3, Drizzle ORM, FTS5 full-text search
+- **better-sqlite3 works:** Prebuilt binaries compatible with Node.js 22.x, no rebuild needed
+- **TDD approach:** All Phase 2 tasks following RED → GREEN → REFACTOR cycle
 
 ---
 
