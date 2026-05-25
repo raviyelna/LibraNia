@@ -6,28 +6,30 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    electron({
-      entry: 'electron/main.ts',
-      vite: {
-        build: {
-          outDir: 'dist-electron',
-          rollupOptions: {
-            external: ['electron', 'better-sqlite3', 'electron-store', 'electron-log', 'electron-window-state', 'express', 'node:events', 'node:path', 'node:fs', 'node:url', 'node:os']
+    electron([
+      {
+        entry: 'electron/main.ts',
+        vite: {
+          build: {
+            outDir: 'dist-electron',
+            rollupOptions: {
+              external: ['electron', 'better-sqlite3', 'electron-store', 'electron-log', 'electron-window-state', 'express', 'node:events', 'node:path', 'node:fs', 'node:url', 'node:os']
+            }
+          }
+        }
+      },
+      {
+        entry: 'electron/preload.ts',
+        onstart(args) {
+          args.reload();
+        },
+        vite: {
+          build: {
+            outDir: 'dist-electron'
           }
         }
       }
-    }),
-    electron({
-      entry: 'electron/preload.ts',
-      onstart(args) {
-        args.reload();
-      },
-      vite: {
-        build: {
-          outDir: 'dist-electron'
-        }
-      }
-    })
+    ])
   ],
   resolve: {
     alias: {
