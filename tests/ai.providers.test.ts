@@ -13,6 +13,20 @@ vi.mock('@anthropic-ai/sdk', () => {
   };
 });
 
+// Mock OpenAI SDK before any imports
+vi.mock('openai', () => {
+  return {
+    default: class MockOpenAI {
+      constructor(public config: any) {}
+      chat = {
+        completions: {
+          create: vi.fn(),
+        },
+      };
+    },
+  };
+});
+
 describe('AIProvider Interface', () => {
   it('should export AIProvider interface with required methods', async () => {
     const module = await import('../electron/services/ai/providers/base.provider');
@@ -245,5 +259,113 @@ describe('ClaudeProvider', () => {
     if (lastCall) {
       expect(lastCall.baseURL).toBe('https://custom.api.com');
     }
+  });
+});
+
+describe('OpenAIProvider', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should implement AIProvider interface', async () => {
+    const { OpenAIProvider } = await import('../electron/services/ai/providers/openai.provider');
+
+    const provider = new OpenAIProvider('test-api-key');
+
+    expect(provider.name).toBe('openai');
+    expect(typeof provider.validateApiKey).toBe('function');
+    expect(typeof provider.generateResponse).toBe('function');
+    expect(typeof provider.getSupportedModels).toBe('function');
+  });
+
+  it('should validate API key with mocked API', async () => {
+    const OpenAI = (await import('openai')).default;
+    const { OpenAIProvider } = await import('../electron/services/ai/providers/openai.provider');
+
+    const provider = new OpenAIProvider('valid-key');
+
+    // Mock the chat.completions.create method
+    const mockCreate = vi.fn().mockResolvedValue({ id: 'chatcmpl-123', choices: [] });
+    (provider as any).client.chat.completions.create = mockCreate;
+
+    const result = await provider.validateApiKey('valid-key');
+
+    expect(result).toBe(true);
+  });
+
+  it('should stream tokens via onToken callback', async () => {
+    const OpenAI = (await import('openai')).default;
+    const { OpenAIProvider } = await import('../electron/services/ai/providers/openai.provider');
+
+    const provider = new OpenAIProvider('test-key');
+
+    // Mock streaming response
+    const mockStream = {
+      async *[Symbol.asyncIterator]() {
+        yield { choices: [{ delta: { content: 'Hello' } }] };
+        yield { choices: [{ delta: { content: ' world' } }] };
+      }
+    };
+
+    const mockCreate = vi.fn().mockResolvedValue(mockStream);
+    (provider as any).client.chat.completions.create = mockCreate;
+
+    const tokens: string[] = [];
+
+    const result = await provider.generateResponse(
+      [{ role: 'user', content: 'test' }],
+      { model: 'gpt-4' },
+      (token) => tokens.push(token)
+    );
+
+    expect(tokens).toEqual(['Hello', ' world']);
+    expect(result).toBe('Hello world');
+  });
+
+  it('should return supported OpenAI models per D-20', async () => {
+    const { OpenAIProvider } = await import('../electron/services/ai/providers/openai.provider');
+
+    const provider = new OpenAIProvider('test-key');
+    const models = provider.getSupportedModels();
+
+    expect(models).toContain('gpt-4');
+    expect(models).toContain('gpt-4o');
+  });
+});
+
+describe('DeepSeekProvider', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should implement AIProvider interface', async () => {
+    const { DeepSeekProvider } = await import('../electron/services/ai/providers/deepseek.provider');
+
+    const provider = new DeepSeekProvider('test-api-key');
+
+    expect(provider.name).toBe('deepseek');
+    expect(typeof provider.validateApiKey).toBe('function');
+    expect(typeof provider.generateResponse).toBe('function');
+    expect(typeof provider.getSupportedModels).toBe('function');
+  });
+
+  it('should use custom baseURL https://api.deepseek.com/v1 per D-03', async () => {
+    const OpenAI = (await import('openai')).default;
+    const { DeepSeekProvider } = await import('../electron/services/ai/providers/deepseek.provider');
+
+    const provider = new DeepSeekProvider('test-key');
+
+    // Verify baseURL is set to DeepSeek API
+    expect((provider as any).baseURL).toBe('https://api.deepseek.com/v1');
+  });
+
+  it('should return supported DeepSeek models per D-20', async () => {
+    const { DeepSeekProvider } = await import('../electron/services/ai/providers/deepseek.provider');
+
+    const provider = new DeepSeekProvider('test-key');
+    const models = provider.getSupportedModels();
+
+    expect(models).toContain('deepseek-chat');
+    expect(models).toContain('deepseek-coder');
   });
 });
