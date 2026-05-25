@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { setupFTS5, setupContentFTS5 } from './fts';
+import { setupVectorExtension } from './vec';
 import * as schema from './schema';
 
 let db: Database.Database | null = null;
@@ -168,6 +169,14 @@ export async function initDatabase(dbPath: string): Promise<void> {
   // Setup FTS5 virtual tables and triggers
   setupFTS5(db);
   setupContentFTS5(db);
+
+  // Setup sqlite-vec extension for vector similarity search
+  try {
+    setupVectorExtension(db);
+  } catch (error) {
+    // Log error but continue - semantic search will be unavailable but app remains functional (T-05-12)
+    console.error('Failed to load sqlite-vec extension:', error);
+  }
 
   // Initialize Drizzle ORM
   orm = drizzle(db, { schema });
