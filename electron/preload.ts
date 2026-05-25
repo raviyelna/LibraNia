@@ -31,5 +31,18 @@ contextBridge.exposeInMainWorld('api', {
 
   // Logging
   logError: (error: { message: string; stack?: string; componentStack?: string }) =>
-    ipcRenderer.invoke('log:error', error)
+    ipcRenderer.invoke('log:error', error),
+
+  // Tags operations
+  tags: {
+    getAll: () => ipcRenderer.invoke('tags:getAll'),
+    create: (name: string) => ipcRenderer.invoke('tags:create', { name }),
+    delete: (id: string) => ipcRenderer.invoke('tags:delete', { id }),
+    rename: (id: string, name: string) => ipcRenderer.invoke('tags:rename', { id, name }),
+    addToNote: (noteId: string, tagNames: string[]) => ipcRenderer.invoke('tags:addToNote', { noteId, tagNames }),
+    removeFromNote: (noteId: string, tagId: string) => ipcRenderer.invoke('tags:removeFromNote', { noteId, tagId }),
+    getForNote: (noteId: string) => ipcRenderer.invoke('tags:getForNote', { noteId }),
+    getNotesByTag: (tagId: string) => ipcRenderer.invoke('tags:getNotesByTag', { tagId }),
+    setForNote: (noteId: string, tagNames: string[]) => ipcRenderer.invoke('tags:setForNote', { noteId, tagNames }),
+  },
 });
