@@ -13,6 +13,7 @@ import type { LogEntry } from '../src/types/logger.js';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { initDatabase } from './database/connection.js';
+import { registerTagsHandlers } from './ipc/tags.handlers.js';
 
 // Set up crash handlers before anything else
 setupCrashHandlers();
@@ -284,6 +285,7 @@ app.whenReady().then(async () => {
   logger.info('App ready, mode: ' + currentConfig.mode);
 
   registerIpcHandlers();
+  registerTagsHandlers();
   await createWindow();
 
   // Create system tray
