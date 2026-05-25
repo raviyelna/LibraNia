@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { setupFTS5 } from '../electron/database/fts';
-import { quickNavSearch, fullTextSearch } from '../electron/services/search.service';
+import { quickNavSearch, fullTextSearch, fuzzySearch } from '../electron/services/search.service';
 
 describe('Search Service', () => {
   let db: Database.Database;
@@ -154,6 +154,45 @@ describe('Search Service', () => {
       const duration = performance.now() - start;
 
       expect(duration).toBeLessThan(100);
+    });
+  });
+
+  describe('Fuzzy Search', () => {
+    it('should find notes using trigram tokenizer', () => {
+      // Trigram tokenizer breaks text into 3-character sequences
+      // "react" -> "rea", "eac", "act"
+      // Query needs to match enough trigrams to find the note
+      const results = fuzzySearch(db, 'react');
+
+      expect(results.length).toBeGreaterThan(0);
+      const titles = results.map(r => r.title);
+      expect(titles.some(t => t.includes('React'))).toBe(true);
+    });
+
+    it('should exclude soft-deleted notes', () => {
+      const results = fuzzySearch(db, 'deleted');
+
+      expect(results).toHaveLength(0);
+    });
+
+    it('should limit results to 20 by default', () => {
+      const now = Date.now();
+      const insert = db.prepare(`
+        INSERT INTO notes (id, title, body, metadata, created_at, updated_at, deleted_at)
+        VALUES (?, ?, ?, NULL, ?, ?, NULL)
+      `);
+
+      for (let i = 400; i < 450; i++) {
+        insert.run(`${i}`, `Fuzzy Note ${i}`, `Content ${i}`, now, now);
+      }
+
+      const results = fuzzySearch(db, 'fuzzy');
+      expect(results.length).toBeLessThanOrEqual(20);
+    });
+
+    it('should escape FTS5 special characters', () => {
+      expect(() => fuzzySearch(db, '"quotes"')).not.toThrow();
+      expect(() => fuzzySearch(db, 'test*')).not.toThrow();
     });
   });
 
