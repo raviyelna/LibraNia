@@ -115,7 +115,42 @@ Plans:
   4. User can view metadata for any knowledge node
   5. Content is stored locally in SQLite with proper file organization
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+
+Plans:
+
+**Wave 1**
+
+
+
+- [ ] 04-01-PLAN.md — Database schema extension (content, content_tags, content_fts tables)
+
+- [ ] 04-02-PLAN.md — Package verification and installation (sharp, pdf-parse, mammoth, file-type)
+
+
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+
+
+- [ ] 04-03-PLAN.md — Content service with file validation, text extraction, thumbnail generation
+
+
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+
+
+- [ ] 04-04-PLAN.md — IPC handlers and API exposure for content operations
+
+
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+
+
+- [ ] 04-05-PLAN.md — UI components (ContentUpload, ContentList) and Library route integration
 
 ---
 
