@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
 import { logger } from '../logger';
 import { getDatabase } from '../database/connection';
-import { quickNavSearch, fullTextSearch, fuzzySearch } from '../services/search.service';
+import { quickNavSearch, fullTextSearch, fuzzySearch, semanticSearch } from '../services/search.service';
 
 /**
  * Register all IPC handlers for search operations
@@ -36,6 +36,17 @@ export function registerSearchHandlers(): void {
       return await fuzzySearch(db, query);
     } catch (error) {
       logger.error('search:fuzzy failed', error);
+      throw error;
+    }
+  });
+
+  // Semantic search (embeddings + vector similarity)
+  ipcMain.handle('search:semantic', async (event, { query }) => {
+    try {
+      const db = getDatabase();
+      return await semanticSearch(db, query);
+    } catch (error) {
+      logger.error('search:semantic failed', error);
       throw error;
     }
   });
