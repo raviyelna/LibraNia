@@ -8,7 +8,7 @@
 
 - [x] **Phase 1: Foundation & Application Shell** - Desktop app infrastructure with native and web modes (COMPLETE)
 - [x] **Phase 2: Core Knowledge Management** - Note creation, editing, search, and bidirectional linking (completed 2026-05-25)
-- [ ] **Phase 3: AI Integration** - Multi-provider AI configuration, chat interface, and research capabilities (6/7 plans complete)
+- [x] **Phase 3: AI Integration** - Multi-provider AI configuration, chat interface, and research capabilities (COMPLETE)
 - [ ] **Phase 4: Content Storage & Management** - Document/image storage with rich metadata
 - [ ] **Phase 5: Semantic Discovery** - Embeddings generation, semantic search, and automatic linking
 - [ ] **Phase 6: 3D Visualization** - Interactive neural network graph visualization
@@ -88,13 +88,13 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 03-06-PLAN.md — AI provider settings UI with API key input and validation
+- [x] 03-06-PLAN.md — AI provider settings UI with API key input and validation (completed 2026-05-25)
 - [x] 03-08-PLAN.md — IPC handler registration and renderer exposure (completed 2026-05-25)
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 03-09-PLAN.md — Chat UI components (MessageBubble, MessageList, MessageInput, CitationList)
-- [ ] 03-10-PLAN.md — React hooks for chat operations (useChat, useConversations)
+- [x] 03-09-PLAN.md — Chat UI components (MessageBubble, MessageList, MessageInput, CitationList) (completed 2026-05-25)
+- [x] 03-10-PLAN.md — React hooks for chat operations (useChat, useConversations) (completed 2026-05-25)
 
 **Wave 6** *(blocked on Wave 5 completion)*
 

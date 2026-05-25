@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 3 In Progress - AI Integration (6/7 plans complete)
+**Current Focus:** Phase 3 Complete - AI Integration (7/7 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -31,12 +31,12 @@ progress:
 
 ## Current Position
 
-**Phase:** 3 - AI Integration (IN PROGRESS)
-**Plan:** 03-06 (completed)
-**Status:** Ready to execute next plan
-**Progress:** [██████░░░░] 62%
+**Phase:** 3 - AI Integration (COMPLETE)
+**Plan:** 03-10 (completed)
+**Status:** Phase 3 complete, ready for Phase 4
+**Progress:** [███████░░░] 67%
 
-**Next Action:** Execute remaining Phase 3 plans
+**Next Action:** Begin Phase 4 - Content Management
 
 ---
 
@@ -44,14 +44,12 @@ progress:
 
 ### Velocity
 
-- **Phases completed:** 2/6 (Phase 1 and Phase 2 complete)
-- **Plans completed:** 16/21 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 6/7)
-- **Average plan duration:** 9 min (16 plans completed)
+- **Phases completed:** 3/6 (Phase 1, Phase 2, and Phase 3 complete)
+- **Plans completed:** 17/21 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 7/7)
+- **Average plan duration:** 8 min (17 plans completed)
 - **Phase 1 total duration:** 8h 0min
 - **Phase 2 total duration:** 52 min
-- **Phase 3 progress:** 56 min (6/7 plans)
-- **Phase 2 total duration:** 52 min
-- **Phase 3 progress:** 40 min (6/7 plans)
+- **Phase 3 total duration:** 59 min (7/7 plans)
 
 ### Quality
 
@@ -74,6 +72,9 @@ progress:
 
 | Decision | Rationale | Phase | Date |
 |----------|-----------|-------|------|
+| Token listener cleanup handled per-request in sendMessage | Prevents memory leaks and cross-conversation token mixing by removing listeners immediately after each request completes | 03-10 | 2026-05-25 |
+| Combined useChat hook provides both send and summarize operations | Simplifies component integration while maintaining separation of concerns | 03-10 | 2026-05-25 |
+| Streaming content accumulated in state for real-time UI updates | Enables real-time token display in message bubbles, content resets on each new message | 03-10 | 2026-05-25 |
 | 6-phase roadmap structure | Natural grouping by feature dependencies: Foundation → Knowledge → AI → Content → Semantic → Visualization | Planning | 2026-05-24 |
 | Standard granularity (6 phases) | Balances coherent delivery boundaries with manageable scope per phase | Planning | 2026-05-24 |
 | Sequential phase dependencies | Each phase builds on previous: APP → KNOW → AI → CONT → SEM → VIZ | Planning | 2026-05-24 |
@@ -125,8 +126,7 @@ progress:
 
 ### Active TODOs
 
-- [ ] Continue Phase 3: AI Integration (6/7 plans complete)
-- [ ] Execute Plan 03-09: React hooks for chat
+- [ ] Begin Phase 4: Content Management
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
 
 ### Known Blockers
@@ -173,6 +173,7 @@ None yet.
 | 3 | 03-05 | 2026-05-25T10:22:46Z | 2026-05-25T10:30:13Z | 7 min | ✓ Complete - Conversation service with CRUD, AI chat handlers with streaming and web search |
 | 3 | 03-06 | 2026-05-25T10:37:06Z | 2026-05-25T10:57:06Z | 20 min | ✓ Complete - AI provider settings UI with API key input, model selection, and validation |
 | 3 | 03-08 | 2026-05-25T10:36:29Z | 2026-05-25T10:40:03Z | 4 min | ✓ Complete - IPC integration: AI handlers registered, chat APIs exposed to renderer |
+| 3 | 03-10 | 2026-05-25T11:13:14Z | 2026-05-25T11:16:19Z | 3 min | ✓ Complete - React hooks for chat operations with streaming support and conversation CRUD |
 
 ---
 
@@ -204,8 +205,10 @@ None yet.
 - **Plan 03-06 COMPLETE:** AI provider settings UI with masked API key input, model selection, validation before save. All 19 tests passing.
 - **Plan 03-07 COMPLETE:** OpenAI and DeepSeek providers, AI service with provider factory and retry logic. All 28 tests passing.
 - **Plan 03-08 COMPLETE:** IPC integration with AI handlers registered in main process, chat and conversation APIs exposed to renderer via contextBridge with TypeScript types.
+- **Plan 03-10 COMPLETE:** React hooks for chat operations (useSendMessage, useSummarizeNote, useChat) with streaming token accumulation and conversation CRUD hooks (useConversations, useConversation, useDeleteConversation). All 14 tests passing.
+- **PHASE 3 COMPLETE:** All 7 plans complete, all requirements (AI-01 through AI-10) fulfilled. Total duration: 59 minutes.
 
 ---
 
 *State initialized: 2026-05-24*
-*Last updated: 2026-05-25 after Phase 3 Plan 03-06 completion*
+*Last updated: 2026-05-25 after Phase 3 Plan 03-10 completion*
