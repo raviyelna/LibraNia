@@ -18,6 +18,7 @@ import { registerSearchHandlers } from './ipc/search.handlers.js';
 import { registerNotesHandlers } from './ipc/notes.handlers.js';
 import { registerExportHandlers } from './ipc/export.handlers.js';
 import { registerAIHandlers } from './ipc/ai.handlers.js';
+import { registerContentHandlers } from './ipc/content.handlers.js';
 
 // Set up crash handlers before anything else
 setupCrashHandlers();
@@ -293,6 +294,7 @@ app.whenReady().then(async () => {
   registerTagsHandlers();
   registerSearchHandlers();
   registerExportHandlers();
+  registerContentHandlers();
   await createWindow();
 
   // Register AI handlers after window is created (needed for streaming tokens)

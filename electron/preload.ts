@@ -122,4 +122,25 @@ contextBridge.exposeInMainWorld('api', {
     validate: (providerId: string, apiKey: string, baseURL?: string) =>
       ipcRenderer.invoke('provider:validate', { providerId, apiKey, baseURL }),
   },
+
+  // Content operations
+  content: {
+    upload: () => ipcRenderer.invoke('content:upload'),
+    create: (data: {
+      filePath: string;
+      source: 'manual' | 'ai-generated';
+      confidence_score?: number;
+      note_id?: string;
+      message_id?: string;
+    }) => ipcRenderer.invoke('content:create', data),
+    getById: (id: string) => ipcRenderer.invoke('content:getById', { id }),
+    getAll: () => ipcRenderer.invoke('content:getAll'),
+    update: (data: {
+      id: string;
+      extracted_text?: string;
+      thumbnail_path?: string;
+      metadata?: string;
+    }) => ipcRenderer.invoke('content:update', data),
+    delete: (id: string) => ipcRenderer.invoke('content:delete', { id }),
+  },
 });
