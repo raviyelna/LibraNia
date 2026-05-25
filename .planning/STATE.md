@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T15:11:39Z"
+last_updated: "2026-05-25T15:20:37Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 26
-  completed_plans: 24
-  percent: 92
+  completed_plans: 25
+  percent: 96
 ---
 
 # State: LibraNia
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 4 Complete - Content Storage & Management (4/4 plans complete)
+**Current Focus:** Phase 4 Complete - Content Storage & Management (5/5 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -32,9 +32,9 @@ progress:
 ## Current Position
 
 **Phase:** 4 - Content Storage & Management (COMPLETE)
-**Plan:** 04-04 (completed)
+**Plan:** 04-05 (completed)
 **Status:** Ready to execute Phase 5
-**Progress:** [██████████] 92%
+**Progress:** [██████████] 96%
 
 **Next Action:** Execute Phase 5 Plan 05-01 - Semantic Search Foundation
 
@@ -45,12 +45,12 @@ progress:
 ### Velocity
 
 - **Phases completed:** 4/6 (Phase 1, Phase 2, Phase 3, and Phase 4 complete)
-- **Plans completed:** 24/26 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8, Phase 4: 4/4)
-- **Average plan duration:** 7 min (24 plans completed)
+- **Plans completed:** 25/26 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8, Phase 4: 5/5)
+- **Average plan duration:** 7 min (25 plans completed)
 - **Phase 1 total duration:** 8h 0min
 - **Phase 2 total duration:** 52 min
 - **Phase 3 total duration:** 67 min (8/8 plans)
-- **Phase 4 total duration:** 16 min (4/4 plans)
+- **Phase 4 total duration:** 23 min (5/5 plans)
 
 ### Quality
 
@@ -73,6 +73,9 @@ progress:
 
 | Decision | Rationale | Phase | Date |
 |----------|-----------|-------|------|
+| Grid layout for content list | Better visual presentation for mixed content (images + documents), thumbnails display naturally in cards | 04-05 | 2026-05-25 |
+| Tab navigation for Notes/Content in Library route | Keeps related functionality together, easy switching without navigation, reuses existing layout | 04-05 | 2026-05-25 |
+| React hooks pattern for content operations | Matches existing useNotes pattern, provides loading/error states, consistent API across codebase | 04-05 | 2026-05-25 |
 | File upload uses Electron dialog API | Provides secure path selection without exposing filesystem to renderer, prevents path traversal attacks | 04-04 | 2026-05-25 |
 | Process files synchronously before database insert | Ensures data consistency - if processing fails, no orphaned files or incomplete records | 04-03 | 2026-05-25 |
 | Truncate extracted text to 100KB | Prevents FTS5 index bloat, 100KB ≈ 15,000 words covers 99% of documents | 04-03 | 2026-05-25 |
@@ -190,6 +193,7 @@ None yet.
 | 4 | 04-02 | 2026-05-25T14:49:50Z | 2026-05-25T14:51:32Z | 2 min | ✓ Complete - File processing dependencies installed (file-type, pdf-parse, mammoth, sharp) |
 | 4 | 04-03 | 2026-05-25T14:53:39Z | 2026-05-25T15:03:39Z | 10 min | ✓ Complete - Content service with CRUD, file validation, text extraction, thumbnail generation |
 | 4 | 04-04 | 2026-05-25T15:07:15Z | 2026-05-25T15:10:19Z | 3 min | ✓ Complete - Content IPC handlers with file dialog integration, window.api.content exposure |
+| 4 | 04-05 | 2026-05-25T15:13:18Z | 2026-05-25T15:20:37Z | 7 min | ✓ Complete - Content UI components with upload, list, metadata display, Library route integration |
 
 ---
 
@@ -224,14 +228,15 @@ None yet.
 - **Plan 03-10 COMPLETE:** React hooks for chat operations (useSendMessage, useSummarizeNote, useChat) with streaming token accumulation and conversation CRUD hooks (useConversations, useConversation, useDeleteConversation). All 14 tests passing.
 - **Plan 03-11 COMPLETE:** Chat route with conversation list sidebar, navigation link in Sidebar, route registration in App.tsx. Added conversation:create IPC handler (missing from prior plans). All 12 tests passing.
 - **PHASE 3 COMPLETE:** All 8 plans complete, all requirements (AI-01 through AI-10) fulfilled. Total duration: 67 minutes.
-- **PHASE 4 IN PROGRESS:** 3/3 plans complete (04-01, 04-02, 04-03)
+- **PHASE 4 IN PROGRESS:** 5/5 plans complete (04-01, 04-02, 04-03, 04-04, 04-05)
 - **Plan 04-01 COMPLETE:** Database schema extension with content and content_tags tables, FTS5 virtual table for document text search. All 10 tests passing (5 schema + 5 FTS5).
 - **Plan 04-02 COMPLETE:** File processing dependencies installed (file-type, pdf-parse, mammoth, sharp). Package legitimacy verified.
 - **Plan 04-03 COMPLETE:** Content service with CRUD operations, magic bytes file validation, atomic writes, PDF/DOCX text extraction, 200x200 JPEG thumbnail generation. All 32 tests passing.
 - **Plan 04-04 COMPLETE:** Content IPC handlers with file dialog integration, window.api.content exposure. All 21 tests passing.
-- **PHASE 4 COMPLETE:** All 4 plans complete, all requirements (CONT-01 through CONT-05) fulfilled. Total duration: 16 minutes.
+- **Plan 04-05 COMPLETE:** Content UI components (ContentUpload, ContentList) with React hooks (useContent, useUploadContent, useDeleteContent, useContentById), Library route integration with tab navigation. All 14 tests passing.
+- **PHASE 4 COMPLETE:** All 5 plans complete, all requirements (CONT-01 through CONT-06) fulfilled. Total duration: 23 minutes.
 
 ---
 
 *State initialized: 2026-05-24*
-*Last updated: 2026-05-25 after Phase 4 Plan 04-03 completion*
+*Last updated: 2026-05-25 after Phase 4 Plan 04-05 completion*

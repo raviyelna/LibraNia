@@ -40,7 +40,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **CONT-03**: AI-generated answers stored with text content
 - [ ] **CONT-04**: AI-generated answers stored with diagrams
 - [ ] **CONT-05**: AI-generated answers stored with images
-- [ ] **CONT-06**: Each knowledge node has metadata (created date, source, confidence)
+- [x] **CONT-06**: Each knowledge node has metadata (created date, source, confidence)
 
 ### Semantic Discovery
 
@@ -141,7 +141,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONT-03 | Phase 4 | In Progress |
 | CONT-04 | Phase 4 | In Progress |
 | CONT-05 | Phase 4 | In Progress |
-| CONT-06 | Phase 4 | In Progress |
+| CONT-06 | Phase 4 | Complete |
 | SEM-01 | Phase 5 | Pending |
 | SEM-02 | Phase 5 | Pending |
 | SEM-03 | Phase 5 | Pending |
