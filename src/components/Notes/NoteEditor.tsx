@@ -5,6 +5,8 @@ import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { keymap } from '@codemirror/view';
 import { useNote, useUpdateNote, useDeleteNote } from '../../hooks/useNotes';
+import { BacklinksPanel } from './BacklinksPanel';
+import { RelatedPanel } from './RelatedPanel';
 
 interface NoteEditorProps {
   noteId: string;
@@ -98,6 +100,12 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     }
   };
 
+  const handleNavigate = (targetNoteId: string) => {
+    // Navigation will be handled by parent component or router
+    // For now, just log the navigation intent
+    console.log('Navigate to note:', targetNoteId);
+  };
+
   if (loading) {
     return (
       <div className="note-editor p-4">
@@ -115,25 +123,32 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
   }
 
   return (
-    <div className="note-editor flex flex-col h-full">
-      <div className="editor-header p-4 border-b border-border">
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note title"
-          className="w-full px-3 py-2 mb-3 text-2xl font-bold bg-background border-none text-foreground placeholder-secondary focus:outline-none"
-        />
-        <button
-          onClick={handleDelete}
-          className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
-        >
-          Delete
-        </button>
+    <div className="note-editor flex h-full">
+      <div className="editor-main flex-1 flex flex-col">
+        <div className="editor-header p-4 border-b border-border">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Note title"
+            className="w-full px-3 py-2 mb-3 text-2xl font-bold bg-background border-none text-foreground placeholder-secondary focus:outline-none"
+          />
+          <button
+            onClick={handleDelete}
+            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+
+        <div className="editor-body flex-1 overflow-y-auto p-4">
+          <div ref={editorRef} className="editor-container" />
+        </div>
       </div>
 
-      <div className="editor-body flex-1 overflow-y-auto p-4">
-        <div ref={editorRef} className="editor-container" />
+      <div className="editor-sidebar w-80 border-l border-border overflow-y-auto">
+        <BacklinksPanel noteId={noteId} onNavigate={handleNavigate} />
+        <RelatedPanel noteId={noteId} onNavigate={handleNavigate} />
       </div>
     </div>
   );
