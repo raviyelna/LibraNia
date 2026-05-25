@@ -1,0 +1,78 @@
+/* CodeMirror editor styles */
+.editor-container {
+  min-height: 400px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.editor-container .cm-editor {
+  height: 100%;
+  outline: none;
+}
+
+.editor-container .cm-scroller {
+  overflow: auto;
+}
+
+.editor-container .cm-content {
+  padding: 10px;
+}
+
+/* Inline formatting hints */
+.cm-strong {
+  font-weight: bold;
+}
+
+.cm-em {
+  font-style: italic;
+}
+
+.cm-heading {
+  font-weight: bold;
+}
+
+.cm-heading-1 {
+  font-size: 2em;
+}
+
+.cm-heading-2 {
+  font-size: 1.5em;
+}
+
+.cm-heading-3 {
+  font-size: 1.25em;
+}
+
+.cm-wiki-link {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* Theme integration */
+.cm-editor {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+.cm-gutters {
+  background-color: var(--color-background);
+  border-right: 1px solid var(--color-border);
+}
+
+.cm-activeLineGutter {
+  background-color: var(--color-accent);
+}
+
+.cm-activeLine {
+  background-color: var(--color-accent);
+}
+
+.cm-selectionBackground {
+  background-color: var(--color-primary);
+  opacity: 0.3;
+}
+
+.cm-cursor {
+  border-left-color: var(--color-foreground);
+}
