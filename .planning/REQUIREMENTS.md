@@ -64,7 +64,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **APP-02**: Desktop app can run in web-based mode
 - [x] **APP-03**: User can switch between desktop and web mode
 - [x] **APP-04**: App supports dark mode
-- [ ] **APP-05**: App works offline (except AI/web search calls)
+- [x] **APP-05**: App works offline (except AI/web search calls)
 
 ## v2 Requirements
 
@@ -115,7 +115,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | APP-02 | Phase 1 | Complete |
 | APP-03 | Phase 1 | Complete |
 | APP-04 | Phase 1 | Complete |
-| APP-05 | Phase 1 | Pending |
+| APP-05 | Phase 1 | Complete |
 | KNOW-01 | Phase 2 | Pending |
 | KNOW-02 | Phase 2 | Pending |
 | KNOW-03 | Phase 2 | Pending |
