@@ -76,4 +76,12 @@ contextBridge.exposeInMainWorld('api', {
     fullText: (query: string) => ipcRenderer.invoke('search:fullText', { query }),
     fuzzy: (query: string) => ipcRenderer.invoke('search:fuzzy', { query }),
   },
+
+  // Export operations
+  export: {
+    selectDirectory: () => ipcRenderer.invoke('export:selectDirectory'),
+    selectFile: (defaultName: string) => ipcRenderer.invoke('export:selectFile', { defaultName }),
+    markdown: (noteIds: string[], directory: string) => ipcRenderer.invoke('export:markdown', { noteIds, directory }),
+    json: (noteIds: string[], filePath: string) => ipcRenderer.invoke('export:json', { noteIds, filePath }),
+  },
 });
