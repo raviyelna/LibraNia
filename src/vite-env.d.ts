@@ -132,6 +132,21 @@ interface ConversationAPI {
   delete: (conversationId: string) => Promise<{ success: boolean }>;
 }
 
+interface ProviderConfig {
+  id: 'claude' | 'openai' | 'deepseek';
+  apiKey: string;
+  baseURL?: string;
+  model: string;
+}
+
+interface ProvidersAPI {
+  setConfig: (config: ProviderConfig) => Promise<{ success: boolean }>;
+  getConfig: (providerId: string) => Promise<ProviderConfig | undefined>;
+  getAllConfigs: () => Promise<ProviderConfig[]>;
+  deleteConfig: (providerId: string) => Promise<{ success: boolean }>;
+  validate: (providerId: string, apiKey: string, baseURL?: string) => Promise<{ valid: boolean }>;
+}
+
 interface WindowAPI {
   getConfig: () => Promise<any>;
   setConfig: (key: string, value: any) => Promise<{ success: boolean }>;
@@ -149,6 +164,7 @@ interface WindowAPI {
   export: ExportAPI;
   chat: ChatAPI;
   conversation: ConversationAPI;
+  providers: ProvidersAPI;
 }
 
 declare global {
