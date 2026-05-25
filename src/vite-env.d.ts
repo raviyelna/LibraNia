@@ -144,7 +144,7 @@ interface ProvidersAPI {
   getConfig: (providerId: string) => Promise<ProviderConfig | undefined>;
   getAllConfigs: () => Promise<ProviderConfig[]>;
   deleteConfig: (providerId: string) => Promise<{ success: boolean }>;
-  validate: (providerId: string, apiKey: string, baseURL?: string) => Promise<{ valid: boolean }>;
+  validate: (providerId: string, apiKey: string, baseURL?: string) => Promise<{ valid: boolean; error?: string }>;
 }
 
 interface WindowAPI {
