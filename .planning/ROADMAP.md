@@ -115,7 +115,7 @@ Plans:
   4. User can view metadata for any knowledge node
   5. Content is stored locally in SQLite with proper file organization
 
-**Plans**: 4 plans
+**Plans**: 5 plans
 
 
 Plans:
@@ -146,7 +146,11 @@ Plans:
 
 
 
-- [ ] 04-05-PLAN.md — UI components (ContentUpload, ContentList) and Library route integration
+**Wave 4** *(blocked on Wave 3 completion)*
+
+
+
+- [x] 04-05-PLAN.md — UI components (ContentUpload, ContentList) and Library route integration (completed 2026-05-25)
 
 ---
 
