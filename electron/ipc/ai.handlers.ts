@@ -216,6 +216,20 @@ export function registerAIHandlers(
   };
 
   /**
+   * conversation:create - Create a new conversation
+   */
+  handlers['conversation:create'] = async (data: { title: string }) => {
+    try {
+      logger.info('IPC: conversation:create', { title: data.title });
+      const conversation = await createConversation({ title: data.title }, orm);
+      return conversation;
+    } catch (error) {
+      logger.error('conversation:create failed', error as Error);
+      throw error;
+    }
+  };
+
+  /**
    * conversation:get - Get conversation with messages and citations
    */
   handlers['conversation:get'] = async (data: { conversationId: string }) => {

@@ -127,6 +127,7 @@ interface ChatAPI {
 }
 
 interface ConversationAPI {
+  create: (data: { title: string }) => Promise<Conversation>;
   getAll: () => Promise<Conversation[]>;
   get: (conversationId: string) => Promise<Conversation | null>;
   delete: (conversationId: string) => Promise<{ success: boolean }>;

@@ -5,6 +5,7 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { Layout } from './components/Layout/Layout';
 import { Home } from './routes/Home';
 import { LibraryPage } from './routes/Library';
+import { Chat } from './routes/Chat';
 import { SettingsPage } from './routes/Settings';
 import './styles/editor.css';
 
@@ -27,6 +28,7 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="library" element={<LibraryPage />} />
+              <Route path="chat" element={<Chat />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

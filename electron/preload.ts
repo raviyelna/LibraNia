@@ -107,6 +107,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // Conversation operations
   conversation: {
+    create: (data: { title: string }) => ipcRenderer.invoke('conversation:create', data),
     getAll: () => ipcRenderer.invoke('conversation:getAll'),
     get: (conversationId: string) => ipcRenderer.invoke('conversation:get', { conversationId }),
     delete: (conversationId: string) => ipcRenderer.invoke('conversation:delete', { conversationId }),
