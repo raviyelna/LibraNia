@@ -58,7 +58,7 @@ Plans:
   4. AI can research topics using both web search and model knowledge
   5. AI-generated answers include citations to sources
   6. AI can generate summaries of existing notes
-**Plans**: 8 plans
+**Plans**: 11 plans
 **UI hint**: yes
 
 
@@ -71,6 +71,9 @@ Plans:
 - [ ] 03-06-PLAN.md — AI provider settings UI with API key input and validation
 - [ ] 03-07-PLAN.md — OpenAI/DeepSeek providers and AI service with retry logic
 - [ ] 03-08-PLAN.md — IPC handler registration and renderer exposure
+- [ ] 03-09-PLAN.md — Chat UI components (MessageBubble, MessageList, MessageInput, CitationList)
+- [ ] 03-10-PLAN.md — React hooks for chat operations (useChat, useConversations)
+- [ ] 03-11-PLAN.md — Chat route integration with navigation and conversation list
 
 ---
 
@@ -124,7 +127,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Application Shell | 4/4 | Complete | 2026-05-25 |
 | 2. Core Knowledge Management | 6/6 | Complete   | 2026-05-25 |
-| 3. AI Integration | 0/8 | Not started | - |
+| 3. AI Integration | 0/11 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |
 | 5. Semantic Discovery | 0/0 | Not started | - |
 | 6. 3D Visualization | 0/0 | Not started | - |
