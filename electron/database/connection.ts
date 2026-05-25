@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { setupFTS5 } from './fts';
+import { setupFTS5, setupContentFTS5 } from './fts';
 import * as schema from './schema';
 
 let db: Database.Database | null = null;
@@ -123,10 +123,38 @@ export async function initDatabase(dbPath: string): Promise<void> {
       created_at INTEGER NOT NULL,
       FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS content (
+      id TEXT PRIMARY KEY,
+      file_path TEXT NOT NULL,
+      thumbnail_path TEXT,
+      mime_type TEXT NOT NULL,
+      original_filename TEXT NOT NULL,
+      file_size INTEGER NOT NULL,
+      extracted_text TEXT,
+      source TEXT NOT NULL,
+      confidence_score INTEGER,
+      metadata TEXT,
+      note_id TEXT,
+      message_id TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE SET NULL,
+      FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS content_tags (
+      content_id TEXT NOT NULL,
+      tag_id TEXT NOT NULL,
+      PRIMARY KEY (content_id, tag_id),
+      FOREIGN KEY (content_id) REFERENCES content(id) ON DELETE CASCADE,
+      FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+    );
   `);
 
   // Setup FTS5 virtual tables and triggers
   setupFTS5(db);
+  setupContentFTS5(db);
 
   // Initialize Drizzle ORM
   orm = drizzle(db, { schema });
