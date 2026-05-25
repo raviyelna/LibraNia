@@ -112,3 +112,52 @@ export function fullTextSearch(
 
   return results;
 }
+
+/**
+ * Fuzzy search - typo-tolerant search using trigram tokenizer
+ * Used as fallback when exact/stemmed search returns no results
+ *
+ * @param db Database instance
+ * @param query Search query
+ * @param limit Maximum number of results (default: 20, fuzzy search is slower)
+ * @returns Array of matching notes with id, title, updated_at, and rank
+ */
+export function fuzzySearch(
+  db: Database.Database,
+  query: string,
+  limit = 20
+): Array<{ id: string; title: string; updated_at: number; rank: number }> {
+  // Escape FTS5 special characters to prevent syntax errors
+  const escapedQuery = query.replace(/['"*]/g, '');
+
+  // Return empty array if query is empty after escaping
+  if (!escapedQuery.trim()) {
+    return [];
+  }
+
+  // Fuzzy search using trigram tokenizer
+  const results = db
+    .prepare(
+      `
+    SELECT
+      n.id,
+      n.title,
+      n.updated_at,
+      notes_fts_trigram.rank
+    FROM notes_fts_trigram
+    INNER JOIN notes n ON notes_fts_trigram.rowid = n.rowid
+    WHERE notes_fts_trigram MATCH ?
+      AND n.deleted_at IS NULL
+    ORDER BY notes_fts_trigram.rank
+    LIMIT ?
+  `
+    )
+    .all(escapedQuery, limit) as Array<{
+    id: string;
+    title: string;
+    updated_at: number;
+    rank: number;
+  }>;
+
+  return results;
+}
