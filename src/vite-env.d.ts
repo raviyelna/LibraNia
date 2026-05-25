@@ -78,6 +78,13 @@ interface SearchAPI {
   fuzzy: (query: string) => Promise<SearchResult[]>;
 }
 
+interface ExportAPI {
+  selectDirectory: () => Promise<string | null>;
+  selectFile: (defaultName: string) => Promise<string | null>;
+  markdown: (noteIds: string[], directory: string) => Promise<{ success: boolean; count: number }>;
+  json: (noteIds: string[], filePath: string) => Promise<{ success: boolean }>;
+}
+
 interface WindowAPI {
   getConfig: () => Promise<any>;
   setConfig: (key: string, value: any) => Promise<{ success: boolean }>;
@@ -92,6 +99,7 @@ interface WindowAPI {
   notes: NotesAPI;
   links: LinksAPI;
   search: SearchAPI;
+  export: ExportAPI;
 }
 
 declare global {

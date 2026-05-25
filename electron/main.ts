@@ -16,6 +16,7 @@ import { initDatabase } from './database/connection.js';
 import { registerTagsHandlers } from './ipc/tags.handlers.js';
 import { registerSearchHandlers } from './ipc/search.handlers.js';
 import { registerNotesHandlers } from './ipc/notes.handlers.js';
+import { registerExportHandlers } from './ipc/export.handlers.js';
 
 // Set up crash handlers before anything else
 setupCrashHandlers();
@@ -290,6 +291,7 @@ app.whenReady().then(async () => {
   registerNotesHandlers();
   registerTagsHandlers();
   registerSearchHandlers();
+  registerExportHandlers();
   await createWindow();
 
   // Create system tray
