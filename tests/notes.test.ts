@@ -55,6 +55,8 @@ describe('Notes Service', () => {
         id TEXT PRIMARY KEY,
         source_note_id TEXT NOT NULL,
         target_note_id TEXT NOT NULL,
+        link_type TEXT NOT NULL DEFAULT 'manual',
+        similarity_score REAL,
         created_at INTEGER NOT NULL,
         FOREIGN KEY (source_note_id) REFERENCES notes(id) ON DELETE CASCADE,
         FOREIGN KEY (target_note_id) REFERENCES notes(id) ON DELETE SET NULL
