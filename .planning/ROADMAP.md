@@ -187,7 +187,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 05-05-PLAN.md — UI components (semantic search mode, RelatedPanel, hooks)
+- [x] 05-05-PLAN.md — UI components (semantic search mode, RelatedPanel, hooks)
 
 ---
 
