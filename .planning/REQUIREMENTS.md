@@ -12,7 +12,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **KNOW-01**: User can create notes with rich text/markdown
 - [ ] **KNOW-02**: User can edit existing notes
 - [ ] **KNOW-03**: User can delete notes
-- [ ] **KNOW-04**: User can search notes with full-text search (<100ms response)
+- [x] **KNOW-04**: User can search notes with full-text search (<100ms response)
 - [ ] **KNOW-05**: User can create bidirectional links between notes using [[wiki-style]] syntax
 - [ ] **KNOW-06**: User can view backlinks panel showing what links to current note
 - [x] **KNOW-07**: User can add tags/labels to notes for organization
@@ -119,7 +119,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | KNOW-01 | Phase 2 | Pending |
 | KNOW-02 | Phase 2 | Pending |
 | KNOW-03 | Phase 2 | Pending |
-| KNOW-04 | Phase 2 | Pending |
+| KNOW-04 | Phase 2 | Complete |
 | KNOW-05 | Phase 2 | Pending |
 | KNOW-06 | Phase 2 | Pending |
 | KNOW-07 | Phase 2 | Complete |

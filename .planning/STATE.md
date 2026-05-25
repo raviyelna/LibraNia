@@ -96,6 +96,9 @@ progress:
 | Use raw SQL for table creation instead of Drizzle migrations | Simpler for Phase 2, migrations can be added later | 02-01 | 2026-05-25 |
 | Three FTS5 tables for different search modes | Provides flexibility for exact/stemmed/fuzzy search | 02-01 | 2026-05-25 |
 | Database initialized in app.whenReady before window creation | Ensures database ready before renderer process access | 02-01 | 2026-05-25 |
+| FTS5 rank is negative, multiply by 0.67 for recency boost | FTS5 rank values are negative (lower = better), so multiply recent notes by 0.67 to make them less negative (better ranking) | 02-03 | 2026-05-25 |
+| Recency boost: 7 days with 1.5x multiplier | Notes updated in last 7 days get 0.67x multiplier (equivalent to 1.5x boost) for better ranking | 02-03 | 2026-05-25 |
+| Fuzzy search limited to 20 results | Trigram tokenizer is slower than unicode61/porter, limit results to prevent performance issues | 02-03 | 2026-05-25 |
 | Case-sensitive tag names with duplicate prevention | Allows users to distinguish between "JavaScript" and "javascript" if needed | 02-04 | 2026-05-25 |
 | Tags created on-the-fly during addTagsToNote | Simplifies UX - users don't need to pre-create tags before using them | 02-04 | 2026-05-25 |
 | Junction table with CASCADE delete on both foreign keys | Automatically cleans up associations when tags or notes are deleted | 02-04 | 2026-05-25 |
@@ -153,9 +156,10 @@ None yet.
 - **Tailwind v4 CSS-first config:** Using @theme directive in CSS, not tailwind.config.js
 - **Winston logging:** Main and renderer processes log separately with 7-day rotation
 - **Error handling:** React Error Boundaries + global crash handlers implemented
-- **Phase 2 IN PROGRESS:** Plan 02-02 complete - Note CRUD services with wiki-link parsing, backlinks, IPC handlers
+- **Phase 2 IN PROGRESS:** 3/6 plans complete (02-01, 02-03, 02-04)
 - **better-sqlite3 works:** Prebuilt binaries compatible with Node.js 22.x, no rebuild needed
 - **TDD approach:** All Phase 2 tasks following RED → GREEN → REFACTOR cycle
+- **Plan 02-03 COMPLETE:** Full-text search with FTS5 (quick nav, full-text, fuzzy), BM25 ranking with recency boost, IPC handlers. All 23 tests passing.
 - **Plan 02-04 COMPLETE:** Tags system with CRUD operations, note-tag associations via junction table, tag-based filtering with soft-delete awareness. All 35 tests passing.
 
 ---
