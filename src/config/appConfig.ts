@@ -1,6 +1,5 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { app } from 'electron';
 import { AppConfig, DEFAULT_CONFIG } from '../types/config';
 
 export function getConfigPath(): string {
