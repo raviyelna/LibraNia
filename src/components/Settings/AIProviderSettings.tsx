@@ -5,13 +5,6 @@ import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
 
 type ProviderId = 'claude' | 'openai' | 'deepseek';
 
-interface ProviderConfig {
-  id: ProviderId;
-  apiKey: string;
-  baseURL?: string;
-  model: string;
-}
-
 interface ProviderFormState {
   apiKey: string;
   baseURL: string;
@@ -52,7 +45,7 @@ const PROVIDER_NAMES: Record<ProviderId, string> = {
 
 export function AIProviderSettings() {
   const { providers, setConfig } = useAIProviders();
-  const { validate, validating } = useProviderValidation();
+  const { validate } = useProviderValidation();
 
   // Initialize form state for each provider
   const [formState, setFormState] = useState<Record<ProviderId, ProviderFormState>>({
