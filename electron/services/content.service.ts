@@ -2,6 +2,9 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { fileTypeFromBuffer } from 'file-type';
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
+import sharp from 'sharp';
 import { eq, desc } from 'drizzle-orm';
 import { content, contentTags } from '../database/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -66,6 +69,11 @@ const ALLOWED_MIME_TYPES = [
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 /**
+ * Maximum extracted text size (100KB) to prevent FTS5 bloat
+ */
+const MAX_TEXT_SIZE = 102400;
+
+/**
  * Validate file type using magic bytes detection
  * @param buffer File buffer to validate
  * @returns Object with mime type and extension
@@ -120,6 +128,71 @@ export async function writeFileAtomic(filePath: string, data: Buffer): Promise<v
 }
 
 /**
+ * Extract text from document files
+ * @param filePath Path to file
+ * @param mimeType MIME type of file
+ * @returns Extracted text (truncated to 100KB)
+ */
+export async function extractText(filePath: string, mimeType: string): Promise<string> {
+  let text = '';
+
+  if (mimeType === 'application/pdf') {
+    // Extract text from PDF using pdf-parse
+    const dataBuffer = await fs.readFile(filePath);
+    const data = await pdfParse(dataBuffer);
+    text = data.text;
+  } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    // Extract text from DOCX using mammoth
+    const result = await mammoth.extractRawText({ path: filePath });
+    text = result.value;
+  } else if (mimeType === 'text/plain' || mimeType === 'text/markdown') {
+    // Read plain text files directly
+    text = await fs.readFile(filePath, 'utf-8');
+  } else {
+    // No text extraction for images
+    return '';
+  }
+
+  // Truncate to 100KB to prevent FTS5 index bloat
+  if (text.length > MAX_TEXT_SIZE) {
+    text = text.substring(0, MAX_TEXT_SIZE);
+  }
+
+  return text;
+}
+
+/**
+ * Generate thumbnail for image files
+ * @param inputPath Path to input image
+ * @param mimeType MIME type of file
+ * @returns Path to generated thumbnail or null if not an image
+ */
+export async function generateThumbnail(inputPath: string, mimeType: string): Promise<string | null> {
+  // Only generate thumbnails for images
+  if (!mimeType.startsWith('image/')) {
+    return null;
+  }
+
+  // Ensure thumbnails directory exists
+  await fs.mkdir('content/thumbnails', { recursive: true });
+
+  // Extract UUID from input path and create thumbnail filename
+  const basename = path.basename(inputPath, path.extname(inputPath));
+  const thumbnailPath = `content/thumbnails/${basename}.jpg`;
+
+  // Generate 200x200 thumbnail using sharp
+  await sharp(inputPath)
+    .resize(200, 200, {
+      fit: 'cover',
+      position: 'center',
+    })
+    .jpeg({ quality: 80 })
+    .toFile(thumbnailPath);
+
+  return thumbnailPath;
+}
+
+/**
  * Create new content record with file storage
  * @param data Content input data
  * @param db Drizzle ORM database instance
@@ -148,6 +221,12 @@ export async function createContent(
   // Write file atomically
   await writeFileAtomic(destinationPath, fileBuffer);
 
+  // Extract text from documents
+  const extractedText = await extractText(destinationPath, mime);
+
+  // Generate thumbnail for images
+  const thumbnailPath = await generateThumbnail(destinationPath, mime);
+
   // Get original filename
   const originalFilename = path.basename(data.filePath);
 
@@ -158,11 +237,11 @@ export async function createContent(
     .values({
       id: uuid,
       file_path: destinationPath,
-      thumbnail_path: null,
+      thumbnail_path: thumbnailPath,
       mime_type: mime,
       original_filename: originalFilename,
       file_size: fileSize,
-      extracted_text: null,
+      extracted_text: extractedText || null,
       source: data.source,
       confidence_score: data.confidence_score ?? null,
       metadata: null,
