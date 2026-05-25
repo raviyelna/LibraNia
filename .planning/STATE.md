@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-25T03:05:53.331Z"
+last_updated: "2026-05-25T03:18:29.698Z"
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 9
-  percent: 17
+  completed_plans: 10
+  percent: 33
 ---
 
 # State: LibraNia
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 2 In Progress - Core Knowledge Management (5/6 plans complete)
+**Current Focus:** Phase 2 Complete - Core Knowledge Management (6/6 plans complete)
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -31,12 +31,12 @@ progress:
 
 ## Current Position
 
-**Phase:** 2 - Core Knowledge Management (IN PROGRESS)
-**Plan:** 02-05 (completed)
-**Status:** Note editor UI complete with CodeMirror 6, backlinks panel, tags input, and quick nav
-**Progress:** [█████████░] 90%
+**Phase:** 2 - Core Knowledge Management (COMPLETE)
+**Plan:** 02-06 (completed)
+**Status:** Export functionality complete with markdown and JSON formats
+**Progress:** [██████████] 100%
 
-**Next Action:** Execute Plan 02-06 (Export functionality with markdown and JSON)
+**Next Action:** Begin Phase 3 (AI Integration)
 
 ---
 
@@ -44,11 +44,12 @@ progress:
 
 ### Velocity
 
-- **Phases completed:** 1/6 (Phase 1 complete)
-- **Plans completed:** 8/10 (Phase 1: 4/4, Phase 2: 3/6)
-- **Average plan duration:** 10 min (8 plans completed)
+- **Phases completed:** 2/6 (Phase 1 and Phase 2 complete)
+- **Plans completed:** 10/10 (Phase 1: 4/4, Phase 2: 6/6)
+- **Average plan duration:** 10 min (10 plans completed)
 - **Phase 1 total duration:** 8h 0min
-- **Phase 2 progress:** 34 min (3/6 plans)
+- **Phase 2 total duration:** 52 min
+- **Phase 2 progress:** 52 min (6/6 plans)
 
 ### Quality
 
@@ -102,10 +103,15 @@ progress:
 | Case-sensitive tag names with duplicate prevention | Allows users to distinguish between "JavaScript" and "javascript" if needed | 02-04 | 2026-05-25 |
 | Tags created on-the-fly during addTagsToNote | Simplifies UX - users don't need to pre-create tags before using them | 02-04 | 2026-05-25 |
 | Junction table with CASCADE delete on both foreign keys | Automatically cleans up associations when tags or notes are deleted | 02-04 | 2026-05-25 |
+| Use gray-matter for YAML frontmatter | Standard package (10M+ weekly downloads), handles edge cases correctly | 02-06 | 2026-05-25 |
+| Convert wiki-links to standard markdown in export | Preserves link structure, compatible with other markdown tools | 02-06 | 2026-05-25 |
+| Preserve broken links as plain text in export | Maintains context without creating invalid markdown links | 02-06 | 2026-05-25 |
+| JSON export includes all relationships | Enables complete data export for backup/migration | 02-06 | 2026-05-25 |
+| Use Electron dialog API for export path selection | Native OS dialogs, secure path validation, prevents path traversal | 02-06 | 2026-05-25 |
 
 ### Active TODOs
 
-- [ ] Execute Plan 02-05: Note editor UI with CodeMirror 6, backlinks panel, tags input
+- [ ] Begin Phase 3: AI Integration
 - [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
 
 ### Known Blockers
@@ -142,6 +148,8 @@ None yet.
 | 2 | 02-02 | 2026-05-25T02:29:01Z | 2026-05-25T02:42:07Z | 13 min | ✓ Complete - Note CRUD services with wiki-link parsing and backlinks |
 | 2 | 02-03 | 2026-05-25T02:28:47Z | 2026-05-25T02:41:11Z | 12 min | ✓ Complete - Full-text search with FTS5, BM25 ranking, recency boost |
 | 2 | 02-04 | 2026-05-25T02:28:40Z | 2026-05-25T02:36:27Z | 8 min | ✓ Complete - Tags system with CRUD, associations, and filtering |
+| 2 | 02-05 | 2026-05-25T02:42:30Z | 2026-05-25T03:05:53Z | 23 min | ✓ Complete - Note editor UI with CodeMirror 6, backlinks panel, tags input |
+| 2 | 02-06 | 2026-05-25T03:07:48Z | 2026-05-25T03:17:04Z | 9 min | ✓ Complete - Export functionality with markdown and JSON formats |
 
 ---
 
@@ -161,6 +169,9 @@ None yet.
 - **TDD approach:** All Phase 2 tasks following RED → GREEN → REFACTOR cycle
 - **Plan 02-03 COMPLETE:** Full-text search with FTS5 (quick nav, full-text, fuzzy), BM25 ranking with recency boost, IPC handlers. All 23 tests passing.
 - **Plan 02-04 COMPLETE:** Tags system with CRUD operations, note-tag associations via junction table, tag-based filtering with soft-delete awareness. All 35 tests passing.
+- **Plan 02-05 COMPLETE:** Note editor UI with CodeMirror 6, backlinks panel, tags input, quick nav. All UI components integrated.
+- **Plan 02-06 COMPLETE:** Export functionality with markdown (YAML frontmatter, wiki-link conversion) and JSON (full relationships). All 11 tests passing.
+- **PHASE 2 COMPLETE:** All 6 plans complete, all requirements (KNOW-01 through KNOW-10) fulfilled. Total duration: 52 minutes.
 
 ---
 
