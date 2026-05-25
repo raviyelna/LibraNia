@@ -84,7 +84,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 03-05-PLAN.md — Conversation service and IPC handlers for chat operations
+- [x] 03-05-PLAN.md — Conversation service and IPC handlers for chat operations (completed 2026-05-25)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
