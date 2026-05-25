@@ -10,7 +10,7 @@ import {
   getAllNotes,
   getDeletedNotes,
 } from '../services/notes.service';
-import { getBacklinks } from '../services/links.service';
+import { getBacklinks, getSemanticLinks } from '../services/links.service';
 
 /**
  * Register IPC handlers for note operations
@@ -112,6 +112,18 @@ export function registerNotesHandlers() {
       return backlinks;
     } catch (error) {
       logger.error('links:getBacklinks failed', error as Error);
+      throw error;
+    }
+  });
+
+  // Get semantic links for a note
+  ipcMain.handle('links:getSemanticLinks', async (event, data) => {
+    try {
+      logger.info('IPC: links:getSemanticLinks', { noteId: data.noteId });
+      const semanticLinks = await getSemanticLinks(data.noteId, orm);
+      return semanticLinks;
+    } catch (error) {
+      logger.error('links:getSemanticLinks failed', error as Error);
       throw error;
     }
   });
