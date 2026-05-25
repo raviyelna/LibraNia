@@ -263,3 +263,88 @@ describe('FTS5 Full-Text Search', () => {
     });
   });
 });
+
+describe('Database Connection Manager', () => {
+  it('should export getDatabase function', async () => {
+    const { getDatabase } = await import('../electron/database/connection');
+    expect(getDatabase).toBeDefined();
+    expect(typeof getDatabase).toBe('function');
+  });
+
+  it('should export initDatabase function', async () => {
+    const { initDatabase } = await import('../electron/database/connection');
+    expect(initDatabase).toBeDefined();
+    expect(typeof initDatabase).toBe('function');
+  });
+
+  it('should create database file in userData directory', async () => {
+    const { initDatabase, closeDatabase } = await import('../electron/database/connection');
+    const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
+
+    // Use temp directory for testing
+    const testDbPath = path.join(os.tmpdir(), 'librania-test.db');
+
+    // Clean up if exists
+    if (fs.existsSync(testDbPath)) {
+      fs.unlinkSync(testDbPath);
+    }
+
+    // Initialize database
+    await initDatabase(testDbPath);
+
+    // Verify file exists
+    expect(fs.existsSync(testDbPath)).toBe(true);
+
+    // Clean up
+    closeDatabase();
+    fs.unlinkSync(testDbPath);
+  });
+
+  it('should enable WAL mode', async () => {
+    const { initDatabase, getDatabase } = await import('../electron/database/connection');
+    const path = await import('path');
+    const os = await import('os');
+    const fs = await import('fs');
+
+    const testDbPath = path.join(os.tmpdir(), 'librania-test-wal.db');
+
+    if (fs.existsSync(testDbPath)) {
+      fs.unlinkSync(testDbPath);
+    }
+
+    await initDatabase(testDbPath);
+    const db = getDatabase();
+
+    const result = db.pragma('journal_mode', { simple: true });
+    expect(result).toBe('wal');
+
+    // Clean up
+    db.close();
+    fs.unlinkSync(testDbPath);
+  });
+
+  it('should enable foreign keys', async () => {
+    const { initDatabase, getDatabase } = await import('../electron/database/connection');
+    const path = await import('path');
+    const os = await import('os');
+    const fs = await import('fs');
+
+    const testDbPath = path.join(os.tmpdir(), 'librania-test-fk.db');
+
+    if (fs.existsSync(testDbPath)) {
+      fs.unlinkSync(testDbPath);
+    }
+
+    await initDatabase(testDbPath);
+    const db = getDatabase();
+
+    const result = db.pragma('foreign_keys', { simple: true });
+    expect(result).toBe(1);
+
+    // Clean up
+    db.close();
+    fs.unlinkSync(testDbPath);
+  });
+});
