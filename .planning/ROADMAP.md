@@ -7,7 +7,7 @@
 ## Phases
 
 - [x] **Phase 1: Foundation & Application Shell** - Desktop app infrastructure with native and web modes (COMPLETE)
-- [ ] **Phase 2: Core Knowledge Management** - Note creation, editing, search, and bidirectional linking
+- [x] **Phase 2: Core Knowledge Management** - Note creation, editing, search, and bidirectional linking (completed 2026-05-25)
 - [ ] **Phase 3: AI Integration** - Multi-provider AI configuration, chat interface, and research capabilities
 - [ ] **Phase 4: Content Storage & Management** - Document/image storage with rich metadata
 - [ ] **Phase 5: Semantic Discovery** - Embeddings generation, semantic search, and automatic linking
@@ -116,7 +116,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Application Shell | 4/4 | Complete | 2026-05-25 |
-| 2. Core Knowledge Management | 5/6 | In Progress|  |
+| 2. Core Knowledge Management | 6/6 | Complete   | 2026-05-25 |
 | 3. AI Integration | 0/0 | Not started | - |
 | 4. Content Storage & Management | 0/0 | Not started | - |
 | 5. Semantic Discovery | 0/0 | Not started | - |
@@ -143,4 +143,4 @@ Plans:
 - [x] 02-03-PLAN.md — Full-text search with FTS5 (quick nav, full-text, fuzzy) (✓ Complete)
 - [x] 02-04-PLAN.md — Tags system with junction table and filtering (✓ Complete)
 - [x] 02-05-PLAN.md — Note editor UI (CodeMirror 6, backlinks panel, tags input, quick nav)
-- [ ] 02-06-PLAN.md — Export functionality (markdown with YAML frontmatter, JSON)
+- [x] 02-06-PLAN.md — Export functionality (markdown with YAML frontmatter, JSON)
