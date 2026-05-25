@@ -1,6 +1,17 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { LogEntry } from '../src/types/logger';
 
 // Expose safe IPC APIs to renderer
+contextBridge.exposeInMainWorld('electronAPI', {
+  // Logging
+  log: (entry: LogEntry) => ipcRenderer.send('log:write', entry),
+  logError: (error: { message: string; stack?: string; componentStack?: string }) =>
+    ipcRenderer.invoke('log:error', error),
+  openLogsDirectory: () => ipcRenderer.invoke('logs:open'),
+  reloadApp: () => ipcRenderer.send('app:reload')
+});
+
+// Keep legacy 'api' namespace for backward compatibility
 contextBridge.exposeInMainWorld('api', {
   // Config operations
   getConfig: () => ipcRenderer.invoke('config:get'),

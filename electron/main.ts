@@ -1,13 +1,16 @@
-import { app, BrowserWindow, ipcMain, Tray } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, shell } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Store from 'electron-store';
-import log from 'electron-log';
+import { logger } from './logger.js';
 import { loadConfig, saveConfig, updateConfig } from '../src/config/appConfig.js';
 import { AppConfig } from '../src/types/config.js';
 import { startServer, stopServer, ServerInstance } from './server.js';
 import { getWindowState, saveWindowState } from './windowState.js';
 import { createTray, updateTrayMode } from './tray.js';
+import type { LogEntry } from '../src/types/logger.js';
+import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,11 +18,26 @@ const __dirname = path.dirname(__filename);
 // Initialize electron-store for config
 const store = new Store();
 
-// Configure logging
-log.transports.file.resolvePathFn = () =>
-  path.join(app.getPath('userData'), 'logs', 'main.log');
-log.transports.file.level = 'info';
-log.transports.console.level = 'debug';
+// Create renderer logger (separate from main logger)
+const logsDir = path.join(app.getPath('userData'), 'logs');
+const rendererLogger = winston.createLogger({
+  level: 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ level, message, timestamp, stack }) => {
+      const stackTrace = stack ? `\n${stack}` : '';
+      return `[${timestamp}] [${level}] [renderer] ${message}${stackTrace}`;
+    })
+  ),
+  transports: [
+    new DailyRotateFile({
+      filename: 'renderer-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logsDir,
+      maxFiles: '7d'
+    })
+  ]
+});
 
 let mainWindow: BrowserWindow | null = null;
 let currentConfig: AppConfig;
@@ -58,18 +76,18 @@ async function createWindow() {
 
   if (isDev) {
     // Development: Always use Vite dev server (both desktop and web mode)
-    log.info('Loading from Vite dev server:', process.env.VITE_DEV_SERVER_URL);
+    logger.info('Loading from Vite dev server: ' + process.env.VITE_DEV_SERVER_URL);
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools();
   } else if (isWebMode) {
     // Production web mode: Start Express server and load from it
-    log.info('Starting Express server for web mode');
+    logger.info('Starting Express server for web mode');
     const distPath = path.join(__dirname, '../dist');
     serverInstance = await startServer(currentConfig.serverPort, distPath);
     mainWindow.loadURL(`http://localhost:${serverInstance.port}`);
   } else {
     // Production desktop mode: Load from file system
-    log.info('Loading from file system (desktop mode)');
+    logger.info('Loading from file system (desktop mode)');
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
@@ -123,7 +141,7 @@ function registerIpcHandlers() {
   ipcMain.handle('mode:switch', async (_event, newMode: 'desktop' | 'web') => {
     await updateConfig({ mode: newMode });
     currentConfig = await loadConfig();
-    log.info('Mode switched to:', newMode);
+    logger.info('Mode switched to: ' + newMode);
 
     // Update tray menu
     if (tray && mainWindow) {
@@ -133,16 +151,36 @@ function registerIpcHandlers() {
     return { success: true, requiresRestart: true };
   });
 
-  // Logging
+  // Logging - renderer process logs
+  ipcMain.on('log:write', (_event, entry: LogEntry) => {
+    // Write renderer logs to separate file
+    rendererLogger.log({
+      level: entry.level,
+      message: entry.message,
+      stack: entry.stack
+    });
+  });
+
   ipcMain.handle('log:error', (_event, error: { message: string; stack?: string; componentStack?: string }) => {
-    log.error('Renderer error:', error);
+    logger.error('Renderer error: ' + error.message, error.stack ? new Error(error.stack) : undefined);
+  });
+
+  // Logs directory operations
+  ipcMain.handle('logs:open', async () => {
+    const logsPath = path.join(app.getPath('userData'), 'logs');
+    await shell.openPath(logsPath);
+  });
+
+  // App reload
+  ipcMain.on('app:reload', () => {
+    mainWindow?.reload();
   });
 }
 
 // Mode switch handler for tray
 function handleModeSwitch(mode: 'desktop' | 'web') {
   updateConfig({ mode }).then(() => {
-    log.info('Mode switched via tray to:', mode);
+    logger.info('Mode switched via tray to: ' + mode);
     // Trigger restart via IPC would require renderer, so we'll just relaunch
     app.relaunch();
     app.exit(0);
@@ -153,7 +191,8 @@ function handleModeSwitch(mode: 'desktop' | 'web') {
 app.whenReady().then(async () => {
   // Load config on startup
   currentConfig = await loadConfig();
-  log.info('Config loaded:', currentConfig);
+  logger.info('Config loaded');
+  logger.info('App ready, mode: ' + currentConfig.mode);
 
   registerIpcHandlers();
   await createWindow();
@@ -161,7 +200,7 @@ app.whenReady().then(async () => {
   // Create system tray
   if (mainWindow) {
     tray = createTray(mainWindow, currentConfig.mode, handleModeSwitch);
-    log.info('System tray created');
+    logger.info('System tray created');
   }
 });
 
