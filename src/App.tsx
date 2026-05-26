@@ -7,6 +7,7 @@ import { Home } from './routes/Home';
 import { LibraryPage } from './routes/Library';
 import { Chat } from './routes/Chat';
 import { SettingsPage } from './routes/Settings';
+import { GraphView } from './components/Graph/GraphView';
 import './styles/editor.css';
 
 /**
@@ -29,6 +30,7 @@ function App() {
               <Route index element={<Home />} />
               <Route path="library" element={<LibraryPage />} />
               <Route path="chat" element={<Chat />} />
+              <Route path="graph" element={<GraphView />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>
