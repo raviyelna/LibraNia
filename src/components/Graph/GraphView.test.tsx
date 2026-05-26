@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GraphView } from './GraphView';
+import * as THREE from 'three';
 
 // Mock useGraph hook
 const mockUseGraph = vi.fn();
@@ -11,25 +12,37 @@ vi.mock('../../hooks/useGraph', () => ({
 
 // Mock ForceGraph3D component
 vi.mock('react-force-graph-3d', () => ({
-  default: ({ graphData, onNodeClick, nodeLabel, nodeAutoColorBy, enableNodeDrag, enableNavigationControls, linkDirectionalParticles }: any) => (
-    <div data-testid="force-graph-3d">
-      <div data-testid="graph-data">{JSON.stringify(graphData)}</div>
-      <div data-testid="node-label">{nodeLabel}</div>
-      <div data-testid="node-auto-color-by">{nodeAutoColorBy}</div>
-      <div data-testid="enable-node-drag">{String(enableNodeDrag)}</div>
-      <div data-testid="enable-navigation-controls">{String(enableNavigationControls)}</div>
-      <div data-testid="link-directional-particles">{String(linkDirectionalParticles)}</div>
-      {graphData.nodes.map((node: any) => (
-        <button
-          key={node.id}
-          data-testid={`node-${node.id}`}
-          onClick={() => onNodeClick(node)}
-        >
-          {node.title}
-        </button>
-      ))}
-    </div>
-  ),
+  default: ({ graphData, onNodeClick, nodeLabel, nodeAutoColorBy, enableNodeDrag, enableNavigationControls, linkDirectionalParticles, nodeThreeObject, nodeThreeObjectExtend, linkWidth, linkColor }: any) => {
+    // Call nodeThreeObject to verify it returns InstancedMesh
+    if (nodeThreeObject && graphData?.nodes?.length > 0) {
+      const result = nodeThreeObject(graphData.nodes[0]);
+      // Store result for test assertions
+      (window as any).__testNodeObject = result;
+    }
+
+    // Store props for test assertions
+    (window as any).__testGraphProps = { linkWidth, linkColor, nodeThreeObjectExtend };
+
+    return (
+      <div data-testid="force-graph-3d">
+        <div data-testid="graph-data">{JSON.stringify(graphData)}</div>
+        <div data-testid="node-label">{nodeLabel}</div>
+        <div data-testid="node-auto-color-by">{nodeAutoColorBy}</div>
+        <div data-testid="enable-node-drag">{String(enableNodeDrag)}</div>
+        <div data-testid="enable-navigation-controls">{String(enableNavigationControls)}</div>
+        <div data-testid="link-directional-particles">{String(linkDirectionalParticles)}</div>
+        {graphData.nodes.map((node: any) => (
+          <button
+            key={node.id}
+            data-testid={`node-${node.id}`}
+            onClick={() => onNodeClick(node)}
+          >
+            {node.title}
+          </button>
+        ))}
+      </div>
+    );
+  },
 }));
 
 // Mock GraphSidePanel component
@@ -45,6 +58,8 @@ vi.mock('./GraphSidePanel', () => ({
 describe('GraphView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (window as any).__testNodeObject = null;
+    (window as any).__testGraphProps = null;
   });
 
   it('shows loading state while fetching', () => {
@@ -202,5 +217,141 @@ describe('GraphView', () => {
     expect(screen.getByTestId('node-1')).toBeInTheDocument();
     expect(screen.getByTestId('node-2')).toBeInTheDocument();
     expect(screen.getByTestId('node-3')).toBeInTheDocument();
+  });
+
+  describe('Instanced Rendering (Task 1)', () => {
+    it('should use InstancedMesh for node rendering', async () => {
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Test Node 1', tags: ['test'] },
+          { id: '2', title: 'Test Node 2', tags: ['demo'] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('force-graph-3d')).toBeInTheDocument();
+      });
+
+      // Verify nodeThreeObject returns InstancedMesh
+      const nodeObject = (window as any).__testNodeObject;
+      expect(nodeObject).toBeInstanceOf(THREE.InstancedMesh);
+    });
+
+    it('should set nodeThreeObjectExtend to false', async () => {
+      const mockGraphData = {
+        nodes: [{ id: '1', title: 'Test Node', tags: ['test'] }],
+        links: [],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+        expect(props.nodeThreeObjectExtend).toBe(false);
+      });
+    });
+
+    it('should set node color based on tag hash', async () => {
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Test Node', tags: ['javascript'] },
+        ],
+        links: [],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      await waitFor(() => {
+        const nodeObject = (window as any).__testNodeObject;
+        expect(nodeObject).toBeInstanceOf(THREE.InstancedMesh);
+
+        // Verify color was set (instanceColor should exist)
+        expect(nodeObject.instanceColor).toBeTruthy();
+      });
+    });
+
+    it('should configure thin link lines (width 1)', async () => {
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Node 1', tags: [] },
+          { id: '2', title: 'Node 2', tags: [] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+        expect(props.linkWidth).toBe(1);
+      });
+    });
+
+    it('should configure subtle link color', async () => {
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Node 1', tags: [] },
+          { id: '2', title: 'Node 2', tags: [] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+        expect(props.linkColor).toBeDefined();
+
+        // Call linkColor function to verify it returns dark gray
+        if (typeof props.linkColor === 'function') {
+          const color = props.linkColor(mockGraphData.links[0]);
+          expect(color).toBe('#444444');
+        }
+      });
+    });
   });
 });
