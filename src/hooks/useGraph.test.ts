@@ -140,10 +140,12 @@ describe('useGraph', () => {
 
     const { unmount } = renderHook(() => useGraph());
 
-    await waitFor(() => {
-      expect(mockOnCreated).toHaveBeenCalledTimes(1);
-      expect(mockOnCreated).toHaveBeenCalledWith(expect.any(Function));
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
+
+    expect(mockOnCreated).toHaveBeenCalledTimes(1);
+    expect(mockOnCreated).toHaveBeenCalledWith(expect.any(Function));
 
     unmount();
   });
@@ -165,9 +167,11 @@ describe('useGraph', () => {
     const { result } = renderHook(() => useGraph());
 
     // Wait for initial load
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
+
+    expect(result.current.loading).toBe(false);
 
     // Verify initial state
     expect(result.current.graphData.nodes).toHaveLength(1);
@@ -180,13 +184,11 @@ describe('useGraph', () => {
     });
 
     // Verify new node added
-    await waitFor(() => {
-      expect(result.current.graphData.nodes).toHaveLength(2);
-      expect(result.current.graphData.nodes.find((n: any) => n.id === 'new-1')).toEqual({
-        id: 'new-1',
-        title: 'New Note',
-        tags: ['test'],
-      });
+    expect(result.current.graphData.nodes).toHaveLength(2);
+    expect(result.current.graphData.nodes.find((n: any) => n.id === 'new-1')).toEqual({
+      id: 'new-1',
+      title: 'New Note',
+      tags: ['test'],
     });
   });
 
@@ -197,9 +199,11 @@ describe('useGraph', () => {
 
     const { unmount } = renderHook(() => useGraph());
 
-    await waitFor(() => {
-      expect(mockOnCreated).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
+
+    expect(mockOnCreated).toHaveBeenCalledTimes(1);
 
     unmount();
 
@@ -219,9 +223,11 @@ describe('useGraph', () => {
 
     const { result } = renderHook(() => useGraph());
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
+
+    expect(result.current.loading).toBe(false);
 
     // Simulate note creation with multiple tags
     act(() => {
@@ -230,11 +236,9 @@ describe('useGraph', () => {
       }
     });
 
-    await waitFor(() => {
-      const node = result.current.graphData.nodes.find((n: any) => n.id === 'n1');
-      expect(node).toBeDefined();
-      expect(node.tags).toEqual(['work', 'project']);
-    });
+    const node = result.current.graphData.nodes.find((n: any) => n.id === 'n1');
+    expect(node).toBeDefined();
+    expect(node.tags).toEqual(['work', 'project']);
   });
 
   it('handles note without tags (empty array)', async () => {
@@ -250,9 +254,11 @@ describe('useGraph', () => {
 
     const { result } = renderHook(() => useGraph());
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
+
+    expect(result.current.loading).toBe(false);
 
     // Simulate note creation without tags
     act(() => {
@@ -261,10 +267,8 @@ describe('useGraph', () => {
       }
     });
 
-    await waitFor(() => {
-      const node = result.current.graphData.nodes.find((n: any) => n.id === 'n2');
-      expect(node).toBeDefined();
-      expect(node.tags).toEqual([]);
-    });
+    const node = result.current.graphData.nodes.find((n: any) => n.id === 'n2');
+    expect(node).toBeDefined();
+    expect(node.tags).toEqual([]);
   });
 });

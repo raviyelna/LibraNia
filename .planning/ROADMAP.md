@@ -10,8 +10,8 @@
 - [x] **Phase 2: Core Knowledge Management** - Note creation, editing, search, and bidirectional linking (completed 2026-05-25)
 - [x] **Phase 3: AI Integration** - Multi-provider AI configuration, chat interface, and research capabilities (COMPLETE)
 - [x] **Phase 4: Content Storage & Management** - Document/image storage with rich metadata (completed 2026-05-25)
-- [ ] **Phase 5: Semantic Discovery** - Embeddings generation, semantic search, and automatic linking
-- [ ] **Phase 6: 3D Visualization** - Interactive neural network graph visualization
+- [x] **Phase 5: Semantic Discovery** - Embeddings generation, semantic search, and automatic linking (completed 2026-05-26)
+- [x] **Phase 6: 3D Visualization** - Interactive neural network graph visualization (completed 2026-05-26)
 
 ## Phase Details
 
