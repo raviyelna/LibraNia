@@ -137,6 +137,26 @@ vi.mock('./GraphSidePanel', () => ({
   ),
 }));
 
+// Mock GraphControls component
+vi.mock('./GraphControls', () => ({
+  GraphControls: ({ onSearchResults }: { onSearchResults: (nodeIds: string[]) => void }) => (
+    <div data-testid="graph-controls">
+      <input
+        data-testid="search-input"
+        placeholder="Search graph..."
+        onChange={(e) => {
+          // Simulate search results
+          if (e.target.value) {
+            onSearchResults(['1', '2']);
+          } else {
+            onSearchResults([]);
+          }
+        }}
+      />
+    </div>
+  ),
+}));
+
 describe('GraphView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
