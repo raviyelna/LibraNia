@@ -146,4 +146,9 @@ contextBridge.exposeInMainWorld('api', {
     }) => ipcRenderer.invoke('content:update', data),
     delete: (id: string) => ipcRenderer.invoke('content:delete', { id }),
   },
+
+  // Graph operations
+  graph: {
+    getData: () => ipcRenderer.invoke('graph:getData'),
+  },
 });
