@@ -29,9 +29,9 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     }
   }, [note]);
 
-  // Initialize CodeMirror
+  // Initialize CodeMirror (wait for note to load)
   useEffect(() => {
-    if (!editorRef.current || editorViewRef.current) return;
+    if (!editorRef.current || editorViewRef.current || !note) return;
 
     try {
       const startState = EditorState.create({
@@ -63,7 +63,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     } catch (error) {
       console.error('Failed to initialize CodeMirror:', error);
     }
-  }, []);
+  }, [note, body]);
 
   // Update editor content when body changes externally
   useEffect(() => {
