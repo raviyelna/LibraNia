@@ -215,11 +215,11 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 06-02-PLAN.md — Graph service and IPC handlers (backend data layer)
+- [x] 06-02-PLAN.md — Graph service and IPC handlers (backend data layer) (completed 2026-05-26)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 06-03-PLAN.md — Basic 3D graph rendering (useGraph hook, GraphView, GraphSidePanel, /graph route)
+- [x] 06-03-PLAN.md — Basic 3D graph rendering (useGraph hook, GraphView, GraphSidePanel, /graph route) (completed 2026-05-26)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -239,7 +239,7 @@ Plans:
 | 3. AI Integration | 11/11 | Complete | 2026-05-25 |
 | 4. Content Storage & Management | 5/5 | Complete | 2026-05-25 |
 | 5. Semantic Discovery | 1/5 | In Progress|  |
-| 6. 3D Visualization | 1/5 | In Progress | - |
+| 6. 3D Visualization | 3/5 | In Progress | - |
 
 ---
 
