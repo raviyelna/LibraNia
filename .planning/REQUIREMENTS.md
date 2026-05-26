@@ -35,7 +35,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Content Storage
 
-- [ ] **CONT-01**: User can manually add documents to library
+- [x] **CONT-01**: User can manually add documents to library
 - [ ] **CONT-02**: User can manually add images to library
 - [ ] **CONT-03**: AI-generated answers stored with text content
 - [ ] **CONT-04**: AI-generated answers stored with diagrams
