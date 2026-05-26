@@ -149,7 +149,9 @@ export function GraphView() {
 
   // Route change handler - reload graph data when navigating to /graph
   useEffect(() => {
+    console.log('GraphView location:', location.pathname);
     if (location.pathname === '/graph') {
+      console.log('Refetching graph data on route change');
       refetch();
     }
   }, [location.pathname, refetch]);

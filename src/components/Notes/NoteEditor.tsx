@@ -35,7 +35,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
     try {
       const startState = EditorState.create({
-        doc: body,
+        doc: note.body,
         extensions: [
           history(),
           keymap.of([...defaultKeymap, ...historyKeymap]),
@@ -63,7 +63,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     } catch (error) {
       console.error('Failed to initialize CodeMirror:', error);
     }
-  }, [note, body]);
+  }, [note]);
 
   // Update editor content when body changes externally
   useEffect(() => {
