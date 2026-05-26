@@ -57,6 +57,17 @@ export function useNote(id: string, includeDeleted = false) {
     fetchNote();
   }, [fetchNote]);
 
+  // Listen for real-time note updates
+  useEffect(() => {
+    const unsubscribe = window.api.notes.onUpdated?.((updatedNote: Note) => {
+      if (updatedNote.id === id) {
+        setNote(updatedNote);
+      }
+    });
+
+    return unsubscribe;
+  }, [id]);
+
   return { note, loading, error, refetch: fetchNote };
 }
 
