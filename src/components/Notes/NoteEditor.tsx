@@ -31,7 +31,19 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
   // Initialize CodeMirror (wait for note to load)
   useEffect(() => {
-    if (!editorRef.current || editorViewRef.current || !note) return;
+    console.log('[NoteEditor] Init effect:', {
+      hasEditorRef: !!editorRef.current,
+      hasNote: !!note,
+      hasEditorView: !!editorViewRef.current,
+      noteId
+    });
+
+    if (!editorRef.current || !note) return;
+
+    // Skip if editor already exists for this note
+    if (editorViewRef.current) return;
+
+    console.log('[NoteEditor] Creating CodeMirror editor');
 
     try {
       const startState = EditorState.create({
@@ -55,15 +67,17 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
       });
 
       editorViewRef.current = view;
+      console.log('[NoteEditor] CodeMirror created successfully');
 
       return () => {
+        console.log('[NoteEditor] Destroying CodeMirror');
         view.destroy();
         editorViewRef.current = null;
       };
     } catch (error) {
       console.error('Failed to initialize CodeMirror:', error);
     }
-  }, [noteId]); // Only recreate when switching notes, not on note object updates
+  }, [noteId, note]); // Recreate when noteId changes OR when note loads
 
   // Update editor content when body changes externally
   useEffect(() => {
