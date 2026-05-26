@@ -227,7 +227,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 06-05-PLAN.md — Real-time updates, search integration, and minimap
+- [x] 06-05-PLAN.md — Real-time updates, search integration, and minimap
 ---
 
 ## Progress
@@ -239,7 +239,7 @@ Plans:
 | 3. AI Integration | 11/11 | Complete | 2026-05-25 |
 | 4. Content Storage & Management | 5/5 | Complete | 2026-05-25 |
 | 5. Semantic Discovery | 1/5 | In Progress|  |
-| 6. 3D Visualization | 4/5 | In Progress | - |
+| 6. 3D Visualization | 9/10 | In Progress|  |
 
 ---
 
