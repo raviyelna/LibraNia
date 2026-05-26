@@ -5,6 +5,7 @@ import * as d3 from 'd3-force-3d';
 import { useGraph } from '../../hooks/useGraph';
 import { GraphSidePanel } from './GraphSidePanel';
 import { GraphControls } from './GraphControls';
+import { GraphMinimap } from './GraphMinimap';
 
 // Helper function to generate consistent color from tag name
 function getColorForTag(tag: string | undefined): string {
@@ -103,6 +104,13 @@ export function GraphView() {
     }
   }, [searchMatchIds, graphData.nodes]);
 
+  // Handle minimap click - jump camera to location
+  const handleMinimapClick = (x: number, y: number) => {
+    if (fgRef.current) {
+      fgRef.current.cameraPosition({ x, y, z: 200 }, { x, y, z: 0 }, 1000);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -170,6 +178,7 @@ export function GraphView() {
           onClose={handlePanelClose}
         />
       )}
+      <GraphMinimap graphData={graphData} onLocationClick={handleMinimapClick} />
     </div>
   );
 }
