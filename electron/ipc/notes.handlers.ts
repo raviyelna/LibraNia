@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron';
+import { ipcMain, BrowserWindow } from 'electron';
 import { logger } from '../logger';
 import { getORM } from '../database/connection';
 import {
@@ -16,7 +16,7 @@ import { getBacklinks, getSemanticLinks } from '../services/links.service';
  * Register IPC handlers for note operations
  * Called from main.ts after database initialization
  */
-export function registerNotesHandlers() {
+export function registerNotesHandlers(mainWindow?: BrowserWindow) {
   const orm = getORM();
 
   // Create note
@@ -24,6 +24,12 @@ export function registerNotesHandlers() {
     try {
       logger.info('IPC: notes:create', { title: data.title });
       const note = await createNote(data, orm);
+
+      // Emit real-time event to all renderer processes
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('notes:created', note);
+      }
+
       return note;
     } catch (error) {
       logger.error('notes:create failed', error as Error);

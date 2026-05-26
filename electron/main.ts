@@ -291,7 +291,6 @@ app.whenReady().then(async () => {
   logger.info('App ready, mode: ' + currentConfig.mode);
 
   registerIpcHandlers();
-  registerNotesHandlers();
   registerTagsHandlers();
   registerSearchHandlers();
   registerExportHandlers();
@@ -299,8 +298,9 @@ app.whenReady().then(async () => {
   registerGraphHandlers();
   await createWindow();
 
-  // Register AI handlers after window is created (needed for streaming tokens)
+  // Register handlers that need mainWindow after window is created
   if (mainWindow) {
+    registerNotesHandlers(mainWindow);
     registerAIHandlers(mainWindow);
     logger.info('AI IPC handlers registered');
   }
