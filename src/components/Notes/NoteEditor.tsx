@@ -63,7 +63,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     } catch (error) {
       console.error('Failed to initialize CodeMirror:', error);
     }
-  }, [note]);
+  }, [noteId]); // Only recreate when switching notes, not on note object updates
 
   // Update editor content when body changes externally
   useEffect(() => {
