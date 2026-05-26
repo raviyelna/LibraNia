@@ -13,7 +13,14 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['electron', 'better-sqlite3', 'electron-store', 'electron-log', 'electron-window-state', 'express', 'node:events', 'node:path', 'node:fs', 'node:url', 'node:os']
+              output: {
+                format: 'cjs'
+              },
+              external: (id) => {
+                return ['electron', 'better-sqlite3', 'electron-store', 'electron-log', 'electron-window-state', 'express', 'pdf-parse', '@anthropic-ai/sdk', 'openai', 'winston', 'colors', 'logform', 'onnxruntime-node', 'onnxruntime-web', '@xenova/transformers', 'sharp', 'mammoth', 'file-type'].includes(id) ||
+                       id.startsWith('node:') ||
+                       id === 'util';
+              }
             }
           }
         }

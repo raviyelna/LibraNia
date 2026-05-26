@@ -1,4 +1,3 @@
-import { pipeline } from '@xenova/transformers';
 import { app } from 'electron';
 import path from 'path';
 import crypto from 'crypto';
@@ -29,6 +28,7 @@ export async function generateEmbedding(text: string): Promise<Float32Array> {
 
   // Lazy load pipeline on first call
   if (!embeddingPipeline) {
+    const { pipeline } = await import('@xenova/transformers');
     embeddingPipeline = await pipeline(
       'feature-extraction',
       'Xenova/all-MiniLM-L6-v2',

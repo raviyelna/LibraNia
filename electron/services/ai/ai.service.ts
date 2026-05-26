@@ -59,8 +59,8 @@ export class AIService {
    * @returns AIProvider instance
    * @throws Error if provider not configured
    */
-  getProvider(providerId: string): AIProvider {
-    const config = getProviderConfig(providerId);
+  async getProvider(providerId: string): Promise<AIProvider> {
+    const config = await getProviderConfig(providerId);
 
     if (!config) {
       throw new Error(`Provider "${providerId}" is not configured. Please configure it in Settings.`);
@@ -96,7 +96,7 @@ export class AIService {
     messages: Message[],
     options: { onToken: (token: string) => void; signal?: AbortSignal }
   ): Promise<string> {
-    const provider = this.getProvider(providerId);
+    const provider = await this.getProvider(providerId);
 
     // Wrap provider call in retry logic
     return retryWithBackoff(async () => {
