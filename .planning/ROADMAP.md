@@ -204,9 +204,30 @@ Plans:
   4. User can see visual connections between related nodes
   5. Graph updates automatically when new knowledge is added
 
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 
+Plans:
+
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Package installation and legitimacy verification (three, react-force-graph-3d, d3-force-3d)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 06-02-PLAN.md — Graph service and IPC handlers (backend data layer)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 06-03-PLAN.md — Basic 3D graph rendering (useGraph hook, GraphView, GraphSidePanel, /graph route)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 06-04-PLAN.md — Performance optimization and interaction (instanced rendering, force tuning, neighbor highlighting, navigation)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 06-05-PLAN.md — Real-time updates, search integration, and minimap
 ---
 
 ## Progress
