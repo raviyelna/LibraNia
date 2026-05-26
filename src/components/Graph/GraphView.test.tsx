@@ -4,6 +4,16 @@ import userEvent from '@testing-library/user-event';
 import { GraphView } from './GraphView';
 import * as THREE from 'three';
 
+// Mock d3-force-3d
+vi.mock('d3-force-3d', () => ({
+  forceCollide: vi.fn((radius?: number) => {
+    const force = {
+      radius: vi.fn(() => radius || 10),
+    };
+    return force;
+  }),
+}));
+
 // Mock useGraph hook
 const mockUseGraph = vi.fn();
 vi.mock('../../hooks/useGraph', () => ({
@@ -11,39 +21,98 @@ vi.mock('../../hooks/useGraph', () => ({
 }));
 
 // Mock ForceGraph3D component
-vi.mock('react-force-graph-3d', () => ({
-  default: ({ graphData, onNodeClick, nodeLabel, nodeAutoColorBy, enableNodeDrag, enableNavigationControls, linkDirectionalParticles, nodeThreeObject, nodeThreeObjectExtend, linkWidth, linkColor }: any) => {
-    // Call nodeThreeObject to verify it returns InstancedMesh
-    if (nodeThreeObject && graphData?.nodes?.length > 0) {
-      const result = nodeThreeObject(graphData.nodes[0]);
-      // Store result for test assertions
-      (window as any).__testNodeObject = result;
+vi.mock('react-force-graph-3d', () => {
+  const mockD3Force = vi.fn((forceName: string, force?: any) => {
+    const mockForce = {
+      strength: vi.fn((value?: any) => {
+        if (forceName === 'charge') {
+          (window as any).__testGraphProps = {
+            ...(window as any).__testGraphProps,
+            chargeStrength: typeof value === 'function' ? value() : value
+          };
+        } else if (forceName === 'center') {
+          (window as any).__testGraphProps = {
+            ...(window as any).__testGraphProps,
+            centerStrength: typeof value === 'function' ? value() : value
+          };
+        } else if (forceName === 'link') {
+          (window as any).__testGraphProps = {
+            ...(window as any).__testGraphProps,
+            linkStrength: typeof value === 'function' ? value() : value
+          };
+        }
+        return mockForce;
+      }),
+      distance: vi.fn((value?: any) => {
+        if (forceName === 'link') {
+          (window as any).__testGraphProps = {
+            ...(window as any).__testGraphProps,
+            linkDistance: typeof value === 'function' ? value() : value
+          };
+        }
+        return mockForce;
+      }),
+    };
+
+    if (force && forceName === 'collision') {
+      // Store collision radius - d3.forceCollide returns a force with radius method
+      const radius = force.radius ? force.radius() : 10;
+      (window as any).__testGraphProps = {
+        ...(window as any).__testGraphProps,
+        collisionRadius: radius
+      };
     }
 
-    // Store props for test assertions
-    (window as any).__testGraphProps = { linkWidth, linkColor, nodeThreeObjectExtend };
+    return mockForce;
+  });
 
-    return (
-      <div data-testid="force-graph-3d">
-        <div data-testid="graph-data">{JSON.stringify(graphData)}</div>
-        <div data-testid="node-label">{nodeLabel}</div>
-        <div data-testid="node-auto-color-by">{nodeAutoColorBy}</div>
-        <div data-testid="enable-node-drag">{String(enableNodeDrag)}</div>
-        <div data-testid="enable-navigation-controls">{String(enableNavigationControls)}</div>
-        <div data-testid="link-directional-particles">{String(linkDirectionalParticles)}</div>
-        {graphData.nodes.map((node: any) => (
-          <button
-            key={node.id}
-            data-testid={`node-${node.id}`}
-            onClick={() => onNodeClick(node)}
-          >
-            {node.title}
-          </button>
-        ))}
-      </div>
-    );
-  },
-}));
+  return {
+    default: vi.fn().mockImplementation(({ graphData, onNodeClick, nodeLabel, nodeAutoColorBy, enableNodeDrag, enableNavigationControls, linkDirectionalParticles, nodeThreeObject, nodeThreeObjectExtend, linkWidth, linkColor }: any) => {
+      // Call nodeThreeObject to verify it returns InstancedMesh
+      if (nodeThreeObject && graphData?.nodes?.length > 0) {
+        const result = nodeThreeObject(graphData.nodes[0]);
+        // Store result for test assertions
+        (window as any).__testNodeObject = result;
+      }
+
+      // Create mock ref with d3Force method
+      const mockRef = {
+        current: {
+          d3Force: mockD3Force,
+        },
+      };
+
+      // Store props for test assertions
+      (window as any).__testGraphProps = {
+        ...(window as any).__testGraphProps,
+        linkWidth,
+        linkColor,
+        nodeThreeObjectExtend,
+        fgRef: mockRef,
+      };
+
+      return (
+        <div data-testid="force-graph-3d">
+          <div data-testid="graph-data">{JSON.stringify(graphData)}</div>
+          <div data-testid="node-label">{nodeLabel}</div>
+          <div data-testid="node-auto-color-by">{nodeAutoColorBy}</div>
+          <div data-testid="enable-node-drag">{String(enableNodeDrag)}</div>
+          <div data-testid="enable-navigation-controls">{String(enableNavigationControls)}</div>
+          <div data-testid="link-directional-particles">{String(linkDirectionalParticles)}</div>
+          {graphData.nodes.map((node: any) => (
+            <button
+              key={node.id}
+              data-testid={`node-${node.id}`}
+              onClick={() => onNodeClick(node)}
+            >
+              {node.title}
+            </button>
+          ))}
+        </div>
+      );
+    }),
+  };
+});
 
 // Mock GraphSidePanel component
 vi.mock('./GraphSidePanel', () => ({
@@ -351,6 +420,31 @@ describe('GraphView', () => {
           const color = props.linkColor(mockGraphData.links[0]);
           expect(color).toBe('#444444');
         }
+      });
+    });
+  });
+
+  describe('Force Simulation Configuration (Task 2)', () => {
+    it('should create ref for ForceGraph3D', async () => {
+      const mockGraphData = {
+        nodes: [{ id: '1', title: 'Node 1', tags: [] }],
+        links: [],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+        expect(props.fgRef).toBeDefined();
+        expect(props.fgRef.current).toBeDefined();
+        expect(props.fgRef.current.d3Force).toBeDefined();
       });
     });
   });
