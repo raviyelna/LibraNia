@@ -73,24 +73,37 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024;
 const MAX_TEXT_SIZE = 102400;
 
 /**
- * Validate file type using magic bytes detection
+ * Validate file type using magic bytes detection with extension-based fallback
  * @param buffer File buffer to validate
+ * @param filePath File path for extension-based fallback
  * @returns Object with mime type and extension
  * @throws Error if file type is not allowed
  */
-export async function validateFileType(buffer: Buffer): Promise<{ mime: string; ext: string }> {
+export async function validateFileType(buffer: Buffer, filePath: string): Promise<{ mime: string; ext: string }> {
   const { fileTypeFromBuffer } = await import('file-type');
   const fileType = await fileTypeFromBuffer(buffer);
 
-  if (!fileType) {
-    throw new Error('Unable to determine file type');
+  // Primary validation: magic bytes
+  if (fileType) {
+    if (!ALLOWED_MIME_TYPES.includes(fileType.mime)) {
+      throw new Error(`File type ${fileType.mime} not allowed`);
+    }
+    return { mime: fileType.mime, ext: fileType.ext };
   }
 
-  if (!ALLOWED_MIME_TYPES.includes(fileType.mime)) {
-    throw new Error(`File type ${fileType.mime} not allowed`);
+  // Fallback: extension-based detection for text files (no magic bytes)
+  const extension = path.extname(filePath).toLowerCase();
+  const extensionToMime: Record<string, { mime: string; ext: string }> = {
+    '.txt': { mime: 'text/plain', ext: 'txt' },
+    '.md': { mime: 'text/markdown', ext: 'md' },
+  };
+
+  const mappedType = extensionToMime[extension];
+  if (mappedType && ALLOWED_MIME_TYPES.includes(mappedType.mime)) {
+    return mappedType;
   }
 
-  return { mime: fileType.mime, ext: fileType.ext };
+  throw new Error('Unable to determine file type');
 }
 
 /**
@@ -207,8 +220,8 @@ export async function createContent(
   // Read file from source path
   const fileBuffer = await fs.readFile(data.filePath);
 
-  // Validate file type using magic bytes
-  const { mime, ext } = await validateFileType(fileBuffer);
+  // Validate file type using magic bytes with extension fallback
+  const { mime, ext } = await validateFileType(fileBuffer, data.filePath);
 
   // Validate file size
   const fileSize = await validateFileSize(data.filePath);

@@ -12,6 +12,7 @@ vi.mock('file-type', () => ({
 // Mock pdf-parse
 vi.mock('pdf-parse', () => ({
   default: vi.fn(),
+  PDFParse: vi.fn(),
 }));
 
 // Mock mammoth
@@ -27,7 +28,7 @@ vi.mock('sharp', () => ({
 }));
 
 import { fileTypeFromBuffer } from 'file-type';
-import pdfParse from 'pdf-parse';
+import pdfParse, { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import sharp from 'sharp';
 import * as contentService from '../electron/services/content.service';
@@ -221,7 +222,7 @@ describe('Content Service - File Validation', () => {
       vi.spyOn(fs, 'rename').mockResolvedValue(undefined);
 
       // Mock text extraction
-      vi.mocked(pdfParse).mockResolvedValue({ text: 'Sample text' } as any);
+      vi.mocked(PDFParse).mockResolvedValue({ text: 'Sample text' } as any);
 
       const inputData = {
         filePath: '/tmp/document.pdf',
@@ -279,7 +280,7 @@ describe('Content Service - File Validation', () => {
       vi.spyOn(fs, 'rename').mockResolvedValue(undefined);
 
       // Mock text extraction
-      vi.mocked(pdfParse).mockResolvedValue({ text: 'Sample text' } as any);
+      vi.mocked(PDFParse).mockResolvedValue({ text: 'Sample text' } as any);
 
       const inputData = {
         filePath: '/tmp/document.pdf',
