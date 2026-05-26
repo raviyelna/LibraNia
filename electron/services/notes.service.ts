@@ -59,6 +59,8 @@ export async function createNote(
   await updateNoteLinks(note.id, note.body, db);
 
   // Generate embedding and discover semantic links per D-01, D-10
+  // DISABLED: embeddings table not created until sqlite-vec available
+  /*
   const text = `${note.title} ${note.body}`.trim(); // Combined per D-03
 
   // Only generate embedding if text is non-empty
@@ -76,6 +78,7 @@ export async function createNote(
       console.warn('[Notes] Semantic link discovery skipped (sqlite-vec unavailable):', error);
     }
   }
+  */
 
   return note as Note;
 }
@@ -120,6 +123,8 @@ export async function updateNote(
   }
 
   // Regenerate embedding if title or body changed per D-01
+  // DISABLED: embeddings table not created until sqlite-vec available
+  /*
   if (data.title !== undefined || data.body !== undefined) {
     const text = `${updated.title} ${updated.body}`.trim();
 
@@ -147,6 +152,7 @@ export async function updateNote(
       }
     }
   }
+  */
 
   return updated as Note;
 }
