@@ -43,6 +43,12 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
       logger.info('IPC: notes:update', { id: data.id });
       const { id, ...updates } = data;
       const note = await updateNote(id, updates, orm);
+
+      // Emit real-time event to all renderer processes
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('notes:updated', note);
+      }
+
       return note;
     } catch (error) {
       logger.error('notes:update failed', error as Error);
