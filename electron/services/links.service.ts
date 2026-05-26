@@ -62,6 +62,7 @@ export async function updateNoteLinks(
 
   // Parse wiki-links from body
   const wikiLinks = parseWikiLinks(body);
+  console.log(`[Links] Found ${wikiLinks.length} wiki-links in note ${noteId}:`, wikiLinks.map(l => l.title));
 
   // For each wiki-link, find target note by title (case-insensitive)
   for (const link of wikiLinks) {
@@ -70,6 +71,8 @@ export async function updateNoteLinks(
       .from(notes)
       .where(sql`lower(${notes.title}) = lower(${link.title})`)
       .limit(1);
+
+    console.log(`[Links] Wiki-link [[${link.title}]] -> target:`, targetNote ? targetNote.id : 'NOT FOUND');
 
     // If target note found, create link record
     if (targetNote) {
