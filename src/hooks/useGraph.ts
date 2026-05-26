@@ -23,5 +23,21 @@ export function useGraph() {
     fetchGraph();
   }, [fetchGraph]);
 
+  // Listen for real-time note creation events
+  useEffect(() => {
+    const unsubscribe = window.api.notes.onCreated((note: any) => {
+      setGraphData(prev => ({
+        ...prev,
+        nodes: [...prev.nodes, {
+          id: note.id,
+          title: note.title,
+          tags: note.tags || []
+        }]
+      }));
+    });
+
+    return unsubscribe;
+  }, []);
+
   return { graphData, loading, error, refetch: fetchGraph };
 }

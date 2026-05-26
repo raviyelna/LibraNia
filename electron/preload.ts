@@ -62,6 +62,11 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('notes:getAll'),
     getDeleted: () =>
       ipcRenderer.invoke('notes:getDeleted'),
+    onCreated: (callback: (note: any) => void) => {
+      const listener = (_event: any, note: any) => callback(note);
+      ipcRenderer.on('notes:created', listener);
+      return () => ipcRenderer.removeListener('notes:created', listener);
+    },
   },
 
   // Links operations
