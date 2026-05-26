@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import ForceGraph2D from 'react-force-graph-2d';
 import { GraphData } from '../../types/graph';
 
@@ -13,20 +14,35 @@ interface GraphMinimapProps {
  * Clicking a node in the minimap jumps the main camera to that location.
  */
 export function GraphMinimap({ graphData, onLocationClick }: GraphMinimapProps) {
+  const fgRef = useRef<any>();
+
+  // Fit graph to view after mount and when data changes
+  useEffect(() => {
+    if (fgRef.current && graphData.nodes.length > 0) {
+      // Small delay to ensure layout has started
+      setTimeout(() => {
+        fgRef.current?.zoomToFit(400, 20);
+      }, 100);
+    }
+  }, [graphData]);
+
   return (
     <div className="absolute bottom-4 right-4 w-48 h-48 bg-background/80 border border-border rounded shadow z-10">
       <div className="text-xs text-muted-foreground px-2 py-1">Minimap</div>
       <ForceGraph2D
+        ref={fgRef}
         graphData={graphData}
         width={192}
-        height={192}
-        nodeRelSize={2}
+        height={168}
+        nodeRelSize={4}
         nodeColor={() => '#888'}
         linkColor={() => '#444'}
         enableZoomInteraction={false}
         enablePanInteraction={false}
         onNodeClick={(node: any) => onLocationClick(node.x, node.y)}
-        backgroundColor="transparent"
+        backgroundColor="#1a1a1a"
+        cooldownTicks={100}
+        cooldownTime={3000}
       />
     </div>
   );
