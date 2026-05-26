@@ -3,8 +3,9 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { act } from 'react';
 import { useGraph } from './useGraph';
 
-// Mock window.api.graph
+// Mock window.api.graph and window.api.notes
 const mockGetData = vi.fn();
+const mockOnCreated = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -12,6 +13,9 @@ beforeEach(() => {
     api: {
       graph: {
         getData: mockGetData,
+      },
+      notes: {
+        onCreated: mockOnCreated,
       },
     },
   };
@@ -126,5 +130,141 @@ describe('useGraph', () => {
 
     expect(result.current.graphData).toEqual(mockData2);
     expect(mockGetData).toHaveBeenCalledTimes(2);
+  });
+
+  // Real-time update tests
+  it('subscribes to note creation events on mount', async () => {
+    const unsubscribe = vi.fn();
+    mockOnCreated.mockReturnValue(unsubscribe);
+    mockGetData.mockResolvedValue({ nodes: [], links: [] });
+
+    const { unmount } = renderHook(() => useGraph());
+
+    await waitFor(() => {
+      expect(mockOnCreated).toHaveBeenCalledTimes(1);
+      expect(mockOnCreated).toHaveBeenCalledWith(expect.any(Function));
+    });
+
+    unmount();
+  });
+
+  it('adds new note to graph data when onCreated fires', async () => {
+    let capturedCallback: ((note: any) => void) | null = null;
+    const unsubscribe = vi.fn();
+
+    mockOnCreated.mockImplementation((callback: (note: any) => void) => {
+      capturedCallback = callback;
+      return unsubscribe;
+    });
+
+    mockGetData.mockResolvedValue({
+      nodes: [{ id: 'existing-1', title: 'Existing Note', tags: [] }],
+      links: [],
+    });
+
+    const { result } = renderHook(() => useGraph());
+
+    // Wait for initial load
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Verify initial state
+    expect(result.current.graphData.nodes).toHaveLength(1);
+
+    // Simulate note creation event
+    act(() => {
+      if (capturedCallback) {
+        capturedCallback({ id: 'new-1', title: 'New Note', tags: ['test'] });
+      }
+    });
+
+    // Verify new node added
+    await waitFor(() => {
+      expect(result.current.graphData.nodes).toHaveLength(2);
+      expect(result.current.graphData.nodes.find((n: any) => n.id === 'new-1')).toEqual({
+        id: 'new-1',
+        title: 'New Note',
+        tags: ['test'],
+      });
+    });
+  });
+
+  it('unsubscribes from events on unmount', async () => {
+    const unsubscribe = vi.fn();
+    mockOnCreated.mockReturnValue(unsubscribe);
+    mockGetData.mockResolvedValue({ nodes: [], links: [] });
+
+    const { unmount } = renderHook(() => useGraph());
+
+    await waitFor(() => {
+      expect(mockOnCreated).toHaveBeenCalledTimes(1);
+    });
+
+    unmount();
+
+    expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('handles note with tags correctly', async () => {
+    let capturedCallback: ((note: any) => void) | null = null;
+    const unsubscribe = vi.fn();
+
+    mockOnCreated.mockImplementation((callback: (note: any) => void) => {
+      capturedCallback = callback;
+      return unsubscribe;
+    });
+
+    mockGetData.mockResolvedValue({ nodes: [], links: [] });
+
+    const { result } = renderHook(() => useGraph());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Simulate note creation with multiple tags
+    act(() => {
+      if (capturedCallback) {
+        capturedCallback({ id: 'n1', title: 'Tagged', tags: ['work', 'project'] });
+      }
+    });
+
+    await waitFor(() => {
+      const node = result.current.graphData.nodes.find((n: any) => n.id === 'n1');
+      expect(node).toBeDefined();
+      expect(node.tags).toEqual(['work', 'project']);
+    });
+  });
+
+  it('handles note without tags (empty array)', async () => {
+    let capturedCallback: ((note: any) => void) | null = null;
+    const unsubscribe = vi.fn();
+
+    mockOnCreated.mockImplementation((callback: (note: any) => void) => {
+      capturedCallback = callback;
+      return unsubscribe;
+    });
+
+    mockGetData.mockResolvedValue({ nodes: [], links: [] });
+
+    const { result } = renderHook(() => useGraph());
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Simulate note creation without tags
+    act(() => {
+      if (capturedCallback) {
+        capturedCallback({ id: 'n2', title: 'Untagged', tags: undefined });
+      }
+    });
+
+    await waitFor(() => {
+      const node = result.current.graphData.nodes.find((n: any) => n.id === 'n2');
+      expect(node).toBeDefined();
+      expect(node.tags).toEqual([]);
+    });
   });
 });
