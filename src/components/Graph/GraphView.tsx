@@ -20,6 +20,7 @@ export function GraphView() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<any>>(new Set());
+  const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set());
   const fgRef = useRef<any>();
 
   // Create shared geometry and material for instanced rendering (reused for all nodes)
@@ -82,6 +83,26 @@ export function GraphView() {
     setHighlightLinks(new Set());
   };
 
+  // Handle search results - highlight matching nodes
+  const handleSearchResults = (nodeIds: string[]) => {
+    setSearchMatchIds(new Set(nodeIds));
+  };
+
+  // Focus camera on first search result
+  useEffect(() => {
+    if (searchMatchIds.size > 0 && fgRef.current) {
+      const firstId = Array.from(searchMatchIds)[0];
+      const firstNode = graphData.nodes.find((n: any) => n.id === firstId);
+      if (firstNode) {
+        fgRef.current.cameraPosition(
+          { x: firstNode.x, y: firstNode.y, z: (firstNode.z || 0) + 200 },
+          firstNode,
+          1000 // Animation duration
+        );
+      }
+    }
+  }, [searchMatchIds, graphData.nodes]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -103,7 +124,7 @@ export function GraphView() {
 
   return (
     <div className="relative w-full h-full">
-      <GraphControls />
+      <GraphControls onSearchResults={handleSearchResults} />
       <ForceGraph3D
         ref={fgRef}
         graphData={graphData}
@@ -126,11 +147,17 @@ export function GraphView() {
           return mesh;
         }}
         nodeThreeObjectExtend={false}
-        // Node color with highlighting (D-14)
+        // Node color with search and neighbor highlighting (priority order)
         nodeColor={(node: any) => {
+          // Priority 1: Search matches (yellow/gold)
+          if (searchMatchIds.size > 0 && searchMatchIds.has(node.id)) {
+            return '#fbbf24';
+          }
+          // Priority 2: Neighbor highlighting (white/dimmed)
           if (highlightNodes.size > 0) {
             return highlightNodes.has(node.id) ? '#ffffff' : '#444444';
           }
+          // Priority 3: Default tag-based colors
           return getColorForTag(node.tags?.[0]);
         }}
         // Link styling with highlighting (D-13, D-14)
