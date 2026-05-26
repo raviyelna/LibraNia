@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import * as d3 from 'd3-force-3d';
 import { useGraph } from '../../hooks/useGraph';
 import { GraphSidePanel } from './GraphSidePanel';
+import { GraphControls } from './GraphControls';
 
 // Helper function to generate consistent color from tag name
 function getColorForTag(tag: string | undefined): string {
@@ -102,6 +103,7 @@ export function GraphView() {
 
   return (
     <div className="relative w-full h-full">
+      <GraphControls />
       <ForceGraph3D
         ref={fgRef}
         graphData={graphData}
