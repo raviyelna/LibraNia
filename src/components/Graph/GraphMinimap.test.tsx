@@ -5,7 +5,7 @@ import { GraphMinimap } from './GraphMinimap';
 
 // Mock ForceGraph2D component
 vi.mock('react-force-graph-2d', () => ({
-  default: vi.fn().mockImplementation(({ graphData, onNodeClick, width, height, nodeRelSize, nodeColor, linkColor, enableZoomInteraction, enablePanInteraction, backgroundColor }: any) => {
+  default: vi.fn().mockImplementation(({ graphData, onNodeClick, width, height, nodeRelSize, nodeColor, linkColor, enableZoomInteraction, enablePanInteraction, backgroundColor, cooldownTicks, cooldownTime }: any) => {
     // Store props for test assertions
     (window as any).__testMinimapProps = {
       width,
@@ -16,6 +16,8 @@ vi.mock('react-force-graph-2d', () => ({
       enableZoomInteraction,
       enablePanInteraction,
       backgroundColor,
+      cooldownTicks,
+      cooldownTime,
     };
 
     return (
@@ -79,7 +81,7 @@ describe('GraphMinimap', () => {
 
     const props = (window as any).__testMinimapProps;
     expect(props.width).toBe(192);
-    expect(props.height).toBe(192);
+    expect(props.height).toBe(168); // 192 - 24px for header
   });
 
   it('configures small node size', () => {
@@ -89,7 +91,7 @@ describe('GraphMinimap', () => {
     render(<GraphMinimap graphData={mockData} onLocationClick={mockOnLocationClick} />);
 
     const props = (window as any).__testMinimapProps;
-    expect(props.nodeRelSize).toBe(2);
+    expect(props.nodeRelSize).toBe(4); // Increased from 2 for better visibility
   });
 
   it('configures gray node color', () => {
@@ -135,14 +137,14 @@ describe('GraphMinimap', () => {
     expect(props.enablePanInteraction).toBe(false);
   });
 
-  it('uses transparent background', () => {
+  it('uses dark background for visibility', () => {
     const mockData = { nodes: [], links: [] };
     const mockOnLocationClick = vi.fn();
 
     render(<GraphMinimap graphData={mockData} onLocationClick={mockOnLocationClick} />);
 
     const props = (window as any).__testMinimapProps;
-    expect(props.backgroundColor).toBe('transparent');
+    expect(props.backgroundColor).toBe('#1a1a1a'); // Dark background instead of transparent for node visibility
   });
 
   it('calls onLocationClick when node is clicked', async () => {
