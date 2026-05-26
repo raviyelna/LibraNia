@@ -157,6 +157,20 @@ vi.mock('./GraphControls', () => ({
   ),
 }));
 
+// Mock GraphMinimap component
+vi.mock('./GraphMinimap', () => ({
+  GraphMinimap: ({ graphData, onLocationClick }: { graphData: any; onLocationClick: (x: number, y: number) => void }) => (
+    <div data-testid="graph-minimap">
+      <button
+        data-testid="minimap-click"
+        onClick={() => onLocationClick(100, 200)}
+      >
+        Click Minimap
+      </button>
+    </div>
+  ),
+}));
+
 describe('GraphView', () => {
   beforeEach(() => {
     vi.clearAllMocks();
