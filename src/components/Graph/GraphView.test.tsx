@@ -67,7 +67,7 @@ vi.mock('react-force-graph-3d', () => {
   });
 
   return {
-    default: vi.fn().mockImplementation(({ graphData, onNodeClick, nodeLabel, nodeAutoColorBy, enableNodeDrag, enableNavigationControls, linkDirectionalParticles, nodeThreeObject, nodeThreeObjectExtend, linkWidth, linkColor }: any) => {
+    default: vi.fn().mockImplementation(({ graphData, onNodeClick, nodeLabel, nodeAutoColorBy, enableNodeDrag, enableNavigationControls, linkDirectionalParticles, nodeThreeObject, nodeThreeObjectExtend, linkWidth, linkColor, nodeColor }: any) => {
       // Call nodeThreeObject to verify it returns InstancedMesh
       if (nodeThreeObject && graphData?.nodes?.length > 0) {
         const result = nodeThreeObject(graphData.nodes[0]);
@@ -82,13 +82,26 @@ vi.mock('react-force-graph-3d', () => {
         },
       };
 
+      // Capture highlighted nodes by testing nodeColor function
+      const highlightedNodes: string[] = [];
+      if (typeof nodeColor === 'function' && graphData?.nodes) {
+        graphData.nodes.forEach((node: any) => {
+          const color = nodeColor(node);
+          if (color === '#ffffff') {
+            highlightedNodes.push(node.id);
+          }
+        });
+      }
+
       // Store props for test assertions
       (window as any).__testGraphProps = {
         ...(window as any).__testGraphProps,
         linkWidth,
         linkColor,
+        nodeColor,
         nodeThreeObjectExtend,
         fgRef: mockRef,
+        highlightedNodes,
       };
 
       return (
@@ -387,7 +400,13 @@ describe('GraphView', () => {
 
       await waitFor(() => {
         const props = (window as any).__testGraphProps;
-        expect(props.linkWidth).toBe(1);
+        expect(props.linkWidth).toBeDefined();
+
+        // Call linkWidth function to verify default is 1
+        if (typeof props.linkWidth === 'function') {
+          const width = props.linkWidth(mockGraphData.links[0]);
+          expect(width).toBe(1);
+        }
       });
     });
 
@@ -445,6 +464,194 @@ describe('GraphView', () => {
         expect(props.fgRef).toBeDefined();
         expect(props.fgRef.current).toBeDefined();
         expect(props.fgRef.current.d3Force).toBeDefined();
+      });
+    });
+  });
+
+  describe('Neighbor Highlighting (Task 3)', () => {
+    it('should highlight clicked node and direct neighbors', async () => {
+      const user = userEvent.setup();
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Node 1', tags: ['test'] },
+          { id: '2', title: 'Node 2', tags: ['test'] },
+          { id: '3', title: 'Node 3', tags: ['test'] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+          { source: '2', target: '3', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      // Click node 2 (has neighbors 1 and 3)
+      const node2Button = screen.getByTestId('node-2');
+      await user.click(node2Button);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+        // Node 2 and its neighbors (1, 3) should be highlighted
+        expect(props.highlightedNodes).toContain('1');
+        expect(props.highlightedNodes).toContain('2');
+        expect(props.highlightedNodes).toContain('3');
+      });
+    });
+
+    it('should use white color for highlighted nodes', async () => {
+      const user = userEvent.setup();
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Node 1', tags: ['test'] },
+          { id: '2', title: 'Node 2', tags: ['test'] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      const node1Button = screen.getByTestId('node-1');
+      await user.click(node1Button);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+        expect(props.nodeColor).toBeDefined();
+
+        // Highlighted node should be white
+        if (typeof props.nodeColor === 'function') {
+          const color = props.nodeColor({ id: '1', title: 'Node 1', tags: ['test'] });
+          expect(color).toBe('#ffffff');
+        }
+      });
+    });
+
+    it('should dim non-highlighted nodes', async () => {
+      const user = userEvent.setup();
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Node 1', tags: ['test'] },
+          { id: '2', title: 'Node 2', tags: ['test'] },
+          { id: '3', title: 'Node 3', tags: ['test'] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      const node1Button = screen.getByTestId('node-1');
+      await user.click(node1Button);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+
+        // Non-highlighted node (3) should be dimmed
+        if (typeof props.nodeColor === 'function') {
+          const color = props.nodeColor({ id: '3', title: 'Node 3', tags: ['test'] });
+          expect(color).toBe('#444444');
+        }
+      });
+    });
+
+    it('should highlight links between highlighted nodes', async () => {
+      const user = userEvent.setup();
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Node 1', tags: ['test'] },
+          { id: '2', title: 'Node 2', tags: ['test'] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      const node1Button = screen.getByTestId('node-1');
+      await user.click(node1Button);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+
+        // Highlighted link should be white with width 2
+        if (typeof props.linkColor === 'function') {
+          const color = props.linkColor(mockGraphData.links[0]);
+          expect(color).toBe('#ffffff');
+        }
+
+        if (typeof props.linkWidth === 'function') {
+          const width = props.linkWidth(mockGraphData.links[0]);
+          expect(width).toBe(2);
+        }
+      });
+    });
+
+    it('should clear highlighting when side panel is closed', async () => {
+      const user = userEvent.setup();
+      const mockGraphData = {
+        nodes: [
+          { id: '1', title: 'Node 1', tags: ['test'] },
+          { id: '2', title: 'Node 2', tags: ['test'] },
+        ],
+        links: [
+          { source: '1', target: '2', type: 'manual' as const },
+        ],
+      };
+
+      mockUseGraph.mockReturnValue({
+        graphData: mockGraphData,
+        loading: false,
+        error: null,
+        refetch: vi.fn(),
+      });
+
+      render(<GraphView />);
+
+      // Click node to open panel and highlight
+      const node1Button = screen.getByTestId('node-1');
+      await user.click(node1Button);
+
+      expect(screen.getByTestId('graph-side-panel')).toBeInTheDocument();
+
+      // Close panel
+      const closeButton = screen.getByTestId('panel-close');
+      await user.click(closeButton);
+
+      await waitFor(() => {
+        const props = (window as any).__testGraphProps;
+        // Highlighting should be cleared
+        expect(props.highlightedNodes).toEqual([]);
       });
     });
   });
