@@ -17,7 +17,7 @@ function getColorForTag(tag: string | undefined): string {
 }
 
 export function GraphView() {
-  const { graphData, loading, error } = useGraph();
+  const { graphData, loading, error, refetch } = useGraph();
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<any>>(new Set());
@@ -104,6 +104,13 @@ export function GraphView() {
     }
   }, [searchMatchIds, graphData.nodes]);
 
+  // Trigger re-render when search or highlight state changes
+  useEffect(() => {
+    if (fgRef.current) {
+      fgRef.current.refresh();
+    }
+  }, [searchMatchIds, highlightNodes]);
+
   // Cleanup: pause animation on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
@@ -112,6 +119,31 @@ export function GraphView() {
       }
     };
   }, []);
+
+  // Window resize handler - update ForceGraph3D dimensions
+  useEffect(() => {
+    const handleResize = () => {
+      if (fgRef.current) {
+        fgRef.current.width(window.innerWidth);
+        fgRef.current.height(window.innerHeight);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Tab visibility handler - reload graph data when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && fgRef.current) {
+        refetch();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [refetch]);
 
   // Handle minimap click - jump camera to location
   const handleMinimapClick = (x: number, y: number) => {
@@ -156,8 +188,19 @@ export function GraphView() {
           // Create instanced mesh for this node (single draw call)
           const mesh = new THREE.InstancedMesh(geometry, material, 1);
 
-          // Set color based on tag (per D-07)
-          const color = getColorForTag(node.tags?.[0]);
+          // Determine color based on search/highlight state (priority order)
+          let color: string;
+          if (searchMatchIds.size > 0 && searchMatchIds.has(node.id)) {
+            // Priority 1: Search matches (yellow/gold)
+            color = '#fbbf24';
+          } else if (highlightNodes.size > 0) {
+            // Priority 2: Neighbor highlighting (white/dimmed)
+            color = highlightNodes.has(node.id) ? '#ffffff' : '#444444';
+          } else {
+            // Priority 3: Default tag-based colors (per D-07)
+            color = getColorForTag(node.tags?.[0]);
+          }
+
           mesh.setColorAt(0, new THREE.Color(color));
           mesh.instanceColor!.needsUpdate = true;
 
