@@ -67,9 +67,14 @@ export async function createNote(
     await storeEmbedding(note.id, embedding, db);
 
     // Discover semantic links (top 5, threshold 0.7 per D-09, D-12)
-    const rawDb = getDatabase();
-    const similar = findSimilarNotes(rawDb, note.id, embedding, 0.7, 5);
-    await createSemanticLinks(note.id, similar, db);
+    // Gracefully degrade if sqlite-vec extension unavailable
+    try {
+      const rawDb = getDatabase();
+      const similar = findSimilarNotes(rawDb, note.id, embedding, 0.7, 5);
+      await createSemanticLinks(note.id, similar, db);
+    } catch (error) {
+      console.warn('[Notes] Semantic link discovery skipped (sqlite-vec unavailable):', error);
+    }
   }
 
   return note as Note;
@@ -131,10 +136,15 @@ export async function updateNote(
       }
 
       // Rediscover semantic links per D-10
-      await deleteSemanticLinks(updated.id, db); // Remove old semantic links
-      const rawDb = getDatabase();
-      const similar = findSimilarNotes(rawDb, updated.id, embedding, 0.7, 5);
-      await createSemanticLinks(updated.id, similar, db);
+      // Gracefully degrade if sqlite-vec extension unavailable
+      try {
+        await deleteSemanticLinks(updated.id, db); // Remove old semantic links
+        const rawDb = getDatabase();
+        const similar = findSimilarNotes(rawDb, updated.id, embedding, 0.7, 5);
+        await createSemanticLinks(updated.id, similar, db);
+      } catch (error) {
+        console.warn('[Notes] Semantic link discovery skipped (sqlite-vec unavailable):', error);
+      }
     }
   }
 
