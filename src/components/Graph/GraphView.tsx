@@ -17,6 +17,8 @@ function getColorForTag(tag: string | undefined): string {
 export function GraphView() {
   const { graphData, loading, error } = useGraph();
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
+  const [highlightLinks, setHighlightLinks] = useState<Set<any>>(new Set());
   const fgRef = useRef<any>();
 
   // Create shared geometry and material for instanced rendering (reused for all nodes)
@@ -46,6 +48,39 @@ export function GraphView() {
     fg.d3Force('collision', d3.forceCollide(10));
   }, [fgRef.current]);
 
+  // Handle node click with neighbor highlighting (D-14)
+  const handleNodeClick = (node: any) => {
+    setSelectedNoteId(node.id);
+
+    // Find all neighbors of clicked node
+    const neighbors = new Set<string>([node.id]); // Include clicked node
+    const links = new Set<any>();
+
+    graphData.links.forEach((link: any) => {
+      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
+      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
+
+      if (sourceId === node.id) {
+        neighbors.add(targetId);
+        links.add(link);
+      }
+      if (targetId === node.id) {
+        neighbors.add(sourceId);
+        links.add(link);
+      }
+    });
+
+    setHighlightNodes(neighbors);
+    setHighlightLinks(links);
+  };
+
+  // Handle side panel close - clear highlighting
+  const handlePanelClose = () => {
+    setSelectedNoteId(null);
+    setHighlightNodes(new Set());
+    setHighlightLinks(new Set());
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -72,7 +107,7 @@ export function GraphView() {
         graphData={graphData}
         nodeLabel="title"
         nodeAutoColorBy="tags"
-        onNodeClick={(node: any) => setSelectedNoteId(node.id)}
+        onNodeClick={handleNodeClick}
         enableNodeDrag={false}
         enableNavigationControls={true}
         linkDirectionalParticles={0}
@@ -89,14 +124,21 @@ export function GraphView() {
           return mesh;
         }}
         nodeThreeObjectExtend={false}
-        // Thin link lines per D-13
-        linkWidth={1}
-        linkColor={() => '#444444'}
+        // Node color with highlighting (D-14)
+        nodeColor={(node: any) => {
+          if (highlightNodes.size > 0) {
+            return highlightNodes.has(node.id) ? '#ffffff' : '#444444';
+          }
+          return getColorForTag(node.tags?.[0]);
+        }}
+        // Link styling with highlighting (D-13, D-14)
+        linkWidth={(link: any) => (highlightLinks.has(link) ? 2 : 1)}
+        linkColor={(link: any) => (highlightLinks.has(link) ? '#ffffff' : '#444444')}
       />
       {selectedNoteId && (
         <GraphSidePanel
           noteId={selectedNoteId}
-          onClose={() => setSelectedNoteId(null)}
+          onClose={handlePanelClose}
         />
       )}
     </div>
