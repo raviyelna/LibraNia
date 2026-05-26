@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
+import * as d3 from 'd3-force-3d';
 import { useGraph } from '../../hooks/useGraph';
 import { GraphSidePanel } from './GraphSidePanel';
 
@@ -16,6 +17,7 @@ function getColorForTag(tag: string | undefined): string {
 export function GraphView() {
   const { graphData, loading, error } = useGraph();
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const fgRef = useRef<any>();
 
   // Create shared geometry and material for instanced rendering (reused for all nodes)
   const { geometry, material } = useMemo(() => {
@@ -25,6 +27,24 @@ export function GraphView() {
     const mat = new THREE.MeshLambertMaterial();
     return { geometry: geom, material: mat };
   }, []);
+
+  // Configure force simulation per user decisions (D-01 through D-04)
+  useEffect(() => {
+    const fg = fgRef.current;
+    if (!fg) return;
+
+    // Per D-01, D-04: Moderate repulsion
+    fg.d3Force('charge').strength(-40);
+
+    // Per D-03: Short link distance
+    fg.d3Force('link').distance(40).strength(1);
+
+    // Per D-02: Strong center gravity
+    fg.d3Force('center').strength(0.8);
+
+    // Per D-04: Prevent overlap
+    fg.d3Force('collision', d3.forceCollide(10));
+  }, [fgRef.current]);
 
   if (loading) {
     return (
@@ -48,6 +68,7 @@ export function GraphView() {
   return (
     <div className="relative w-full h-full">
       <ForceGraph3D
+        ref={fgRef}
         graphData={graphData}
         nodeLabel="title"
         nodeAutoColorBy="tags"
