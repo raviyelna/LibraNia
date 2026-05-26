@@ -44,8 +44,8 @@ export async function initDatabase(dbPath: string): Promise<void> {
   // Create new database connection
   db = new Database(dbPath);
 
-  // Enable WAL mode for better concurrency
-  db.pragma('journal_mode = WAL');
+  // Use DELETE mode instead of WAL to avoid corruption issues
+  db.pragma('journal_mode = DELETE');
 
   // Enable foreign keys
   db.pragma('foreign_keys = ON');
