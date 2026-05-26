@@ -1,0 +1,130 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { act } from 'react';
+import { useGraph } from './useGraph';
+
+// Mock window.api.graph
+const mockGetData = vi.fn();
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  (global as any).window = {
+    api: {
+      graph: {
+        getData: mockGetData,
+      },
+    },
+  };
+});
+
+describe('useGraph', () => {
+  it('fetches graph data on mount', async () => {
+    const mockData = {
+      nodes: [
+        { id: '1', title: 'Node 1', tags: ['tag1'] },
+        { id: '2', title: 'Node 2', tags: ['tag2'] },
+      ],
+      links: [
+        { source: '1', target: '2', type: 'manual' as const },
+      ],
+    };
+    mockGetData.mockResolvedValue(mockData);
+
+    const { result } = renderHook(() => useGraph());
+
+    // Initially loading
+    expect(result.current.loading).toBe(true);
+    expect(result.current.graphData).toEqual({ nodes: [], links: [] });
+    expect(result.current.error).toBe(null);
+
+    // Wait for data to load
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.graphData).toEqual(mockData);
+    expect(result.current.error).toBe(null);
+    expect(mockGetData).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns graphData, loading, error, and refetch', async () => {
+    mockGetData.mockResolvedValue({ nodes: [], links: [] });
+
+    const { result } = renderHook(() => useGraph());
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current).toHaveProperty('graphData');
+    expect(result.current).toHaveProperty('loading');
+    expect(result.current).toHaveProperty('error');
+    expect(result.current).toHaveProperty('refetch');
+    expect(typeof result.current.refetch).toBe('function');
+  });
+
+  it('manages loading state correctly', async () => {
+    mockGetData.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ nodes: [], links: [] }), 100)));
+
+    const { result } = renderHook(() => useGraph());
+
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 150));
+    });
+
+    expect(result.current.loading).toBe(false);
+  });
+
+  it('populates error state on failure', async () => {
+    const mockError = new Error('Failed to fetch graph data');
+    mockGetData.mockRejectedValue(mockError);
+
+    const { result } = renderHook(() => useGraph());
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toEqual(mockError);
+    expect(result.current.graphData).toEqual({ nodes: [], links: [] });
+  });
+
+  it('refetch function works', async () => {
+    const mockData1 = {
+      nodes: [{ id: '1', title: 'Node 1', tags: [] }],
+      links: [],
+    };
+    const mockData2 = {
+      nodes: [
+        { id: '1', title: 'Node 1', tags: [] },
+        { id: '2', title: 'Node 2', tags: [] },
+      ],
+      links: [{ source: '1', target: '2', type: 'manual' as const }],
+    };
+
+    mockGetData.mockResolvedValueOnce(mockData1);
+
+    const { result } = renderHook(() => useGraph());
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.graphData).toEqual(mockData1);
+
+    // Update mock and refetch
+    mockGetData.mockResolvedValueOnce(mockData2);
+
+    await act(async () => {
+      result.current.refetch();
+      await new Promise(resolve => setTimeout(resolve, 0));
+    });
+
+    expect(result.current.graphData).toEqual(mockData2);
+    expect(mockGetData).toHaveBeenCalledTimes(2);
+  });
+});
