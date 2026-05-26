@@ -1,18 +1,19 @@
 import { Tray, Menu, app, nativeImage, BrowserWindow } from 'electron';
 import path from 'path';
-import { fileURLToPath } from 'url';
+// import { fileURLToPath } from 'url';
 import { AppMode } from '../src/types/config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// CJS globals work in bundled output
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 export function createTray(
   window: BrowserWindow,
   currentMode: AppMode,
   onModeSwitch: (mode: AppMode) => void
 ): Tray {
-  // Load icon from resources
-  const iconPath = path.join(__dirname, '../resources/icon.svg');
+  // Load icon from resources - use app.getAppPath() instead of __dirname
+  const iconPath = path.join(app.getAppPath(), 'resources/icon.svg');
   const icon = nativeImage.createFromPath(iconPath);
 
   // Create tray

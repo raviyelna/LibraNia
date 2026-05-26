@@ -1,4 +1,3 @@
-import Store from 'electron-store';
 import { randomBytes } from 'crypto';
 
 /**
@@ -21,10 +20,32 @@ const storeOptions = {
 };
 
 /**
+ * Lazy-loaded Store instance
+ */
+let secureStore: any = null;
+
+/**
+ * Get or initialize secure store instance
+ */
+async function getSecureStore() {
+  if (!secureStore) {
+    const Store = (await import('electron-store')).default;
+    const encryptionKey = await getEncryptionKey();
+    secureStore = new Store({
+      ...storeOptions,
+      name: 'secure-config',
+      encryptionKey,
+    });
+  }
+  return secureStore;
+}
+
+/**
  * Get or generate encryption key for secure storage
  * Key is generated once on first launch and persisted
  */
-export function getEncryptionKey(): string {
+async function getEncryptionKey(): Promise<string> {
+  const Store = (await import('electron-store')).default;
   const keyStore = new Store({
     ...storeOptions,
     name: 'encryption-key',
@@ -40,39 +61,36 @@ export function getEncryptionKey(): string {
   return key;
 }
 
-// Initialize encrypted store with encryption key
-const secureStore = new Store({
-  ...storeOptions,
-  name: 'secure-config',
-  encryptionKey: getEncryptionKey(),
-});
-
 /**
  * Store encrypted provider configuration
  */
-export function setProviderConfig(config: ProviderConfig): void {
-  secureStore.set(`providers.${config.id}`, config);
+export async function setProviderConfig(config: ProviderConfig): Promise<void> {
+  const store = await getSecureStore();
+  store.set(`providers.${config.id}`, config);
 }
 
 /**
  * Retrieve decrypted provider configuration
  */
-export function getProviderConfig(providerId: string): ProviderConfig | undefined {
-  return secureStore.get(`providers.${providerId}`) as ProviderConfig | undefined;
+export async function getProviderConfig(providerId: string): Promise<ProviderConfig | undefined> {
+  const store = await getSecureStore();
+  return store.get(`providers.${providerId}`) as ProviderConfig | undefined;
 }
 
 /**
  * Delete provider configuration
  */
-export function deleteProviderConfig(providerId: string): void {
-  secureStore.delete(`providers.${providerId}`);
+export async function deleteProviderConfig(providerId: string): Promise<void> {
+  const store = await getSecureStore();
+  store.delete(`providers.${providerId}`);
 }
 
 /**
  * Get all configured providers
  */
-export function getAllProviderConfigs(): ProviderConfig[] {
-  const providers = secureStore.get('providers') as Record<string, ProviderConfig> | undefined;
+export async function getAllProviderConfigs(): Promise<ProviderConfig[]> {
+  const store = await getSecureStore();
+  const providers = store.get('providers') as Record<string, ProviderConfig> | undefined;
 
   if (!providers) {
     return [];

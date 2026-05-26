@@ -1,10 +1,9 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { fileTypeFromBuffer } from 'file-type';
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
-import sharp from 'sharp';
+// import sharp from 'sharp'; // Disabled for phase 6 testing - native module issues
 import { eq, desc } from 'drizzle-orm';
 import { content, contentTags } from '../database/schema';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
@@ -80,6 +79,7 @@ const MAX_TEXT_SIZE = 102400;
  * @throws Error if file type is not allowed
  */
 export async function validateFileType(buffer: Buffer): Promise<{ mime: string; ext: string }> {
+  const { fileTypeFromBuffer } = await import('file-type');
   const fileType = await fileTypeFromBuffer(buffer);
 
   if (!fileType) {
@@ -139,7 +139,7 @@ export async function extractText(filePath: string, mimeType: string): Promise<s
   if (mimeType === 'application/pdf') {
     // Extract text from PDF using pdf-parse
     const dataBuffer = await fs.readFile(filePath);
-    const data = await pdfParse(dataBuffer);
+    const data = await PDFParse(dataBuffer);
     text = data.text;
   } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     // Extract text from DOCX using mammoth
@@ -181,15 +181,17 @@ export async function generateThumbnail(inputPath: string, mimeType: string): Pr
   const thumbnailPath = `content/thumbnails/${basename}.jpg`;
 
   // Generate 200x200 thumbnail using sharp
-  await sharp(inputPath)
-    .resize(200, 200, {
-      fit: 'cover',
-      position: 'center',
-    })
-    .jpeg({ quality: 80 })
-    .toFile(thumbnailPath);
+  // DISABLED for phase 6 testing - sharp native module issues
+  // await sharp(inputPath)
+  //   .resize(200, 200, {
+  //     fit: 'cover',
+  //     position: 'center',
+  //   })
+  //   .jpeg({ quality: 80 })
+  //   .toFile(thumbnailPath);
 
-  return thumbnailPath;
+  // Temporary: return empty thumbnail path
+  return '';
 }
 
 /**

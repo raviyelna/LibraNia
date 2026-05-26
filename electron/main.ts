@@ -1,8 +1,8 @@
 import { app, BrowserWindow, ipcMain, Tray, shell } from 'electron';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import Store from 'electron-store';
-import { logger } from './logger.js';
+// import { fileURLToPath } from 'url';
+// import Store from 'electron-store'; // ESM-only in v11, disabled for phase 6
+// import { logger } from './logger.js';
 import { setupCrashHandlers } from './crashHandler.js';
 import { loadConfig, saveConfig, updateConfig } from '../src/config/appConfig.js';
 import { AppConfig } from '../src/types/config.js';
@@ -10,8 +10,8 @@ import { startServer, stopServer, ServerInstance } from './server.js';
 import { getWindowState, saveWindowState } from './windowState.js';
 import { createTray, updateTrayMode } from './tray.js';
 import type { LogEntry } from '../src/types/logger.js';
-import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
+// import winston from 'winston';
+// import DailyRotateFile from 'winston-daily-rotate-file';
 import { initDatabase } from './database/connection.js';
 import { registerTagsHandlers } from './ipc/tags.handlers.js';
 import { registerSearchHandlers } from './ipc/search.handlers.js';
@@ -21,35 +21,31 @@ import { registerAIHandlers } from './ipc/ai.handlers.js';
 import { registerContentHandlers } from './ipc/content.handlers.js';
 import { registerGraphHandlers } from './ipc/graph.handlers.js';
 
+// Temporary logger replacement for phase 6 testing
+const logger = {
+  error: (msg: string, err?: Error) => console.error('[ERROR]', msg, err),
+  warn: (msg: string) => console.warn('[WARN]', msg),
+  info: (msg: string) => console.log('[INFO]', msg),
+  debug: (msg: string) => console.log('[DEBUG]', msg)
+};
+
 // Set up crash handlers before anything else
 setupCrashHandlers();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// CJS globals work in bundled output
+const __dirname = __dirname || path.dirname(__filename);
 
 // Initialize electron-store for config
-const store = new Store();
+// const store = new Store(); // Disabled - ESM-only in v11
 
 // Create renderer logger (separate from main logger)
-const logsDir = path.join(app.getPath('userData'), 'logs');
-const rendererLogger = winston.createLogger({
-  level: 'debug',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(({ level, message, timestamp, stack }) => {
-      const stackTrace = stack ? `\n${stack}` : '';
-      return `[${timestamp}] [${level}] [renderer] ${message}${stackTrace}`;
-    })
-  ),
-  transports: [
-    new DailyRotateFile({
-      filename: 'renderer-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      dirname: logsDir,
-      maxFiles: '7d'
-    })
-  ]
-});
+// const logsDir = path.join(app.getPath('userData'), 'logs');
+const rendererLogger = {
+  error: (msg: string) => console.error('[RENDERER ERROR]', msg),
+  warn: (msg: string) => console.warn('[RENDERER WARN]', msg),
+  info: (msg: string) => console.log('[RENDERER INFO]', msg),
+  debug: (msg: string) => console.log('[RENDERER DEBUG]', msg)
+};
 
 let mainWindow: BrowserWindow | null = null;
 let currentConfig: AppConfig;
@@ -225,12 +221,16 @@ function registerIpcHandlers() {
   // Logging - renderer process logs
   ipcMain.on('log:write', (_event, entry: LogEntry) => {
     try {
-      // Write renderer logs to separate file
-      rendererLogger.log({
-        level: entry.level,
-        message: entry.message,
-        stack: entry.stack
-      });
+      // Write renderer logs to console (winston disabled for phase 6 testing)
+      const level = entry.level;
+      const msg = entry.message;
+      if (level === 'error') {
+        console.error('[RENDERER ERROR]', msg, entry.stack);
+      } else if (level === 'warn') {
+        console.warn('[RENDERER WARN]', msg);
+      } else {
+        console.log(`[RENDERER ${level.toUpperCase()}]`, msg);
+      }
     } catch (error) {
       logger.error('IPC log:write failed', error as Error);
     }

@@ -264,7 +264,7 @@ export function registerAIHandlers(
   handlers['provider:setConfig'] = async (data: ProviderConfig) => {
     try {
       logger.info('IPC: provider:setConfig', { providerId: data.id });
-      setProviderConfig(data);
+      await setProviderConfig(data);
       return { success: true };
     } catch (error) {
       logger.error('provider:setConfig failed', error as Error);
@@ -278,7 +278,7 @@ export function registerAIHandlers(
   handlers['provider:getConfig'] = async (data: { providerId: string }) => {
     try {
       logger.info('IPC: provider:getConfig', { providerId: data.providerId });
-      const config = getProviderConfig(data.providerId);
+      const config = await getProviderConfig(data.providerId);
       return config;
     } catch (error) {
       logger.error('provider:getConfig failed', error as Error);
@@ -292,7 +292,7 @@ export function registerAIHandlers(
   handlers['provider:getAllConfigs'] = async () => {
     try {
       logger.info('IPC: provider:getAllConfigs');
-      const configs = getAllProviderConfigs();
+      const configs = await getAllProviderConfigs();
       return configs;
     } catch (error) {
       logger.error('provider:getAllConfigs failed', error as Error);
@@ -306,7 +306,7 @@ export function registerAIHandlers(
   handlers['provider:deleteConfig'] = async (data: { providerId: string }) => {
     try {
       logger.info('IPC: provider:deleteConfig', { providerId: data.providerId });
-      deleteProviderConfig(data.providerId);
+      await deleteProviderConfig(data.providerId);
       return { success: true };
     } catch (error) {
       logger.error('provider:deleteConfig failed', error as Error);

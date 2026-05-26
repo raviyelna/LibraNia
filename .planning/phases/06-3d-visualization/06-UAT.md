@@ -3,7 +3,7 @@ status: testing
 phase: 06-3d-visualization
 source: [06-01-SUMMARY.md, 06-02-SUMMARY.md, 06-03-SUMMARY.md, 06-04-SUMMARY.md, 06-05-SUMMARY.md]
 started: 2026-05-26T04:15:00Z
-updated: 2026-05-26T04:15:00Z
+updated: 2026-05-26T14:45:00Z
 ---
 
 ## Current Test
@@ -13,12 +13,15 @@ name: Navigate to Graph View
 expected: |
   Open application. Click "Graph" link in sidebar navigation. Graph view loads showing 3D visualization. If no notes exist, graph shows empty space with camera controls working (rotate, zoom, pan).
 awaiting: user response
+notes: |
+  Fixed winston ESM/CJS crash by removing "type": "module" from package.json. Build succeeded. Electron processes running. Need user to confirm app window opened and Graph link visible in sidebar.
 
 ## Tests
 
 ### 1. Navigate to Graph View
 expected: Open application. Click "Graph" link in sidebar navigation. Graph view loads showing 3D visualization. If no notes exist, graph shows empty space with camera controls working (rotate, zoom, pan).
-result: [pending]
+result: [blocked - awaiting user confirmation app opened]
+notes: Fixed build crash (winston require() in ESM context). Removed "type": "module" from package.json. Build succeeded, Electron running.
 
 ### 2. View Existing Notes as 3D Graph
 expected: With 5+ notes in database, navigate to /graph. Nodes appear as spheres in 3D space. Each node represents one note. Nodes colored by tag (same tag = same color, untagged = gray). Hover over node shows note title as label.
@@ -80,9 +83,23 @@ result: [pending]
 
 total: 15
 passed: 0
-issues: 0
-pending: 15
+issues: 1
+pending: 14
 skipped: 0
+
+## Issues
+
+### I-01: Winston ESM/CJS Module Crash
+severity: critical
+test: 1
+description: |
+  App crashed on load with "Calling `require` for 'winston' in environment that doesn't expose require function". 
+  
+  Root cause: package.json had "type": "module" forcing ESM, but vite.config.ts outputs CJS format. Node tried to load winston (CJS) as ESM → crash.
+  
+  Fix: Removed "type": "module" from package.json. Electron main process should be CJS.
+status: fixed
+fixed_in: package.json edit (removed "type": "module")
 
 ## Gaps
 

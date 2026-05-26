@@ -4,7 +4,15 @@
  */
 
 import { app, dialog } from 'electron';
-import { logger } from './logger.js';
+// import { logger } from './logger.js';
+
+// Temporary logger replacement for phase 6 testing
+const logger = {
+  error: (msg: string, err?: Error) => console.error('[ERROR]', msg, err),
+  warn: (msg: string, err?: Error) => console.warn('[WARN]', msg, err),
+  info: (msg: string) => console.log('[INFO]', msg),
+  debug: (msg: string) => console.log('[DEBUG]', msg)
+};
 
 /**
  * Set up global error handlers for the main process
