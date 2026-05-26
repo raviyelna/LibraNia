@@ -24,7 +24,7 @@ export function GraphView() {
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
   const [highlightLinks, setHighlightLinks] = useState<Set<any>>(new Set());
   const [searchMatchIds, setSearchMatchIds] = useState<Set<string>>(new Set());
-  const fgRef = useRef<any>();
+  const fgRef = useRef<any>(null);
 
   // Create shared geometry and material for instanced rendering (reused for all nodes)
   const { geometry, material } = useMemo(() => {
