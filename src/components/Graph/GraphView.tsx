@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
 import * as d3 from 'd3-force-3d';
@@ -17,6 +18,7 @@ function getColorForTag(tag: string | undefined): string {
 }
 
 export function GraphView() {
+  const location = useLocation();
   const { graphData, loading, error, refetch } = useGraph();
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [highlightNodes, setHighlightNodes] = useState<Set<string>>(new Set());
@@ -144,6 +146,13 @@ export function GraphView() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [refetch]);
+
+  // Route change handler - reload graph data when navigating to /graph
+  useEffect(() => {
+    if (location.pathname === '/graph') {
+      refetch();
+    }
+  }, [location.pathname, refetch]);
 
   // Handle minimap click - jump camera to location
   const handleMinimapClick = (x: number, y: number) => {

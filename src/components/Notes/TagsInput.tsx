@@ -1,4 +1,4 @@
-import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import { useTags, useNoteTags } from '../../hooks/useTags';
 
 interface TagsInputProps {
@@ -20,19 +20,19 @@ export function TagsInput({ noteId }: TagsInputProps) {
   }));
 
   const handleChange = async (selectedOptions: any) => {
-    const selectedIds = selectedOptions ? selectedOptions.map((opt: any) => opt.value) : [];
+    const selectedValues = selectedOptions ? selectedOptions.map((opt: any) => ({ id: opt.value, name: opt.label })) : [];
     const currentIds = noteTags.map(tag => tag.id);
 
-    // Find added tags
-    const addedIds = selectedIds.filter((id: string) => !currentIds.includes(id));
-    for (const id of addedIds) {
-      const tag = allTags.find(t => t.id === id);
-      if (tag) {
-        await addTag(tag.name);
+    // Find added tags (existing or new)
+    for (const selected of selectedValues) {
+      if (!currentIds.includes(selected.id)) {
+        // New tag created by user (id will be the label itself for new tags)
+        await addTag(selected.name);
       }
     }
 
     // Find removed tags
+    const selectedIds = selectedValues.map(s => s.id);
     const removedIds = currentIds.filter(id => !selectedIds.includes(id));
     for (const id of removedIds) {
       await removeTag(id);
@@ -49,7 +49,7 @@ export function TagsInput({ noteId }: TagsInputProps) {
 
   return (
     <div className="tags-input p-4 border-b border-border">
-      <Select
+      <CreatableSelect
         isMulti
         value={value}
         options={options}
