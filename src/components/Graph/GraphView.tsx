@@ -104,6 +104,15 @@ export function GraphView() {
     }
   }, [searchMatchIds, graphData.nodes]);
 
+  // Cleanup: pause animation on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (fgRef.current) {
+        fgRef.current.pauseAnimation();
+      }
+    };
+  }, []);
+
   // Handle minimap click - jump camera to location
   const handleMinimapClick = (x: number, y: number) => {
     if (fgRef.current) {
