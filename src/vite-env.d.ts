@@ -45,6 +45,8 @@ interface NotesAPI {
   getById: (id: string, includeDeleted?: boolean) => Promise<Note | null>;
   getAll: () => Promise<Note[]>;
   getDeleted: () => Promise<Note[]>;
+  onCreated: (callback: (note: Note) => void) => () => void;
+  onUpdated: (callback: (note: Note) => void) => () => void;
 }
 
 interface Backlink {
@@ -55,6 +57,7 @@ interface Backlink {
 
 interface LinksAPI {
   getBacklinks: (noteId: string) => Promise<Backlink[]>;
+  getSemanticLinks: (noteId: string) => Promise<Backlink[]>;
 }
 
 interface SearchResult {
@@ -76,6 +79,7 @@ interface SearchAPI {
   quickNav: (query: string) => Promise<SearchResult[]>;
   fullText: (query: string) => Promise<FullTextSearchResult[]>;
   fuzzy: (query: string) => Promise<SearchResult[]>;
+  semantic: (query: string) => Promise<SearchResult[]>;
 }
 
 interface ExportAPI {
@@ -189,6 +193,7 @@ interface WindowAPI {
   closeWindow: () => Promise<void>;
   restartApp: () => Promise<void>;
   logError: (error: { message: string; stack?: string; componentStack?: string }) => Promise<void>;
+  openExternal: (url: string) => Promise<void>;
   tags: TagsAPI;
   notes: NotesAPI;
   links: LinksAPI;
@@ -198,6 +203,9 @@ interface WindowAPI {
   conversation: ConversationAPI;
   providers: ProvidersAPI;
   content: ContentAPI;
+  graph: {
+    getData: () => Promise<any>;
+  };
 }
 
 declare global {

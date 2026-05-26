@@ -14,7 +14,7 @@ interface GraphMinimapProps {
  * Clicking a node in the minimap jumps the main camera to that location.
  */
 export function GraphMinimap({ graphData, onLocationClick }: GraphMinimapProps) {
-  const fgRef = useRef<any>();
+  const fgRef = useRef<any>(null);
 
   // Fit graph to view after mount and when data changes
   useEffect(() => {
