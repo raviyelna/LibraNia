@@ -59,14 +59,18 @@ export async function createNote(
   await updateNoteLinks(note.id, note.body, db);
 
   // Generate embedding and discover semantic links per D-01, D-10
-  const text = `${note.title} ${note.body}`; // Combined per D-03
-  const embedding = await generateEmbedding(text);
-  await storeEmbedding(note.id, embedding, db);
+  const text = `${note.title} ${note.body}`.trim(); // Combined per D-03
 
-  // Discover semantic links (top 5, threshold 0.7 per D-09, D-12)
-  const rawDb = getDatabase();
-  const similar = findSimilarNotes(rawDb, note.id, embedding, 0.7, 5);
-  await createSemanticLinks(note.id, similar, db);
+  // Only generate embedding if text is non-empty
+  if (text.length > 0) {
+    const embedding = await generateEmbedding(text);
+    await storeEmbedding(note.id, embedding, db);
+
+    // Discover semantic links (top 5, threshold 0.7 per D-09, D-12)
+    const rawDb = getDatabase();
+    const similar = findSimilarNotes(rawDb, note.id, embedding, 0.7, 5);
+    await createSemanticLinks(note.id, similar, db);
+  }
 
   return note as Note;
 }
@@ -112,22 +116,26 @@ export async function updateNote(
 
   // Regenerate embedding if title or body changed per D-01
   if (data.title !== undefined || data.body !== undefined) {
-    const text = `${updated.title} ${updated.body}`;
-    const embedding = await generateEmbedding(text);
+    const text = `${updated.title} ${updated.body}`.trim();
 
-    // Update or create embedding
-    const existing = await getEmbedding(updated.id, db);
-    if (existing) {
-      await updateEmbedding(updated.id, embedding, db);
-    } else {
-      await storeEmbedding(updated.id, embedding, db);
+    // Only generate embedding if text is non-empty
+    if (text.length > 0) {
+      const embedding = await generateEmbedding(text);
+
+      // Update or create embedding
+      const existing = await getEmbedding(updated.id, db);
+      if (existing) {
+        await updateEmbedding(updated.id, embedding, db);
+      } else {
+        await storeEmbedding(updated.id, embedding, db);
+      }
+
+      // Rediscover semantic links per D-10
+      await deleteSemanticLinks(updated.id, db); // Remove old semantic links
+      const rawDb = getDatabase();
+      const similar = findSimilarNotes(rawDb, updated.id, embedding, 0.7, 5);
+      await createSemanticLinks(updated.id, similar, db);
     }
-
-    // Rediscover semantic links per D-10
-    await deleteSemanticLinks(updated.id, db); // Remove old semantic links
-    const rawDb = getDatabase();
-    const similar = findSimilarNotes(rawDb, updated.id, embedding, 0.7, 5);
-    await createSemanticLinks(updated.id, similar, db);
   }
 
   return updated as Note;
