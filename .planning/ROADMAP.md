@@ -11,7 +11,7 @@
 - [x] **Phase 3: AI Integration** - Multi-provider AI configuration, chat interface, and research capabilities (COMPLETE)
 - [x] **Phase 4: Content Storage & Management** - Document/image storage with rich metadata (completed 2026-05-25)
 - [x] **Phase 5: Semantic Discovery** - Embeddings generation, semantic search, and automatic linking (completed 2026-05-26)
-- [x] **Phase 6: 3D Visualization** - Interactive neural network graph visualization (completed 2026-05-26)
+- [x] **Phase 6: 3D Visualization** - Interactive neural network graph visualization (completed 2026-05-27)
 
 ## Phase Details
 
@@ -227,7 +227,16 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [x] 06-05-PLAN.md — Real-time updates, search integration, and minimap
+- [x] 06-05-PLAN.md — Real-time updates, search integration, and minimap (completed 2026-05-26)
+
+**Gap Closure Wave** *(UAT-driven fixes)*
+
+- [x] 06-06-PLAN.md — Text file upload validation fix (extension-based fallback) (completed 2026-05-27)
+- [x] 06-07-PLAN.md — Graph auto-scaling and tab reload handlers (completed 2026-05-27)
+- [x] 06-08-PLAN.md — Minimap node visibility fix (completed 2026-05-27)
+- [x] 06-09-PLAN.md — Search highlighting verification (completed 2026-05-27)
+- [x] 06-10-PLAN.md — Resizable side panel with drag handle (completed 2026-05-27)
+
 ---
 
 ## Progress
@@ -239,7 +248,7 @@ Plans:
 | 3. AI Integration | 11/11 | Complete | 2026-05-25 |
 | 4. Content Storage & Management | 5/5 | Complete | 2026-05-25 |
 | 5. Semantic Discovery | 1/5 | In Progress|  |
-| 6. 3D Visualization | 9/10 | In Progress|  |
+| 6. 3D Visualization | 10/10 | Complete | 2026-05-27 |
 
 ---
 
