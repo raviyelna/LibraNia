@@ -18,23 +18,28 @@ function DebugLogger() {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('[DEBUG] Route changed:', location.pathname, location);
+    console.log('=== [DEBUG] Route changed ===');
+    console.log('Path:', location.pathname);
+    console.log('Full location:', location);
+    console.log('=============================');
   }, [location]);
 
   useEffect(() => {
+    console.log('[DEBUG] DebugLogger mounted - click tracking active');
+
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      console.log('[DEBUG] Click:', {
-        tag: target.tagName,
-        id: target.id,
-        className: target.className,
-        text: target.textContent?.substring(0, 50),
-        path: location.pathname
-      });
+      console.log('=== [DEBUG] CLICK ===');
+      console.log('Tag:', target.tagName);
+      console.log('ID:', target.id);
+      console.log('Class:', target.className);
+      console.log('Text:', target.textContent?.substring(0, 50));
+      console.log('Current path:', location.pathname);
+      console.log('====================');
     };
 
-    document.addEventListener('click', handleClick);
-    return () => document.removeEventListener('click', handleClick);
+    document.addEventListener('click', handleClick, true); // Use capture phase
+    return () => document.removeEventListener('click', handleClick, true);
   }, [location]);
 
   return null;

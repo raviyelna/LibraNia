@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import ForceGraph3D from 'react-force-graph-3d';
 import * as THREE from 'three';
@@ -87,9 +87,9 @@ export function GraphView() {
   };
 
   // Handle search results - highlight matching nodes
-  const handleSearchResults = (nodeIds: string[]) => {
+  const handleSearchResults = useCallback((nodeIds: string[]) => {
     setSearchMatchIds(new Set(nodeIds));
-  };
+  }, []);
 
   // Focus camera on first search result
   useEffect(() => {
