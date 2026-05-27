@@ -98,11 +98,18 @@ export async function updateNote(
 ): Promise<Note> {
   const now = new Date();
 
+  // DEBUG: Check integrity before update
+  const rawDb = getDatabase();
+  const integrityBefore = rawDb.pragma('integrity_check', { simple: true });
+  console.log('[Notes] Integrity before update:', integrityBefore);
+
   // Check if note exists and is not deleted
   const existing = await getNoteById(id, db, false);
   if (!existing) {
     throw new Error(`Note with id ${id} not found or is deleted`);
   }
+
+  console.log('[Notes] About to run update query for note:', id);
 
   const [updated] = await db
     .update(notes)
