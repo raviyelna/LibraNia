@@ -1,73 +1,60 @@
-import { eq, isNull } from 'drizzle-orm';
-import { notes, links, tags, noteTags } from '../database/schema';
-import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../database/schema';
+import { getAllNotes } from './file-storage.service';
 import type { GraphData, GraphNode, GraphLink } from '../../src/types/graph';
 
 /**
- * Get graph data for 3D visualization
- * Queries notes and links tables to build graph structure
- * @param db Drizzle ORM instance
- * @returns GraphData with nodes (id, title, tags) and links (source, target, type, similarity)
+ * Extract wiki-links from note body
+ * Matches [[note-title]] pattern
  */
-export async function getGraphData(
-  db: BetterSQLite3Database<typeof schema>
-): Promise<GraphData> {
-  // Query all non-deleted notes
-  const allNotes = await db
-    .select({
-      id: notes.id,
-      title: notes.title,
-    })
-    .from(notes)
-    .where(isNull(notes.deleted_at));
+function extractWikiLinks(body: string): string[] {
+  const regex = /\[\[([^\]]+)\]\]/g;
+  const links: string[] = [];
+  let match;
 
-  // Build nodes array with tags
-  const graphNodes: GraphNode[] = [];
-
-  for (const note of allNotes) {
-    // Query tags for this note via note_tags junction
-    const noteTags_result = await db
-      .select({
-        tagName: tags.name,
-      })
-      .from(noteTags)
-      .innerJoin(tags, eq(noteTags.tag_id, tags.id))
-      .where(eq(noteTags.note_id, note.id));
-
-    graphNodes.push({
-      id: note.id,
-      title: note.title,
-      tags: noteTags_result.map((row) => row.tagName),
-    });
+  while ((match = regex.exec(body)) !== null) {
+    links.push(match[1].trim());
   }
 
-  // Query all links where both source and target are non-deleted
-  const allLinks = await db
-    .select({
-      source_note_id: links.source_note_id,
-      target_note_id: links.target_note_id,
-      link_type: links.link_type,
-      similarity_score: links.similarity_score,
-    })
-    .from(links)
-    .innerJoin(notes, eq(links.target_note_id, notes.id))
-    .where(isNull(notes.deleted_at));
+  return links;
+}
 
-  // Build links array
-  const graphLinks: GraphLink[] = allLinks.map((link) => {
-    const graphLink: GraphLink = {
-      source: link.source_note_id,
-      target: link.target_note_id,
-      type: link.link_type as 'manual' | 'semantic',
-    };
+/**
+ * Get graph data for 3D visualization from file storage
+ * Builds graph by parsing wiki-links in note bodies
+ * @returns GraphData with nodes (id, title, tags) and links (source, target, type)
+ */
+export function getGraphData(): GraphData {
+  const notes = getAllNotes();
 
-    // Only include similarity for semantic links
-    if (link.link_type === 'semantic' && link.similarity_score !== null) {
-      graphLink.similarity = link.similarity_score;
-    }
+  // Create title-to-id map for link resolution
+  const titleToId = new Map<string, string>();
+  notes.forEach(note => {
+    titleToId.set(note.title.toLowerCase(), note.id);
+  });
 
-    return graphLink;
+  // Build nodes array
+  const graphNodes: GraphNode[] = notes.map(note => ({
+    id: note.id,
+    title: note.title,
+    tags: note.tags,
+  }));
+
+  // Extract links from note bodies
+  const graphLinks: GraphLink[] = [];
+  notes.forEach(note => {
+    const wikiLinks = extractWikiLinks(note.body);
+
+    wikiLinks.forEach(linkTitle => {
+      const targetId = titleToId.get(linkTitle.toLowerCase());
+
+      // Only create link if target note exists
+      if (targetId) {
+        graphLinks.push({
+          source: note.id,
+          target: targetId,
+          type: 'manual',
+        });
+      }
+    });
   });
 
   return {
