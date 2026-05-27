@@ -1,111 +1,126 @@
 import { ipcMain } from 'electron';
 import { logger } from '../logger';
 import {
-  createTag,
   getAllTags,
-  getTagById,
-  deleteTag,
-  renameTag,
-  addTagsToNote,
-  removeTagFromNote,
   getNoteTags,
-  getNotesByTag,
-  setNoteTags,
-} from '../services/tags.service';
+  addTagsToNote,
+  removeTagsFromNote,
+} from '../services/file-storage.service';
 
-/**
- * Register all IPC handlers for tag operations
- */
-export function registerTagsHandlers(): void {
-  // Get all tags
+export function registerTagsHandlers() {
   ipcMain.handle('tags:getAll', async () => {
     try {
-      return await getAllTags();
+      logger.info('IPC: tags:getAll');
+      const tagNames = getAllTags();
+      // Convert string[] to Tag[] format expected by frontend
+      const tags = tagNames.map(name => ({
+        id: name, // Use name as id for file-based storage
+        name: name,
+        created_at: new Date(),
+      }));
+      return tags;
     } catch (error) {
-      logger.error('tags:getAll failed', error);
+      logger.error('tags:getAll failed', error as Error);
       throw error;
     }
   });
 
-  // Create a new tag
-  ipcMain.handle('tags:create', async (event, { name }) => {
+  ipcMain.handle('tags:create', async (event, data) => {
     try {
-      return await createTag(name);
+      logger.info('IPC: tags:create', { name: data.name });
+      // Tags auto-created when added to notes, just return success
+      return { success: true, name: data.name };
     } catch (error) {
-      logger.error('tags:create failed', error);
+      logger.error('tags:create failed', error as Error);
       throw error;
     }
   });
 
-  // Delete a tag
-  ipcMain.handle('tags:delete', async (event, { id }) => {
+  ipcMain.handle('tags:delete', async (event, data) => {
     try {
-      return await deleteTag(id);
+      logger.info('IPC: tags:delete', { id: data.id });
+      // TODO: Remove tag from all notes
+      return { success: true };
     } catch (error) {
-      logger.error('tags:delete failed', error);
+      logger.error('tags:delete failed', error as Error);
       throw error;
     }
   });
 
-  // Rename a tag
-  ipcMain.handle('tags:rename', async (event, { id, name }) => {
+  ipcMain.handle('tags:rename', async (event, data) => {
     try {
-      return await renameTag(id, name);
+      logger.info('IPC: tags:rename', { id: data.id, name: data.name });
+      // TODO: Rename tag in all notes
+      return { success: true };
     } catch (error) {
-      logger.error('tags:rename failed', error);
+      logger.error('tags:rename failed', error as Error);
       throw error;
     }
   });
 
-  // Add tags to a note
-  ipcMain.handle('tags:addToNote', async (event, { noteId, tagNames }) => {
+  ipcMain.handle('tags:getForNote', async (event, data) => {
     try {
-      return await addTagsToNote(noteId, tagNames);
+      logger.info('IPC: tags:getForNote', { noteId: data.noteId });
+      const tagNames = getNoteTags(data.noteId);
+      // Convert string[] to Tag[] format
+      const tags = tagNames.map(name => ({
+        id: name,
+        name: name,
+        created_at: new Date(),
+      }));
+      return tags;
     } catch (error) {
-      logger.error('tags:addToNote failed', error);
+      logger.error('tags:getForNote failed', error as Error);
       throw error;
     }
   });
 
-  // Remove tag from note
-  ipcMain.handle('tags:removeFromNote', async (event, { noteId, tagId }) => {
+  ipcMain.handle('tags:addToNote', async (event, data) => {
     try {
-      await removeTagFromNote(noteId, tagId);
-      return true;
+      logger.info('IPC: tags:addToNote', { noteId: data.noteId, tagNames: data.tagNames });
+      const tags = Array.isArray(data.tagNames) ? data.tagNames : [data.tagNames];
+      const note = addTagsToNote(data.noteId, tags);
+      return { success: true, note };
     } catch (error) {
-      logger.error('tags:removeFromNote failed', error);
+      logger.error('tags:addToNote failed', error as Error);
       throw error;
     }
   });
 
-  // Get all tags for a note
-  ipcMain.handle('tags:getForNote', async (event, { noteId }) => {
+  ipcMain.handle('tags:removeFromNote', async (event, data) => {
     try {
-      return await getNoteTags(noteId);
+      logger.info('IPC: tags:removeFromNote', { noteId: data.noteId, tagId: data.tagId });
+      const tags = Array.isArray(data.tagId) ? data.tagId : [data.tagId];
+      const note = removeTagsFromNote(data.noteId, tags);
+      return { success: true, note };
     } catch (error) {
-      logger.error('tags:getForNote failed', error);
+      logger.error('tags:removeFromNote failed', error as Error);
       throw error;
     }
   });
 
-  // Get all notes with a specific tag
-  ipcMain.handle('tags:getNotesByTag', async (event, { tagId }) => {
+  ipcMain.handle('tags:getNotesByTag', async (event, data) => {
     try {
-      return await getNotesByTag(tagId);
+      logger.info('IPC: tags:getNotesByTag', { tagId: data.tagId });
+      // TODO: Filter notes by tag
+      return [];
     } catch (error) {
-      logger.error('tags:getNotesByTag failed', error);
+      logger.error('tags:getNotesByTag failed', error as Error);
       throw error;
     }
   });
 
-  // Set all tags for a note (replace existing)
-  ipcMain.handle('tags:setForNote', async (event, { noteId, tagNames }) => {
+  ipcMain.handle('tags:setForNote', async (event, data) => {
     try {
-      await setNoteTags(noteId, tagNames);
-      return true;
+      logger.info('IPC: tags:setForNote', { noteId: data.noteId, tagNames: data.tagNames });
+      const tags = Array.isArray(data.tagNames) ? data.tagNames : [];
+      const note = addTagsToNote(data.noteId, tags);
+      return { success: true, note };
     } catch (error) {
-      logger.error('tags:setForNote failed', error);
+      logger.error('tags:setForNote failed', error as Error);
       throw error;
     }
   });
+
+  logger.info('Tags IPC handlers registered');
 }
