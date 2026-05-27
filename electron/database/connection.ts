@@ -47,8 +47,8 @@ export async function initDatabase(dbPath: string): Promise<void> {
   // Use DELETE mode instead of WAL to avoid corruption issues
   db.pragma('journal_mode = DELETE');
 
-  // Enable foreign keys
-  db.pragma('foreign_keys = ON');
+  // Disable foreign keys temporarily to avoid SQLITE_CORRUPT_VTAB
+  db.pragma('foreign_keys = OFF');
 
   // Create tables using raw SQL (Drizzle migrations would be better for production)
   db.exec(`

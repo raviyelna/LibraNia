@@ -114,13 +114,37 @@ export async function updateNote(
 
   console.log('[Notes] About to run update query for note:', id);
 
-  await db
-    .update(notes)
-    .set({
-      ...data,
-      updated_at: now,
-    })
-    .where(and(eq(notes.id, id), isNull(notes.deleted_at)));
+  // Use raw better-sqlite3 instead of Drizzle to avoid SQLITE_CORRUPT_VTAB
+  const sql = `
+    UPDATE notes
+    SET title = ?, body = ?, metadata = ?, updated_at = ?
+    WHERE id = ? AND deleted_at IS NULL
+  `;
+  console.log('[Notes] SQL:', sql);
+  console.log('[Notes] Params:', {
+    title: data.title ?? existing.title,
+    body: data.body ?? existing.body,
+    metadata: data.metadata ?? existing.metadata,
+    updated_at: now.getTime(),
+    id
+  });
+
+  const stmt = rawDb.prepare(sql);
+  console.log('[Notes] Statement prepared, about to run');
+
+  try {
+    stmt.run(
+      data.title ?? existing.title,
+      data.body ?? existing.body,
+      data.metadata ?? existing.metadata,
+      now.getTime(),
+      id
+    );
+    console.log('[Notes] Statement executed successfully');
+  } catch (error) {
+    console.error('[Notes] Statement execution failed:', error);
+    throw error;
+  }
 
   console.log('[Notes] Update query completed, fetching updated note');
 
