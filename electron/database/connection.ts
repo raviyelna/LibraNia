@@ -182,6 +182,19 @@ export async function initDatabase(dbPath: string): Promise<void> {
 
   // Initialize Drizzle ORM
   orm = drizzle(db, { schema });
+
+  // Verify database integrity after initialization
+  try {
+    const result = db.pragma('integrity_check', { simple: true });
+    console.log('[DB] Integrity check:', result);
+    if (result !== 'ok') {
+      console.error('[DB] Database integrity check failed:', result);
+      throw new Error('Database integrity check failed');
+    }
+  } catch (error) {
+    console.error('[DB] Integrity check error:', error);
+    throw error;
+  }
 }
 
 /**
