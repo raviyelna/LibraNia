@@ -168,8 +168,9 @@ export async function initDatabase(dbPath: string): Promise<void> {
   `);
 
   // Setup FTS5 virtual tables and triggers
-  setupFTS5(db);
-  setupContentFTS5(db);
+  // DISABLED: FTS5 triggers may cause SQLITE_CORRUPT_VTAB on Windows
+  // setupFTS5(db);
+  // setupContentFTS5(db);
 
   // Setup sqlite-vec extension for vector similarity search
   try {
