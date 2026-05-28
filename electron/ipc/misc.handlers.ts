@@ -184,5 +184,19 @@ export function registerMiscHandlers() {
     }
   });
 
+  ipcMain.handle('conversation:rename', async (event, data) => {
+    try {
+      logger.info('IPC: conversation:rename', { conversationId: data.conversationId, title: data.title });
+      const orm = getORM();
+      const { conversations } = await import('../database/schema');
+      const { eq } = await import('drizzle-orm');
+      await orm.update(conversations).set({ title: data.title, updated_at: new Date() }).where(eq(conversations.id, data.conversationId));
+      return { success: true };
+    } catch (error) {
+      logger.error('conversation:rename failed', error as Error);
+      throw error;
+    }
+  });
+
   logger.info('Misc IPC handlers registered');
 }
