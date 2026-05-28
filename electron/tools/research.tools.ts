@@ -4,7 +4,7 @@
 
 import { getAllNotes, getNoteById, createNote } from '../services/file-storage.service';
 import { getBacklinks } from '../services/links.service';
-import { getTagsForNote, setTagsForNote } from '../services/tags.service';
+import { getNoteTags, setNoteTags } from '../services/tags.service';
 import type Database from 'better-sqlite3';
 
 export interface Tool {
@@ -173,7 +173,7 @@ export async function executeToolCall(
     }
 
     case 'get_note_tags': {
-      const tags = getTagsForNote(toolInput.noteId);
+      const tags = await getNoteTags(toolInput.noteId);
       return tags.map(tag => ({ id: tag.id, name: tag.name }));
     }
 
@@ -197,7 +197,7 @@ export async function executeToolCall(
     }
 
     case 'add_tags': {
-      setTagsForNote(toolInput.noteId, toolInput.tags);
+      await setNoteTags(toolInput.noteId, toolInput.tags);
       return { success: true };
     }
 
