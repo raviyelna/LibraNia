@@ -11,11 +11,29 @@ interface ChatInterfaceProps {
 export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [progressStatus, setProgressStatus] = useState<string>('');
   const [selectedProvider, setSelectedProvider] = useState<string>('deepseek');
   const [selectedModel, setSelectedModel] = useState<string>('deepseek-chat');
   const [customModel, setCustomModel] = useState<string>('');
   const [useCustomModel, setUseCustomModel] = useState<boolean>(false);
   const { providers } = useAIProviders();
+
+  // Listen for progress updates
+  useEffect(() => {
+    const handleProgress = (data: { conversationId: string; status: string }) => {
+      if (data.conversationId === conversationId) {
+        setProgressStatus(data.status);
+      }
+    };
+
+    // @ts-ignore - ai:progress event
+    window.electronAPI?.on?.('ai:progress', handleProgress);
+
+    return () => {
+      // @ts-ignore
+      window.electronAPI?.off?.('ai:progress', handleProgress);
+    };
+  }, [conversationId]);
 
   // Update model when provider changes
   useEffect(() => {
@@ -53,13 +71,22 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   const handleSendMessage = async (message: string) => {
     if (!conversationId) return;
 
+    // Check for /research command
+    const isResearchMode = message.trim().startsWith('/research');
+    const actualMessage = isResearchMode ? message.trim().substring(9).trim() : message;
+
+    if (isResearchMode && !actualMessage) {
+      console.error('[ChatInterface] /research requires a query');
+      return;
+    }
+
     setIsSending(true);
     try {
       // Add user message optimistically
       const userMessage = {
         id: Date.now().toString(),
         role: 'user' as const,
-        content: message,
+        content: actualMessage,
         created_at: new Date(),
       };
       const updatedMessages = [...messages, userMessage];
@@ -67,7 +94,11 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
       // Call AI with selected provider and model
       const modelToUse = useCustomModel && customModel ? customModel : selectedModel;
-      console.log('[ChatInterface] Calling AI:', { provider: selectedProvider, model: modelToUse });
+      console.log('[ChatInterface] Calling AI:', {
+        provider: selectedProvider,
+        model: modelToUse,
+        researchMode: isResearchMode
+      });
       const response = await window.api.ai.chat({
         conversationId,
         messages: updatedMessages.map(m => ({
@@ -75,7 +106,8 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
           content: m.content
         })),
         providerId: selectedProvider,
-        model: modelToUse
+        model: modelToUse,
+        researchMode: isResearchMode
       });
 
       console.log('[ChatInterface] AI response:', response);
@@ -174,7 +206,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
         </div>
       </div>
 
-      <MessageList messages={messages} />
+      <MessageList messages={messages} isGenerating={isSending} generationStatus={progressStatus} />
       <MessageInput onSend={handleSendMessage} isSending={isSending} />
     </div>
   );
