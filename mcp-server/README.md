@@ -23,12 +23,16 @@ MCP server exposing LibraNia knowledge base to Claude Desktop, Codex, and other 
 ```bash
 cd mcp-server
 npm install
-npm run build
+npm run setup
 ```
 
-## Configuration
+**That's it!** Script will:
+1. Build MCP server
+2. Find Claude Desktop config
+3. Add LibraNia to mcpServers
+4. Show next steps
 
-### Claude Desktop
+**Manual setup** (if needed):
 
 Add to `%APPDATA%\Claude\claude_desktop_config.json`:
 
