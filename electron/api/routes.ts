@@ -104,6 +104,27 @@ router.get('/api/conversations/:id', async (req, res) => {
   }
 });
 
+router.patch('/api/conversations/:id', async (req, res) => {
+  try {
+    const { title } = req.body;
+    if (!title) {
+      return res.status(400).json({ success: false, error: 'Missing required field: title' });
+    }
+    const db = getORM();
+    const conversation = await getConversation(req.params.id, db);
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+    // Update conversation title
+    const { conversations } = await import('../database/schema');
+    const { eq } = await import('drizzle-orm');
+    await db.update(conversations).set({ title, updated_at: new Date() }).where(eq(conversations.id, req.params.id));
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 router.delete('/api/conversations/:id', async (req, res) => {
   try {
     const db = getORM();
