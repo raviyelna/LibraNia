@@ -169,22 +169,27 @@ export async function callClaude(
   let iteration = 0;
   while (data.stop_reason === 'tool_use' && iteration < maxIterations) {
     iteration++;
-    logger.info(`Tool use iteration ${iteration}`);
+    logger.info(`Tool use iteration ${iteration}`, { stopReason: data.stop_reason });
 
     // Extract tool calls
     const toolUseBlocks = data.content.filter((block: any) => block.type === 'tool_use');
     const textBlocks = data.content.filter((block: any) => block.type === 'text');
 
+    logger.info(`Found ${toolUseBlocks.length} tool calls`, {
+      tools: toolUseBlocks.map((t: any) => t.name)
+    });
+
     // Execute tools
     const toolResults = [];
     for (const toolUse of toolUseBlocks) {
-      logger.info(`Executing tool: ${toolUse.name}`, toolUse.input);
+      logger.info(`Executing tool: ${toolUse.name}`, { input: toolUse.input });
       if (onProgress) {
         onProgress(`Executing: ${toolUse.name}...`);
       }
 
       try {
         const result = await executeToolCall(toolUse.name, toolUse.input);
+        logger.info(`Tool ${toolUse.name} succeeded`, { resultLength: JSON.stringify(result).length });
         toolResults.push({
           type: 'tool_result',
           tool_use_id: toolUse.id,
