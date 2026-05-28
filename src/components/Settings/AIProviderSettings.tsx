@@ -191,10 +191,16 @@ export function AIProviderSettings() {
     }
   };
 
-  const handleSaveTavily = () => {
-    localStorage.setItem('tavilyApiKey', tavilyApiKey);
-    // Also save to .env via IPC if needed
-    alert('Tavily API key saved to localStorage. Restart app to use in backend.');
+  const handleSaveTavily = async () => {
+    try {
+      localStorage.setItem('tavilyApiKey', tavilyApiKey);
+      // Save to .env via IPC
+      await window.api.config.setEnvVar('TAVILY_API_KEY', tavilyApiKey);
+      alert('Tavily API key saved successfully!');
+    } catch (error) {
+      console.error('Failed to save Tavily key:', error);
+      alert('Failed to save Tavily key. Check console for details.');
+    }
   };
 
   const renderProviderSection = (providerId: ProviderId) => {

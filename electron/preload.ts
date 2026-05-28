@@ -21,6 +21,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 // Keep legacy 'api' namespace for backward compatibility
 contextBridge.exposeInMainWorld('api', {
   // Config operations
+  config: {
+    get: () => ipcRenderer.invoke('config:get'),
+    set: (key: string, value: any) => ipcRenderer.invoke('config:set', key, value),
+    update: (updates: any) => ipcRenderer.invoke('config:update', updates),
+    setEnvVar: (key: string, value: string) => ipcRenderer.invoke('config:setEnvVar', { key, value }),
+  },
   getConfig: () => ipcRenderer.invoke('config:get'),
   setConfig: (key: string, value: any) => ipcRenderer.invoke('config:set', key, value),
   updateConfig: (updates: any) => ipcRenderer.invoke('config:update', updates),
