@@ -198,7 +198,9 @@ export async function executeToolCall(
     }
 
     case 'add_tags': {
+      logger.info(`Adding tags to note ${toolInput.noteId}:`, toolInput.tags);
       await setNoteTags(toolInput.noteId, toolInput.tags);
+      logger.info(`Tags added successfully to note ${toolInput.noteId}`);
       return { success: true };
     }
 
