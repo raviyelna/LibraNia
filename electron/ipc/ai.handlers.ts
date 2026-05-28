@@ -1,9 +1,10 @@
 import { ipcMain, BrowserWindow } from 'electron';
 import { logger } from '../logger';
-import { loadProviderFromEnv } from '../store/env.store';
+import { loadProviderFromEnv, readEnv } from '../store/env.store';
 import { createMessage, getMessagesByConversation } from '../services/message.service';
 import { RESEARCH_SYSTEM_PROMPT } from '../prompts/research.system';
 import { RESEARCH_TOOLS, executeToolCall } from '../tools/research.tools';
+import { searchWeb } from '../services/web-search.service';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -80,7 +81,15 @@ export async function callDeepSeek(
 
       try {
         const args = JSON.parse(toolCall.function.arguments);
-        const result = await executeToolCall(toolCall.function.name, args);
+
+        // Create web search function if API key available
+        const env = readEnv();
+        const tavilyApiKey = env.TAVILY_API_KEY;
+        const webSearchFn = tavilyApiKey
+          ? async (query: string) => await searchWeb(query, tavilyApiKey)
+          : undefined;
+
+        const result = await executeToolCall(toolCall.function.name, args, webSearchFn);
         conversationMessages.push({
           role: 'tool',
           tool_call_id: toolCall.id,
@@ -188,7 +197,14 @@ export async function callClaude(
       }
 
       try {
-        const result = await executeToolCall(toolUse.name, toolUse.input);
+        // Create web search function if API key available
+        const env = readEnv();
+        const tavilyApiKey = env.TAVILY_API_KEY;
+        const webSearchFn = tavilyApiKey
+          ? async (query: string) => await searchWeb(query, tavilyApiKey)
+          : undefined;
+
+        const result = await executeToolCall(toolUse.name, toolUse.input, webSearchFn);
         logger.info(`Tool ${toolUse.name} succeeded`, { resultLength: JSON.stringify(result).length });
         toolResults.push({
           type: 'tool_result',
@@ -310,7 +326,15 @@ export async function callOpenAI(
 
       try {
         const args = JSON.parse(toolCall.function.arguments);
-        const result = await executeToolCall(toolCall.function.name, args);
+
+        // Create web search function if API key available
+        const env = readEnv();
+        const tavilyApiKey = env.TAVILY_API_KEY;
+        const webSearchFn = tavilyApiKey
+          ? async (query: string) => await searchWeb(query, tavilyApiKey)
+          : undefined;
+
+        const result = await executeToolCall(toolCall.function.name, args, webSearchFn);
         conversationMessages.push({
           role: 'tool',
           tool_call_id: toolCall.id,
