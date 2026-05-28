@@ -248,6 +248,84 @@ export function restoreNote(id: string): Note {
 }
 
 /**
+ * Sync filesystem to database
+ * - Add notes from filesystem that are missing in DB
+ * - Remove notes from DB that don't exist in filesystem
+ */
+export async function syncFilesystemToDb(): Promise<{
+  synced: number;
+  deleted: number;
+  skipped: number;
+}> {
+  const Database = require('better-sqlite3');
+  const os = require('os');
+  const dbPath = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'librania.db');
+
+  const db = new Database(dbPath);
+  const dir = getNotesDir();
+
+  // Get all note files
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+  const fileIds = new Set(files.map(f => path.basename(f, '.md')));
+
+  // Get all note IDs from DB
+  const dbNoteIds = new Set(
+    db.prepare('SELECT id FROM notes').all().map((row: any) => row.id)
+  );
+
+  let synced = 0;
+  let deleted = 0;
+  let skipped = 0;
+
+  // Sync filesystem → DB (add missing notes)
+  for (const file of files) {
+    const noteId = path.basename(file, '.md');
+
+    if (dbNoteIds.has(noteId)) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      const filePath = path.join(dir, file);
+      const note = parseNoteFile(noteId, filePath);
+
+      db.prepare(`
+        INSERT INTO notes (id, title, body, created_at, updated_at, deleted_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(
+        noteId,
+        note.title,
+        note.body,
+        note.created_at.toISOString(),
+        note.updated_at.toISOString(),
+        note.deleted_at ? note.deleted_at.toISOString() : null
+      );
+
+      console.log('[Sync] Added to DB:', note.title);
+      synced++;
+    } catch (error) {
+      console.error('[Sync] Error syncing', noteId, error);
+    }
+  }
+
+  // Clean up DB → filesystem (remove notes without files)
+  for (const noteId of dbNoteIds) {
+    if (!fileIds.has(noteId)) {
+      db.prepare('DELETE FROM notes WHERE id = ?').run(noteId);
+      console.log('[Sync] Removed from DB:', noteId);
+      deleted++;
+    }
+  }
+
+  db.close();
+
+  console.log('[Sync] Complete:', { synced, deleted, skipped });
+
+  return { synced, deleted, skipped };
+}
+
+/**
  * Get all unique tags across all notes
  */
 export function getAllTags(): string[] {
