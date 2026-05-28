@@ -272,10 +272,10 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
                   rehypePlugins={[rehypeRaw, rehypeSanitize]}
                   components={{
                     img: ({ node, src, ...props }) => {
-                      // Convert absolute file paths to file:// URLs
+                      // Convert absolute file paths to librania:// protocol
                       let imgSrc = src;
                       if (src && (src.startsWith('C:\\') || src.startsWith('/') || src.includes('AppData'))) {
-                        imgSrc = `file:///${src.replace(/\\/g, '/')}`;
+                        imgSrc = `librania://${src.replace(/\\/g, '/')}`;
                       }
                       return (
                         <img {...props} src={imgSrc} className="max-w-full h-auto rounded" loading="lazy" />
