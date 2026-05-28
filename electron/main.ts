@@ -170,7 +170,8 @@ function handleModeSwitch(mode: 'desktop' | 'web') {
 // App lifecycle
 app.whenReady().then(async () => {
   // Initialize database
-  await initDatabase();
+  const dbPath = path.join(app.getPath('userData'), 'librania.db');
+  await initDatabase(dbPath);
   logger.info('Database initialized');
 
   // Initialize file storage
@@ -206,6 +207,13 @@ app.whenReady().then(async () => {
   if (mainWindow) {
     tray = createTray(mainWindow, currentConfig.mode, handleModeSwitch);
     logger.info('System tray created');
+  }
+
+  // Start HTTP server if in web mode
+  if (currentConfig.mode === 'web') {
+    const distPath = path.join(__dirname, '../dist');
+    serverInstance = await startServer(3000, distPath);
+    logger.info('HTTP server started on port 3000');
   }
 });
 
