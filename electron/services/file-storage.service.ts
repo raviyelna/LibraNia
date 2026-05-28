@@ -67,15 +67,23 @@ function parseNoteFile(id: string, filePath: string): Note {
   const content = fs.readFileSync(filePath, 'utf-8');
   const { data, content: body } = matter(content);
 
+  // Safe date parsing - handle missing/invalid dates
+  const now = new Date();
+  const parseDate = (value: any): Date => {
+    if (!value) return now;
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? now : date;
+  };
+
   return {
     id,
     title: data.title || 'Untitled',
     body: body.trim(),
     metadata: data.metadata || null,
     tags: Array.isArray(data.tags) ? data.tags : [],
-    created_at: new Date(data.created_at),
-    updated_at: new Date(data.updated_at),
-    deleted_at: data.deleted_at ? new Date(data.deleted_at) : null,
+    created_at: parseDate(data.created_at),
+    updated_at: parseDate(data.updated_at),
+    deleted_at: data.deleted_at ? parseDate(data.deleted_at) : null,
   };
 }
 
@@ -85,13 +93,23 @@ function parseNoteFile(id: string, filePath: string): Note {
 function writeNoteFile(note: Note): void {
   const filePath = getNoteFilePath(note.id);
 
+  // Safe date serialization
+  const toISOStringOrNull = (date: Date | null): string | null => {
+    if (!date) return null;
+    try {
+      return date.toISOString();
+    } catch {
+      return new Date().toISOString();
+    }
+  };
+
   const frontmatter = {
     title: note.title,
     metadata: note.metadata,
     tags: note.tags,
-    created_at: note.created_at.toISOString(),
-    updated_at: note.updated_at.toISOString(),
-    deleted_at: note.deleted_at ? note.deleted_at.toISOString() : null,
+    created_at: toISOStringOrNull(note.created_at),
+    updated_at: toISOStringOrNull(note.updated_at),
+    deleted_at: toISOStringOrNull(note.deleted_at),
   };
 
   const content = matter.stringify(note.body, frontmatter);
