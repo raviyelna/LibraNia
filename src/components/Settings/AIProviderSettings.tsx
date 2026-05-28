@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAIProviders, useProviderValidation } from '../../hooks/useAIProviders';
 import { Button } from '../ui/Button';
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
@@ -73,8 +73,10 @@ export function AIProviderSettings() {
   });
 
   // Load existing configs into form state
-  useState(() => {
+  useEffect(() => {
+    console.log('[AIProviderSettings] Loading providers into form:', providers);
     providers.forEach((config) => {
+      console.log('[AIProviderSettings] Loading config:', config.id, 'apiKey length:', config.apiKey?.length);
       setFormState((prev) => ({
         ...prev,
         [config.id]: {
@@ -85,7 +87,7 @@ export function AIProviderSettings() {
         },
       }));
     });
-  });
+  }, [providers]);
 
   const handleFieldChange = (
     providerId: ProviderId,
