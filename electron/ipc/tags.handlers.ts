@@ -81,9 +81,8 @@ export function registerTagsHandlers() {
   ipcMain.handle('tags:removeFromNote', async (event, data) => {
     try {
       logger.info('IPC: tags:removeFromNote', { noteId: data.noteId, tagId: data.tagId });
-      const tags = Array.isArray(data.tagId) ? data.tagId : [data.tagId];
-      const note = removeTagsFromNote(data.noteId, tags);
-      return { success: true, note };
+      await removeTagFromNote(data.noteId, data.tagId);
+      return { success: true };
     } catch (error) {
       logger.error('tags:removeFromNote failed', error as Error);
       throw error;
