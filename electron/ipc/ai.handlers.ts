@@ -15,7 +15,7 @@ interface ChatRequest {
   model?: string;
 }
 
-async function callDeepSeek(messages: ChatMessage[], apiKey: string, model: string): Promise<string> {
+export async function callDeepSeek(messages: ChatMessage[], apiKey: string, model: string): Promise<string> {
   const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -38,7 +38,7 @@ async function callDeepSeek(messages: ChatMessage[], apiKey: string, model: stri
   return data.choices[0].message.content;
 }
 
-async function callClaude(messages: ChatMessage[], apiKey: string, model: string, baseURL?: string): Promise<string> {
+export async function callClaude(messages: ChatMessage[], apiKey: string, model: string, baseURL?: string): Promise<string> {
   // Extract system message if present
   const systemMessage = messages.find(m => m.role === 'system');
   const conversationMessages = messages.filter(m => m.role !== 'system');
@@ -69,7 +69,7 @@ async function callClaude(messages: ChatMessage[], apiKey: string, model: string
   return data.content[0].text;
 }
 
-async function callOpenAI(messages: ChatMessage[], apiKey: string, model: string, baseURL?: string): Promise<string> {
+export async function callOpenAI(messages: ChatMessage[], apiKey: string, model: string, baseURL?: string): Promise<string> {
   const url = baseURL ? `${baseURL}/chat/completions` : 'https://api.openai.com/v1/chat/completions';
 
   const response = await fetch(url, {
