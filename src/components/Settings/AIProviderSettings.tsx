@@ -9,6 +9,8 @@ interface ProviderFormState {
   apiKey: string;
   baseURL: string;
   model: string;
+  customModel: string;
+  useCustomModel: boolean;
   showApiKey: boolean;
   validationStatus: 'idle' | 'validating' | 'success' | 'error';
   validationMessage?: string;
@@ -46,6 +48,8 @@ const PROVIDER_NAMES: Record<ProviderId, string> = {
 export function AIProviderSettings() {
   const { providers, setConfig } = useAIProviders();
   const { validate } = useProviderValidation();
+  const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
+  const [showTavilyKey, setShowTavilyKey] = useState<boolean>(false);
 
   // Initialize form state for each provider
   const [formState, setFormState] = useState<Record<ProviderId, ProviderFormState>>({
@@ -53,6 +57,8 @@ export function AIProviderSettings() {
       apiKey: '',
       baseURL: '',
       model: PROVIDER_MODELS.claude[0].value,
+      customModel: '',
+      useCustomModel: false,
       showApiKey: false,
       validationStatus: 'idle',
     },
@@ -60,6 +66,8 @@ export function AIProviderSettings() {
       apiKey: '',
       baseURL: '',
       model: PROVIDER_MODELS.openai[0].value,
+      customModel: '',
+      useCustomModel: false,
       showApiKey: false,
       validationStatus: 'idle',
     },
@@ -67,6 +75,8 @@ export function AIProviderSettings() {
       apiKey: '',
       baseURL: '',
       model: PROVIDER_MODELS.deepseek[0].value,
+      customModel: '',
+      useCustomModel: false,
       showApiKey: false,
       validationStatus: 'idle',
     },
@@ -75,8 +85,18 @@ export function AIProviderSettings() {
   // Load existing configs into form state
   useEffect(() => {
     console.log('[AIProviderSettings] Loading providers into form:', providers);
+
+    // Load Tavily key from localStorage
+    const savedTavilyKey = localStorage.getItem('tavilyApiKey') || '';
+    setTavilyApiKey(savedTavilyKey);
+
     providers.forEach((config) => {
       console.log('[AIProviderSettings] Loading config:', config.id, 'apiKey length:', config.apiKey?.length);
+
+      // Load custom model from localStorage
+      const savedCustomModel = localStorage.getItem(`customModel_${config.id}`) || '';
+      const savedUseCustom = localStorage.getItem(`useCustomModel_${config.id}`) === 'true';
+
       setFormState((prev) => ({
         ...prev,
         [config.id]: {
@@ -84,6 +104,8 @@ export function AIProviderSettings() {
           apiKey: config.apiKey,
           baseURL: config.baseURL || '',
           model: config.model,
+          customModel: savedCustomModel,
+          useCustomModel: savedUseCustom,
         },
       }));
     });
@@ -106,6 +128,14 @@ export function AIProviderSettings() {
   const handleSave = async (providerId: ProviderId) => {
     const state = formState[providerId];
 
+    // Save custom model to localStorage
+    if (state.useCustomModel && state.customModel) {
+      localStorage.setItem(`customModel_${providerId}`, state.customModel);
+      localStorage.setItem(`useCustomModel_${providerId}`, 'true');
+    } else {
+      localStorage.setItem(`useCustomModel_${providerId}`, 'false');
+    }
+
     // Reset validation status
     setFormState((prev) => ({
       ...prev,
@@ -123,11 +153,12 @@ export function AIProviderSettings() {
 
       if (result.valid) {
         // Save config
+        const modelToSave = state.useCustomModel && state.customModel ? state.customModel : state.model;
         await setConfig({
           id: providerId,
           apiKey: state.apiKey,
           baseURL: baseURL,
-          model: state.model,
+          model: modelToSave,
         });
 
         setFormState((prev) => ({
@@ -158,6 +189,12 @@ export function AIProviderSettings() {
         },
       }));
     }
+  };
+
+  const handleSaveTavily = () => {
+    localStorage.setItem('tavilyApiKey', tavilyApiKey);
+    // Also save to .env via IPC if needed
+    alert('Tavily API key saved to localStorage. Restart app to use in backend.');
   };
 
   const renderProviderSection = (providerId: ProviderId) => {
@@ -220,7 +257,8 @@ export function AIProviderSettings() {
               id={`${providerId}-model`}
               value={state.model}
               onChange={(e) => handleFieldChange(providerId, 'model', e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              disabled={state.useCustomModel}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
             >
               {models.map((model) => (
                 <option key={model.value} value={model.value}>
@@ -228,6 +266,27 @@ export function AIProviderSettings() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Custom Model */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-1">
+              <input
+                type="checkbox"
+                checked={state.useCustomModel}
+                onChange={(e) => handleFieldChange(providerId, 'useCustomModel', e.target.checked)}
+                className="rounded"
+              />
+              Use Custom Model
+            </label>
+            <input
+              type="text"
+              value={state.customModel}
+              onChange={(e) => handleFieldChange(providerId, 'customModel', e.target.value)}
+              disabled={!state.useCustomModel}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground disabled:opacity-50"
+              placeholder="e.g., claude-opus-4-7"
+            />
           </div>
 
           {/* Validation Status */}
@@ -270,6 +329,45 @@ export function AIProviderSettings() {
         <p className="text-sm text-yellow-800 dark:text-yellow-200">
           <strong>Security Notice:</strong> API keys are encrypted but stored locally. Keep your machine secure.
         </p>
+      </div>
+
+      {/* Tavily Web Search API Key */}
+      <div className="border border-border rounded-lg p-6 bg-background">
+        <h3 className="text-lg font-semibold text-foreground mb-2">Tavily Web Search (Optional)</h3>
+        <p className="text-sm text-secondary mb-4">
+          Configure Tavily API for high-quality web search. Without it, providers will use their own search (if available).
+          Get free API key at <a href="https://tavily.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">tavily.com</a>
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="tavily-apiKey" className="block text-sm font-medium text-foreground mb-1">
+              Tavily API Key
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="tavily-apiKey"
+                type={showTavilyKey ? 'text' : 'password'}
+                value={tavilyApiKey}
+                onChange={(e) => setTavilyApiKey(e.target.value)}
+                className="flex-1 px-3 py-2 border border-border rounded-md bg-background text-foreground"
+                placeholder="tvly-..."
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowTavilyKey(!showTavilyKey)}
+                aria-label={showTavilyKey ? 'Hide API key' : 'Reveal API key'}
+              >
+                {showTavilyKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+
+          <Button onClick={handleSaveTavily}>
+            Save Tavily Key
+          </Button>
+        </div>
       </div>
 
       {/* Provider Sections */}
