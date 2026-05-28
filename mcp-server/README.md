@@ -30,11 +30,23 @@ npm run setup
 
 ### Claude Code CLI
 
+**Project-specific (recommended):**
 ```bash
 cd mcp-server
 npm install
 npm run setup-cli
 ```
+
+**Global (all projects):**
+```bash
+cd mcp-server
+npm install
+npm run setup-cli -- --global
+```
+
+**Difference:**
+- **Project**: Auto-connects in current directory only
+- **Global**: Available everywhere, enable per-project via `/mcp`
 
 ### Codex / Other MCP Clients
 
