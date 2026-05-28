@@ -5,6 +5,7 @@ import { createMessage, getMessagesByConversation } from '../services/message.se
 import { RESEARCH_SYSTEM_PROMPT } from '../prompts/research.system';
 import { RESEARCH_TOOLS, executeToolCall } from '../tools/research.tools';
 import { searchWeb } from '../services/web-search.service';
+import { searchWithClaude, searchWithDeepSeek, searchWithOpenAI } from '../services/provider-search.service';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -26,6 +27,13 @@ export async function callDeepSeek(
   tools?: any[],
   onProgress?: (status: string) => void
 ): Promise<string> {
+  // Create web search function
+  const env = readEnv();
+  const tavilyApiKey = env.TAVILY_API_KEY;
+  const webSearchFn = tavilyApiKey
+    ? async (query: string) => await searchWeb(query, tavilyApiKey)
+    : async (query: string) => await searchWithDeepSeek(query, apiKey);
+
   const requestBody: any = {
     model,
     messages,
@@ -139,6 +147,13 @@ export async function callClaude(
   tools?: any[],
   onProgress?: (status: string) => void
 ): Promise<string> {
+  // Create web search function
+  const env = readEnv();
+  const tavilyApiKey = env.TAVILY_API_KEY;
+  const webSearchFn = tavilyApiKey
+    ? async (query: string) => await searchWeb(query, tavilyApiKey)
+    : async (query: string) => await searchWithClaude(query, apiKey, baseURL);
+
   // Extract system message if present
   const systemMessage = messages.find(m => m.role === 'system');
   const conversationMessages = messages.filter(m => m.role !== 'system');
@@ -269,6 +284,13 @@ export async function callOpenAI(
   tools?: any[],
   onProgress?: (status: string) => void
 ): Promise<string> {
+  // Create web search function
+  const env = readEnv();
+  const tavilyApiKey = env.TAVILY_API_KEY;
+  const webSearchFn = tavilyApiKey
+    ? async (query: string) => await searchWeb(query, tavilyApiKey)
+    : async (query: string) => await searchWithOpenAI(query, apiKey, baseURL);
+
   const url = baseURL ? `${baseURL}/chat/completions` : 'https://api.openai.com/v1/chat/completions';
 
   const requestBody: any = {
