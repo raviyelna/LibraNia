@@ -55,7 +55,7 @@ function serializeEnv(env: Record<string, string>): string {
 }
 
 // Read .env file
-function readEnv(): Record<string, string> {
+export function readEnv(): Record<string, string> {
   const envPath = getEnvPath();
   console.log('[ENV] Reading from:', envPath);
 
