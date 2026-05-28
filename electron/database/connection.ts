@@ -1,11 +1,12 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { setupFTS5, setupContentFTS5 } from './fts';
 import { setupVectorExtension } from './vec';
 import * as schema from './schema';
 
 let db: Database.Database | null = null;
-let orm: ReturnType<typeof drizzle> | null = null;
+let orm: BetterSQLite3Database<typeof schema> | null = null;
 
 /**
  * Get the singleton database instance
@@ -24,7 +25,7 @@ export function getDatabase(): Database.Database {
  * @returns Drizzle ORM instance
  * @throws Error if database not initialized
  */
-export function getORM() {
+export function getORM(): BetterSQLite3Database<typeof schema> {
   if (!orm) {
     throw new Error('Database not initialized. Call initDatabase() first.');
   }
@@ -44,13 +45,16 @@ export async function initDatabase(dbPath: string): Promise<void> {
   // Create new database connection
   db = new Database(dbPath);
 
+  // CRITICAL: Disable recursive triggers to prevent SQLITE_CORRUPT_VTAB
+  db.pragma('recursive_triggers = OFF');
+
   // Use DELETE mode instead of WAL to avoid corruption issues
   db.pragma('journal_mode = DELETE');
 
-  // Disable foreign keys temporarily to avoid SQLITE_CORRUPT_VTAB
+  // Disable foreign keys temporarily
   db.pragma('foreign_keys = OFF');
 
-  // Create tables using raw SQL (Drizzle migrations would be better for production)
+  // Create tables using raw SQL
   db.exec(`
     CREATE TABLE IF NOT EXISTS notes (
       id TEXT PRIMARY KEY,
@@ -173,12 +177,12 @@ export async function initDatabase(dbPath: string): Promise<void> {
   // setupContentFTS5(db);
 
   // Setup sqlite-vec extension for vector similarity search
-  try {
-    setupVectorExtension(db);
-  } catch (error) {
-    // Log error but continue - semantic search will be unavailable but app remains functional (T-05-12)
-    console.error('Failed to load sqlite-vec extension:', error);
-  }
+  // DISABLED: causes issues
+  // try {
+  //   setupVectorExtension(db);
+  // } catch (error) {
+  //   console.error('Failed to load sqlite-vec extension:', error);
+  // }
 
   // Initialize Drizzle ORM
   orm = drizzle(db, { schema });

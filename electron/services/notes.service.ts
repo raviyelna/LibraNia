@@ -99,11 +99,6 @@ export async function updateNote(
   console.log('[Notes] updateNote called for id:', id);
   const now = new Date();
 
-  // DEBUG: Check integrity before update
-  const rawDb = getDatabase();
-  const integrityBefore = rawDb.pragma('integrity_check', { simple: true });
-  console.log('[Notes] Integrity before update:', integrityBefore);
-
   console.log('[Notes] About to call getNoteById');
   // Check if note exists and is not deleted
   const existing = await getNoteById(id, db, false);
@@ -114,41 +109,22 @@ export async function updateNote(
 
   console.log('[Notes] About to run update query for note:', id);
 
-  // Use raw better-sqlite3 instead of Drizzle to avoid SQLITE_CORRUPT_VTAB
-  const sql = `
-    UPDATE notes
-    SET title = ?, body = ?, metadata = ?, updated_at = ?
-    WHERE id = ? AND deleted_at IS NULL
-  `;
-  console.log('[Notes] SQL:', sql);
-  console.log('[Notes] Params:', {
-    title: data.title ?? existing.title,
-    body: data.body ?? existing.body,
-    metadata: data.metadata ?? existing.metadata,
-    updated_at: now.getTime(),
+  // Use raw SQL with better-sqlite3
+  const rawDb = getDatabase();
+  const stmt = rawDb.prepare(
+    'UPDATE notes SET title = ?, body = ?, metadata = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL'
+  );
+  stmt.run(
+    data.title ?? existing.title,
+    data.body ?? existing.body,
+    data.metadata ?? existing.metadata,
+    now.getTime(),
     id
-  });
+  );
 
-  const stmt = rawDb.prepare(sql);
-  console.log('[Notes] Statement prepared, about to run');
+  console.log('[Notes] Update completed, fetching updated note');
 
-  try {
-    stmt.run(
-      data.title ?? existing.title,
-      data.body ?? existing.body,
-      data.metadata ?? existing.metadata,
-      now.getTime(),
-      id
-    );
-    console.log('[Notes] Statement executed successfully');
-  } catch (error) {
-    console.error('[Notes] Statement execution failed:', error);
-    throw error;
-  }
-
-  console.log('[Notes] Update query completed, fetching updated note');
-
-  // Fetch updated note separately instead of using .returning()
+  // Fetch updated note separately
   const updated = await getNoteById(id, db, false);
   if (!updated) {
     throw new Error(`Failed to update note with id ${id}`);

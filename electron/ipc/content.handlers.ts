@@ -1,21 +1,11 @@
 import { ipcMain, dialog } from 'electron';
 import { logger } from '../logger';
-import { getORM } from '../database/connection';
-import {
-  createContent,
-  getContentById,
-  updateContent,
-  deleteContent,
-  getAllContent,
-} from '../services/content.service';
 
 /**
  * Register IPC handlers for content operations
- * Called from main.ts after database initialization
+ * DISABLED: File storage doesn't support content table yet
  */
 export function registerContentHandlers() {
-  const orm = getORM();
-
   // File upload dialog
   ipcMain.handle('content:upload', async () => {
     try {
@@ -39,66 +29,31 @@ export function registerContentHandlers() {
     }
   });
 
-  // Create content
-  ipcMain.handle('content:create', async (event, data) => {
-    try {
-      logger.info('IPC: content:create', { filePath: data.filePath, source: data.source });
-      const content = await createContent(data, orm);
-      return content;
-    } catch (error) {
-      logger.error('content:create failed', error as Error);
-      throw error;
-    }
+  // Stub remaining handlers
+  ipcMain.handle('content:create', async () => {
+    logger.info('IPC: content:create (stubbed)');
+    return null;
   });
 
-  // Get content by ID
-  ipcMain.handle('content:getById', async (event, data) => {
-    try {
-      logger.info('IPC: content:getById', { id: data.id });
-      const content = await getContentById(data.id, orm);
-      return content;
-    } catch (error) {
-      logger.error('content:getById failed', error as Error);
-      throw error;
-    }
+  ipcMain.handle('content:getById', async () => {
+    logger.info('IPC: content:getById (stubbed)');
+    return null;
   });
 
-  // Get all content
   ipcMain.handle('content:getAll', async () => {
-    try {
-      logger.info('IPC: content:getAll');
-      const contents = await getAllContent(orm);
-      return contents;
-    } catch (error) {
-      logger.error('content:getAll failed', error as Error);
-      throw error;
-    }
+    logger.info('IPC: content:getAll (stubbed)');
+    return [];
   });
 
-  // Update content
-  ipcMain.handle('content:update', async (event, data) => {
-    try {
-      logger.info('IPC: content:update', { id: data.id });
-      const { id, ...updates } = data;
-      const content = await updateContent(id, updates, orm);
-      return content;
-    } catch (error) {
-      logger.error('content:update failed', error as Error);
-      throw error;
-    }
+  ipcMain.handle('content:update', async () => {
+    logger.info('IPC: content:update (stubbed)');
+    return null;
   });
 
-  // Delete content
-  ipcMain.handle('content:delete', async (event, data) => {
-    try {
-      logger.info('IPC: content:delete', { id: data.id });
-      const success = await deleteContent(data.id, orm);
-      return { success };
-    } catch (error) {
-      logger.error('content:delete failed', error as Error);
-      throw error;
-    }
+  ipcMain.handle('content:delete', async () => {
+    logger.info('IPC: content:delete (stubbed)');
+    return { success: false };
   });
 
-  logger.info('Content IPC handlers registered');
+  logger.info('Content IPC handlers registered (stubbed)');
 }

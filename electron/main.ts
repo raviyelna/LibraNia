@@ -12,6 +12,7 @@ import { createTray, updateTrayMode } from './tray.js';
 import type { LogEntry } from '../src/types/logger.js';
 // import winston from 'winston';
 // import DailyRotateFile from 'winston-daily-rotate-file';
+import { initDatabase } from './database/connection.js';
 import { initFileStorage } from './services/file-storage.service.js';
 import { registerTagsHandlers } from './ipc/tags.handlers.js';
 import { registerSearchHandlers } from './ipc/search.handlers.js';
@@ -168,6 +169,10 @@ function handleModeSwitch(mode: 'desktop' | 'web') {
 
 // App lifecycle
 app.whenReady().then(async () => {
+  // Initialize database
+  await initDatabase();
+  logger.info('Database initialized');
+
   // Initialize file storage
   const storageDir = app.getPath('userData');
   initFileStorage(storageDir);
