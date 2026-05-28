@@ -24,10 +24,14 @@ export function useAIProviders() {
   const fetchProviders = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('[useAIProviders] Fetching providers...');
       const data = await window.api.providers.getAllConfigs();
+      console.log('[useAIProviders] Received data:', data);
+      console.log('[useAIProviders] Data type:', typeof data, 'Array:', Array.isArray(data));
       setProviders(data);
       setError(null);
     } catch (err) {
+      console.error('[useAIProviders] Error:', err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -40,9 +44,18 @@ export function useAIProviders() {
 
   const setConfig = useCallback(async (config: ProviderConfig) => {
     try {
+      console.log('[useAIProviders] Saving config:', {
+        id: config.id,
+        hasApiKey: !!config.apiKey,
+        apiKeyLength: config.apiKey?.length,
+        model: config.model
+      });
       await window.api.providers.setConfig(config);
+      console.log('[useAIProviders] Config saved, refetching...');
       await fetchProviders(); // Refetch all configs
+      console.log('[useAIProviders] Refetch complete');
     } catch (err) {
+      console.error('[useAIProviders] setConfig error:', err);
       setError(err as Error);
       throw err;
     }

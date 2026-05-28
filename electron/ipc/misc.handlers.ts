@@ -1,6 +1,19 @@
 import { ipcMain, shell, app } from 'electron';
 import { logger } from '../logger';
 import path from 'path';
+import { getORM } from '../database/connection';
+import {
+  createConversation,
+  getConversation,
+  getAllConversations,
+  deleteConversation,
+} from '../services/conversation.service';
+import {
+  saveProviderToEnv,
+  loadProviderFromEnv,
+  loadAllProvidersFromEnv,
+  deleteProviderFromEnv,
+} from '../store/env.store';
 
 export function registerMiscHandlers() {
   // Logs
@@ -29,28 +42,86 @@ export function registerMiscHandlers() {
 
   // Provider config
   ipcMain.handle('provider:getConfig', async (event, data) => {
-    logger.info('IPC: provider:getConfig (stubbed)');
-    return null;
+    try {
+      logger.info('IPC: provider:getConfig', { providerId: data.providerId });
+      const config = loadProviderFromEnv(data.providerId);
+      return config || null;
+    } catch (error) {
+      logger.error('provider:getConfig failed', error as Error);
+      throw error;
+    }
   });
 
   ipcMain.handle('provider:getAllConfigs', async () => {
-    logger.info('IPC: provider:getAllConfigs (stubbed)');
-    return [];
+    try {
+      logger.info('IPC: provider:getAllConfigs');
+      const configs = loadAllProvidersFromEnv();
+      logger.info('Retrieved configs from .env:', configs.map(c => ({
+        id: c.id,
+        hasApiKey: !!c.apiKey,
+        model: c.model
+      })));
+      return configs;
+    } catch (error) {
+      logger.error('provider:getAllConfigs failed', error as Error);
+      throw error;
+    }
   });
 
   ipcMain.handle('provider:setConfig', async (event, data) => {
-    logger.info('IPC: provider:setConfig (stubbed)');
-    return { success: true };
+    try {
+      logger.info('IPC: provider:setConfig', {
+        providerId: data.id,
+        hasApiKey: !!data.apiKey,
+        model: data.model
+      });
+      saveProviderToEnv(data);
+      logger.info('Config saved to .env');
+
+      // Verify save
+      const saved = loadProviderFromEnv(data.id);
+      logger.info('Verification:', {
+        id: saved?.id,
+        hasApiKey: !!saved?.apiKey,
+        model: saved?.model
+      });
+
+      return { success: true };
+    } catch (error) {
+      logger.error('provider:setConfig failed', error as Error);
+      throw error;
+    }
   });
 
   ipcMain.handle('provider:deleteConfig', async (event, data) => {
-    logger.info('IPC: provider:deleteConfig (stubbed)');
-    return { success: true };
+    try {
+      logger.info('IPC: provider:deleteConfig', { providerId: data.providerId });
+      deleteProviderFromEnv(data.providerId);
+      return { success: true };
+    } catch (error) {
+      logger.error('provider:deleteConfig failed', error as Error);
+      throw error;
+    }
   });
 
   ipcMain.handle('provider:validate', async (event, data) => {
-    logger.info('IPC: provider:validate (stubbed)');
-    return { valid: true };
+    try {
+      logger.info('IPC: provider:validate - raw data:', data);
+      logger.info('IPC: provider:validate', {
+        providerId: data?.providerId,
+        hasApiKey: !!data?.apiKey,
+        hasModel: !!data?.model,
+        apiKeyLength: data?.apiKey?.length || 0
+      });
+      // Basic validation - check required fields
+      // Note: validation receives providerId (not id), apiKey, baseURL from preload
+      const isValid = !!(data?.providerId && data?.apiKey);
+      logger.info('Validation result:', { isValid });
+      return { valid: isValid };
+    } catch (error) {
+      logger.error('provider:validate failed', error as Error);
+      throw error;
+    }
   });
 
   // Chat
@@ -66,23 +137,51 @@ export function registerMiscHandlers() {
 
   // Conversations
   ipcMain.handle('conversation:create', async (event, data) => {
-    logger.info('IPC: conversation:create (stubbed)');
-    return null;
+    try {
+      logger.info('IPC: conversation:create', { title: data.title });
+      const orm = getORM();
+      const conversation = await createConversation({ title: data.title }, orm);
+      return conversation;
+    } catch (error) {
+      logger.error('conversation:create failed', error as Error);
+      throw error;
+    }
   });
 
   ipcMain.handle('conversation:get', async (event, data) => {
-    logger.info('IPC: conversation:get (stubbed)');
-    return null;
+    try {
+      logger.info('IPC: conversation:get', { conversationId: data.conversationId });
+      const orm = getORM();
+      const conversation = await getConversation(data.conversationId, orm);
+      return conversation;
+    } catch (error) {
+      logger.error('conversation:get failed', error as Error);
+      throw error;
+    }
   });
 
   ipcMain.handle('conversation:getAll', async () => {
-    logger.info('IPC: conversation:getAll (stubbed)');
-    return [];
+    try {
+      logger.info('IPC: conversation:getAll');
+      const orm = getORM();
+      const conversations = await getAllConversations(orm);
+      return conversations;
+    } catch (error) {
+      logger.error('conversation:getAll failed', error as Error);
+      throw error;
+    }
   });
 
   ipcMain.handle('conversation:delete', async (event, data) => {
-    logger.info('IPC: conversation:delete (stubbed)');
-    return { success: true };
+    try {
+      logger.info('IPC: conversation:delete', { conversationId: data.conversationId });
+      const orm = getORM();
+      await deleteConversation(data.conversationId, orm);
+      return { success: true };
+    } catch (error) {
+      logger.error('conversation:delete failed', error as Error);
+      throw error;
+    }
   });
 
   logger.info('Misc IPC handlers registered');
