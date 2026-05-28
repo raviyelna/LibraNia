@@ -5,7 +5,9 @@
       "WebSearch",
       "mcp__librania__create_note",
       "mcp__librania__get_note",
-      "WebFetch(domain:aws.amazon.com)"
+      "WebFetch(domain:aws.amazon.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.ibm.com)"
     ]
   }
 }

@@ -177,6 +177,7 @@ interface ContentAPI {
   getAll: () => Promise<Content[]>;
   getById: (id: string) => Promise<Content | null>;
   upload: () => Promise<{ filePath: string; canceled: boolean }>;
+  saveImage: (data: { buffer: ArrayBuffer; filename: string; noteId: string }) => Promise<{ filePath: string }>;
   create: (data: {
     filePath: string;
     source: 'manual' | 'ai-generated';

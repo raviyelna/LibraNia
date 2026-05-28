@@ -155,6 +155,8 @@ contextBridge.exposeInMainWorld('api', {
   // Content operations
   content: {
     upload: () => ipcRenderer.invoke('content:upload'),
+    saveImage: (data: { buffer: ArrayBuffer; filename: string; noteId: string }) =>
+      ipcRenderer.invoke('content:saveImage', data),
     create: (data: {
       filePath: string;
       source: 'manual' | 'ai-generated';
