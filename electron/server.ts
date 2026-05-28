@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import http from 'http';
+import apiRoutes from './api/routes';
 
 export interface ServerInstance {
   server: http.Server;
@@ -12,6 +13,24 @@ export async function startServer(
   distPath: string
 ): Promise<ServerInstance> {
   const app = express();
+
+  // Middleware
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+
+  // CORS for web version
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
+  // API routes
+  app.use(apiRoutes);
 
   // Serve static files from dist directory
   app.use(express.static(distPath));

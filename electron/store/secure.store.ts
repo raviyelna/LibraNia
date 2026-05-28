@@ -29,13 +29,22 @@ let secureStore: any = null;
  */
 async function getSecureStore() {
   if (!secureStore) {
+    console.log('[SECURE STORE] Initializing new store instance');
     const Store = (await import('electron-store')).default;
     const encryptionKey = await getEncryptionKey();
+    console.log('[SECURE STORE] Encryption key length:', encryptionKey.length);
+    console.log('[SECURE STORE] Store options:', storeOptions);
     secureStore = new Store({
       ...storeOptions,
       name: 'secure-config',
       encryptionKey,
     });
+    console.log('[SECURE STORE] Store initialized at:', secureStore.path);
+    console.log('[SECURE STORE] Store size:', secureStore.size);
+    console.log('[SECURE STORE] Store contents:', JSON.stringify([...secureStore], null, 2));
+  } else {
+    console.log('[SECURE STORE] Reusing existing store instance');
+    console.log('[SECURE STORE] Current size:', secureStore.size);
   }
   return secureStore;
 }
@@ -65,8 +74,27 @@ async function getEncryptionKey(): Promise<string> {
  * Store encrypted provider configuration
  */
 export async function setProviderConfig(config: ProviderConfig): Promise<void> {
+  console.log('[SECURE STORE] setProviderConfig called with:', {
+    id: config.id,
+    hasApiKey: !!config.apiKey,
+    apiKeyLength: config.apiKey?.length,
+    model: config.model,
+    baseURL: config.baseURL
+  });
   const store = await getSecureStore();
-  store.set(`providers.${config.id}`, config);
+  const key = `providers.${config.id}`;
+  console.log('[SECURE STORE] Setting key:', key);
+  store.set(key, config);
+  console.log('[SECURE STORE] Store size after set:', store.size);
+  console.log('[SECURE STORE] All store keys:', [...store]);
+
+  // Immediate verification
+  const verify = store.get(key);
+  console.log('[SECURE STORE] Immediate verification:', {
+    exists: !!verify,
+    id: verify?.id,
+    hasApiKey: !!verify?.apiKey
+  });
 }
 
 /**
@@ -89,12 +117,24 @@ export async function deleteProviderConfig(providerId: string): Promise<void> {
  * Get all configured providers
  */
 export async function getAllProviderConfigs(): Promise<ProviderConfig[]> {
+  console.log('[SECURE STORE] getAllProviderConfigs called');
   const store = await getSecureStore();
+  console.log('[SECURE STORE] Store size:', store.size);
+  console.log('[SECURE STORE] All keys:', [...store]);
+
   const providers = store.get('providers') as Record<string, ProviderConfig> | undefined;
+  console.log('[SECURE STORE] Raw providers object:', providers);
 
   if (!providers) {
+    console.log('[SECURE STORE] No providers found, returning empty array');
     return [];
   }
 
-  return Object.values(providers);
+  const result = Object.values(providers);
+  console.log('[SECURE STORE] Returning configs:', result.map(c => ({
+    id: c.id,
+    hasApiKey: !!c.apiKey,
+    model: c.model
+  })));
+  return result;
 }

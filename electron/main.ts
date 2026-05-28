@@ -13,6 +13,7 @@ import type { LogEntry } from '../src/types/logger.js';
 // import winston from 'winston';
 // import DailyRotateFile from 'winston-daily-rotate-file';
 import { initDatabase } from './database/connection.js';
+import { initFileStorage } from './services/file-storage.service.js';
 import { registerTagsHandlers } from './ipc/tags.handlers.js';
 import { registerSearchHandlers } from './ipc/search.handlers.js';
 import { registerNotesHandlers } from './ipc/notes.handlers.js';
@@ -20,6 +21,10 @@ import { registerExportHandlers } from './ipc/export.handlers.js';
 import { registerAIHandlers } from './ipc/ai.handlers.js';
 import { registerContentHandlers } from './ipc/content.handlers.js';
 import { registerGraphHandlers } from './ipc/graph.handlers.js';
+import { registerAppHandlers } from './ipc/app.handlers.js';
+import { registerConfigHandlers } from './ipc/config.handlers.js';
+import { registerWindowHandlers } from './ipc/window.handlers.js';
+import { registerMiscHandlers } from './ipc/misc.handlers.js';
 
 // Temporary logger replacement for phase 6 testing
 const logger = {
@@ -123,100 +128,6 @@ async function createWindow() {
 // IPC Handlers
 function registerIpcHandlers() {
   // Config operations
-  ipcMain.handle('config:get', async () => {
-    try {
-      return { success: true, data: currentConfig };
-    } catch (error) {
-      logger.error('IPC config:get failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  ipcMain.handle('config:set', async (_event, updates: Partial<AppConfig>) => {
-    try {
-      await saveConfig(updates);
-      currentConfig = await loadConfig();
-      return { success: true };
-    } catch (error) {
-      logger.error('IPC config:set failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  ipcMain.handle('config:update', async (_event, updates: Partial<AppConfig>) => {
-    try {
-      currentConfig = await updateConfig(updates);
-      return { success: true, data: currentConfig };
-    } catch (error) {
-      logger.error('IPC config:update failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  // Window operations
-  ipcMain.handle('window:minimize', () => {
-    try {
-      mainWindow?.minimize();
-      return { success: true };
-    } catch (error) {
-      logger.error('IPC window:minimize failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  ipcMain.handle('window:maximize', () => {
-    try {
-      if (mainWindow?.isMaximized()) {
-        mainWindow.unmaximize();
-      } else {
-        mainWindow?.maximize();
-      }
-      return { success: true };
-    } catch (error) {
-      logger.error('IPC window:maximize failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  ipcMain.handle('window:close', () => {
-    try {
-      mainWindow?.close();
-      return { success: true };
-    } catch (error) {
-      logger.error('IPC window:close failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  // App operations
-  ipcMain.handle('app:restart', () => {
-    try {
-      app.relaunch();
-      app.exit(0);
-    } catch (error) {
-      logger.error('IPC app:restart failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  // Mode switching
-  ipcMain.handle('mode:switch', async (_event, newMode: 'desktop' | 'web') => {
-    try {
-      await updateConfig({ mode: newMode });
-      currentConfig = await loadConfig();
-      logger.info('Mode switched to: ' + newMode);
-
-      // Update tray menu
-      if (tray && mainWindow) {
-        updateTrayMode(tray, mainWindow, newMode, handleModeSwitch);
-      }
-
-      return { success: true, requiresRestart: true };
-    } catch (error) {
-      logger.error('IPC mode:switch failed', error as Error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
 
   // Logging - renderer process logs
   ipcMain.on('log:write', (_event, entry: LogEntry) => {
@@ -233,28 +144,6 @@ function registerIpcHandlers() {
       }
     } catch (error) {
       logger.error('IPC log:write failed', error as Error);
-    }
-  });
-
-  ipcMain.handle('log:error', (_event, error: { message: string; stack?: string; componentStack?: string }) => {
-    try {
-      logger.error('Renderer error: ' + error.message, error.stack ? new Error(error.stack) : undefined);
-      return { success: true };
-    } catch (err) {
-      logger.error('IPC log:error failed', err as Error);
-      return { success: false, error: (err as Error).message };
-    }
-  });
-
-  // Logs directory operations
-  ipcMain.handle('logs:open', async () => {
-    try {
-      const logsPath = path.join(app.getPath('userData'), 'logs');
-      await shell.openPath(logsPath);
-      return { success: true };
-    } catch (error) {
-      logger.error('IPC logs:open failed', error as Error);
-      return { success: false, error: (error as Error).message };
     }
   });
 
@@ -283,7 +172,12 @@ app.whenReady().then(async () => {
   // Initialize database
   const dbPath = path.join(app.getPath('userData'), 'librania.db');
   await initDatabase(dbPath);
-  logger.info('Database initialized at: ' + dbPath);
+  logger.info('Database initialized');
+
+  // Initialize file storage
+  const storageDir = app.getPath('userData');
+  initFileStorage(storageDir);
+  logger.info('File storage initialized at: ' + path.join(storageDir, 'notes'));
 
   // Load config on startup
   currentConfig = await loadConfig();
@@ -291,6 +185,10 @@ app.whenReady().then(async () => {
   logger.info('App ready, mode: ' + currentConfig.mode);
 
   registerIpcHandlers();
+  registerAppHandlers();
+  registerConfigHandlers();
+  registerWindowHandlers();
+  registerMiscHandlers();
   registerTagsHandlers();
   registerSearchHandlers();
   registerExportHandlers();
@@ -309,6 +207,13 @@ app.whenReady().then(async () => {
   if (mainWindow) {
     tray = createTray(mainWindow, currentConfig.mode, handleModeSwitch);
     logger.info('System tray created');
+  }
+
+  // Start HTTP server if in web mode
+  if (currentConfig.mode === 'web') {
+    const distPath = path.join(__dirname, '../dist');
+    serverInstance = await startServer(3000, distPath);
+    logger.info('HTTP server started on port 3000');
   }
 });
 
