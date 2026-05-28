@@ -32,7 +32,7 @@ export function TagsInput({ noteId }: TagsInputProps) {
     }
 
     // Find removed tags
-    const selectedIds = selectedValues.map(s => s.id);
+    const selectedIds = selectedValues.map((s: any) => s.id);
     const removedIds = currentIds.filter(id => !selectedIds.includes(id));
     for (const id of removedIds) {
       await removeTag(id);
