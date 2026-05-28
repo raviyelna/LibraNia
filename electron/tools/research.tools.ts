@@ -188,6 +188,7 @@ export async function executeToolCall(
       const note = createNote({
         title: toolInput.title,
         body: toolInput.body,
+        tags: [], // Tags added separately via add_tags
       });
       return {
         id: note.id,
