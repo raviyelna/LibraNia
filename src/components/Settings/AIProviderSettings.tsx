@@ -196,7 +196,7 @@ export function AIProviderSettings() {
     try {
       localStorage.setItem('tavilyApiKey', tavilyApiKey);
       // Save to .env via IPC
-      await window.api.config.setEnvVar('TAVILY_API_KEY', tavilyApiKey);
+      await window.api.updateConfig({ tavilyApiKey });
       alert('Tavily API key saved successfully!');
     } catch (error) {
       console.error('Failed to save Tavily key:', error);
