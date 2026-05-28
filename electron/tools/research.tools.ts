@@ -5,6 +5,7 @@
 import { getAllNotes, getNoteById, createNote } from '../services/file-storage.service';
 import { getBacklinks } from '../services/links.service';
 import { getNoteTags, setNoteTags } from '../services/tags.service';
+import { logger } from '../utils/logger';
 import type Database from 'better-sqlite3';
 
 export interface Tool {
