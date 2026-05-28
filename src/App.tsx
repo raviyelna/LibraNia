@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -59,7 +59,7 @@ function App() {
     <ThemeProvider>
       <ErrorBoundary>
         <OfflineIndicator />
-        <BrowserRouter>
+        <HashRouter>
           <DebugLogger />
           <Routes>
             <Route path="/" element={<Layout />}>
@@ -70,7 +70,7 @@ function App() {
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </ErrorBoundary>
     </ThemeProvider>
   );
