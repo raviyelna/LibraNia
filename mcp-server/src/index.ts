@@ -396,9 +396,17 @@ class LibraniaMCPServer {
        VALUES (?, ?, ?, ?, ?)`
     ).run(noteId, title, body, now, now);
 
-    // Write markdown file
+    // Write markdown file with frontmatter
     const notePath = path.join(NOTES_DIR, `${noteId}.md`);
-    fs.writeFileSync(notePath, body, 'utf-8');
+    const frontmatter = `---
+title: ${title}
+created_at: ${now}
+updated_at: ${now}
+tags: ${JSON.stringify(tagNames)}
+---
+
+${body}`;
+    fs.writeFileSync(notePath, frontmatter, 'utf-8');
 
     // Add tags
     if (tagNames.length > 0) {
@@ -456,9 +464,29 @@ class LibraniaMCPServer {
        WHERE id = ?`
     ).run(newTitle, newBody, now, noteId);
 
-    // Update markdown file
+    // Update markdown file with frontmatter
     const notePath = path.join(NOTES_DIR, `${noteId}.md`);
-    fs.writeFileSync(notePath, newBody, 'utf-8');
+
+    // Get tags for frontmatter
+    const tags = db
+      .prepare(
+        `SELECT t.name
+         FROM tags t
+         JOIN note_tags nt ON t.id = nt.tag_id
+         WHERE nt.note_id = ?`
+      )
+      .all(noteId)
+      .map((row: any) => row.name);
+
+    const frontmatter = `---
+title: ${newTitle}
+created_at: ${note.created_at}
+updated_at: ${now}
+tags: ${JSON.stringify(tags)}
+---
+
+${newBody}`;
+    fs.writeFileSync(notePath, frontmatter, 'utf-8');
 
     return {
       content: [
