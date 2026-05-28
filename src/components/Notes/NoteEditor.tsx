@@ -55,9 +55,9 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
     try {
       // Handle paste events for images
-      const handlePaste = async (event: ClipboardEvent) => {
+      const handlePaste = (event: ClipboardEvent): boolean => {
         const items = event.clipboardData?.items;
-        if (!items) return;
+        if (!items) return false;
 
         let hasImage = false;
         for (const item of Array.from(items)) {
@@ -71,7 +71,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
             try {
               const reader = new FileReader();
-              reader.onload = async (e) => {
+              reader.onload = (e) => {
                 const arrayBuffer = e.target?.result as ArrayBuffer;
                 const blob = new Blob([arrayBuffer], { type: file.type });
                 const dataUrl = URL.createObjectURL(blob);
