@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Tray, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Tray, shell, protocol } from 'electron';
 import path from 'path';
 // import { fileURLToPath } from 'url';
 // import Store from 'electron-store'; // ESM-only in v11, disabled for phase 6
@@ -169,6 +169,14 @@ function handleModeSwitch(mode: 'desktop' | 'web') {
 
 // App lifecycle
 app.whenReady().then(async () => {
+  // Register custom protocol for serving attachments
+  protocol.registerFileProtocol('librania', (request, callback) => {
+    const url = request.url.replace('librania://', '');
+    const filePath = path.normalize(decodeURIComponent(url));
+    callback({ path: filePath });
+  });
+  logger.info('Custom protocol registered: librania://');
+
   // Initialize database
   const dbPath = path.join(app.getPath('userData'), 'librania.db');
   await initDatabase(dbPath);
