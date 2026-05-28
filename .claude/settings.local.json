@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "mcp__librania__search_notes",
-      "WebSearch"
+      "WebSearch",
+      "mcp__librania__create_note",
+      "mcp__librania__get_note",
+      "WebFetch(domain:aws.amazon.com)"
     ]
   }
 }
