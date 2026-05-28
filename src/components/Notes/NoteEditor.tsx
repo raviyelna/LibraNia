@@ -59,24 +59,21 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
         const items = event.clipboardData?.items;
         if (!items) return;
 
+        let hasImage = false;
         for (const item of Array.from(items)) {
           if (item.type.startsWith('image/')) {
+            hasImage = true;
             event.preventDefault();
+            event.stopPropagation();
+
             const file = item.getAsFile();
             if (!file) continue;
 
             try {
-              // Save image to content storage
               const reader = new FileReader();
               reader.onload = async (e) => {
                 const arrayBuffer = e.target?.result as ArrayBuffer;
                 const blob = new Blob([arrayBuffer], { type: file.type });
-
-                // Create temporary file path
-                const tempPath = `temp_${Date.now()}_${file.name}`;
-
-                // TODO: Save blob to file system via IPC
-                // For now, use data URL
                 const dataUrl = URL.createObjectURL(blob);
 
                 // Insert markdown image syntax
@@ -95,6 +92,8 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
             }
           }
         }
+
+        return hasImage; // Return true to prevent default if image found
       };
 
       const startState = EditorState.create({
@@ -111,8 +110,8 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
           }),
           EditorView.domEventHandlers({
             paste: (event) => {
-              handlePaste(event);
-              return false;
+              const handled = handlePaste(event);
+              return handled; // Return true to prevent default
             }
           }),
         ],

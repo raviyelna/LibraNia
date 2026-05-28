@@ -75,6 +75,12 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
     const isResearchMode = message.trim().startsWith('/research');
     const actualMessage = isResearchMode ? message.trim().substring(9).trim() : message;
 
+    console.log('[ChatInterface] Message processing:', {
+      original: message,
+      isResearchMode,
+      actualMessage
+    });
+
     if (isResearchMode && !actualMessage) {
       console.error('[ChatInterface] /research requires a query');
       return;
