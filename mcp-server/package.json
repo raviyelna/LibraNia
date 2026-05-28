@@ -1,0 +1,24 @@
+{
+  "name": "librania-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for LibraNia knowledge base",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "librania-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "better-sqlite3": "^11.8.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.5",
+    "typescript": "^5.7.3"
+  }
+}
