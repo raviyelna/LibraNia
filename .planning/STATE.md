@@ -1,21 +1,21 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-last_updated: "2026-05-26T18:29:17.659Z"
+milestone: v2.0
+milestone_name: Cross-Platform Web Architecture
+status: planning
+last_updated: "2026-05-29T00:00:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 41
-  completed_plans: 41
-  percent: 100
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
-# State: LibraNia
+# State: LibraNia v2.0
 
-**Last Updated:** 2026-05-27
-**Milestone:** v1.0 - AI-Powered Knowledge Management with Multi-Model Verification
+**Last Updated:** 2026-05-29
+**Milestone:** v2.0 - Cross-Platform Web Architecture
 
 ---
 
@@ -23,20 +23,22 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 6 Complete - 3D Visualization (10/10 plans complete)
+**Current Focus:** Roadmap created - awaiting Phase 1 planning
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
+
+**v2.0 Goal:** Transform from Electron desktop app to cross-platform CLI + web server. User runs `librania start` on Linux or Windows, server launches, browser opens, all v1 features work.
 
 ---
 
 ## Current Position
 
-**Phase:** 6 - 3D Visualization (COMPLETE)
-**Plan:** 06-10 (completed)
-**Status:** Phase 6 complete (10/10 plans)
-**Progress:** [██████████] 98%
+**Phase:** Not started
+**Plan:** N/A
+**Status:** Roadmap created, awaiting planning
+**Progress:** [          ] 0%
 
-**Next Action:** Execute Phase 5 remaining plans (05-03, 05-04, 05-05) - Semantic Search
+**Next Action:** `/gsd-plan-phase 1` to plan Backend Extraction
 
 ---
 
@@ -44,19 +46,14 @@ progress:
 
 ### Velocity
 
-- **Phases completed:** 6/6 (All phases complete)
-- **Plans completed:** 40/41 (Phase 1: 4/4, Phase 2: 6/6, Phase 3: 8/8, Phase 4: 5/5, Phase 5: 1/5, Phase 6: 10/10)
-- **Average plan duration:** 5 min (40 plans completed)
-- **Phase 1 total duration:** 8h 0min
-- **Phase 2 total duration:** 52 min
-- **Phase 3 total duration:** 67 min (8/8 plans)
-- **Phase 4 total duration:** 23 min (5/5 plans)
-- **Phase 5 total duration:** 43s (1/5 plans)
-- **Phase 6 total duration:** 72 min 12s (10/10 plans)
+- **Phases completed:** 0/5
+- **Plans completed:** 0/0
+- **Average plan duration:** N/A
+- **Milestone started:** 2026-05-29
 
 ### Quality
 
-- **Verification pass rate:** 100% (all tests passing)
+- **Verification pass rate:** N/A
 - **Rework incidents:** 0
 - **Blockers encountered:** 0
 - **Blockers resolved:** 0
@@ -64,7 +61,7 @@ progress:
 ### Efficiency
 
 - **Context budget used:** Minimal
-- **Research phases:** 0/3 planned (Phases 3, 5, 6 flagged)
+- **Research phases:** 0/0 planned
 - **Node repairs:** 0/2 budget remaining
 
 ---
@@ -75,87 +72,22 @@ progress:
 
 | Decision | Rationale | Phase | Date |
 |----------|-----------|-------|------|
-| Width state managed with useState, default 384px | Matches original w-96 Tailwind class, provides session persistence | 06-10 | 2026-05-26 |
-| Clamp width between 256px and 768px | 256px ensures content remains readable, 768px prevents panel from dominating screen | 06-10 | 2026-05-26 |
-| Real-time updates via IPC events instead of polling | More efficient, immediate updates, follows existing streaming pattern from AI handlers | 06-05 | 2026-05-26 |
-| Search uses quickNav mode by default in graph | Fastest search mode, suitable for graph navigation, user can switch modes if needed | 06-05 | 2026-05-26 |
-| Search highlighting takes priority over neighbor highlighting | User intent: when searching, search results should be most visible | 06-05 | 2026-05-26 |
-| Minimap uses separate ForceGraph2D instance | Simpler than custom 2D projection, leverages existing force-directed layout | 06-05 | 2026-05-26 |
-| User approved performance checkpoint without testing | Instanced rendering and force tuning implemented per plan. If issues arise, will create separate plan to address. | 06-04 | 2026-05-26 |
-| Human verification required for [ASSUMED] packages per Package Legitimacy Gate protocol | Ensures package legitimacy before installation | 05-02 | 2026-05-26 |
-| @xenova/transformers provides local embeddings generation (no API costs, privacy-preserving) | Enables semantic search without external API dependencies | 05-02 | 2026-05-26 |
-| sqlite-vec distributed as platform-specific binaries via GitHub releases, not npm package | Manual download required for SQLite extension | 05-02 | 2026-05-26 |
-| Grid layout for content list | Better visual presentation for mixed content (images + documents), thumbnails display naturally in cards | 04-05 | 2026-05-25 |
-| Tab navigation for Notes/Content in Library route | Keeps related functionality together, easy switching without navigation, reuses existing layout | 04-05 | 2026-05-25 |
-| React hooks pattern for content operations | Matches existing useNotes pattern, provides loading/error states, consistent API across codebase | 04-05 | 2026-05-25 |
-| File upload uses Electron dialog API | Provides secure path selection without exposing filesystem to renderer, prevents path traversal attacks | 04-04 | 2026-05-25 |
-| Process files synchronously before database insert | Ensures data consistency - if processing fails, no orphaned files or incomplete records | 04-03 | 2026-05-25 |
-| Truncate extracted text to 100KB | Prevents FTS5 index bloat, 100KB ≈ 15,000 words covers 99% of documents | 04-03 | 2026-05-25 |
-| Use magic bytes validation (file-type) instead of extensions | File extensions are user-controlled and spoofable, magic bytes provide cryptographic verification | 04-03 | 2026-05-25 |
-| Generate 200x200 JPEG thumbnails for images | Balances UI quality with storage efficiency, matches common UI patterns | 04-03 | 2026-05-25 |
-| FTS5 UPDATE trigger uses 'delete' command followed by INSERT | FTS5 external content tables don't support direct UPDATE, must use special 'delete' command to remove old entry then INSERT new entry | 04-01 | 2026-05-25 |
-| confidence_score stored as integer (0-100) instead of real (0.0-1.0) | Better SQLite compatibility, avoids floating-point precision issues | 04-01 | 2026-05-25 |
-| Used MessageSquare icon from lucide-react for Chat navigation link | Consistent with existing icon usage pattern | 03-11 | 2026-05-25 |
-| Placed Chat link between Library and Settings in navigation order | Logical grouping: content → chat → settings | 03-11 | 2026-05-25 |
-| Added matchMedia mock to global test setup | DRY principle, benefits all tests that render ThemeContext | 03-11 | 2026-05-25 |
-| Token listener cleanup handled per-request in sendMessage | Prevents memory leaks and cross-conversation token mixing by removing listeners immediately after each request completes | 03-10 | 2026-05-25 |
-| Combined useChat hook provides both send and summarize operations | Simplifies component integration while maintaining separation of concerns | 03-10 | 2026-05-25 |
-| Streaming content accumulated in state for real-time UI updates | Enables real-time token display in message bubbles, content resets on each new message | 03-10 | 2026-05-25 |
-| 6-phase roadmap structure | Natural grouping by feature dependencies: Foundation → Knowledge → AI → Content → Semantic → Visualization | Planning | 2026-05-24 |
-| Standard granularity (6 phases) | Balances coherent delivery boundaries with manageable scope per phase | Planning | 2026-05-24 |
-| Sequential phase dependencies | Each phase builds on previous: APP → KNOW → AI → CONT → SEM → VIZ | Planning | 2026-05-24 |
-| Use vite-plugin-electron for unified build | Provides hot reload for main process and handles Electron bundling automatically | 01-01 | 2026-05-24 |
-| Defer better-sqlite3 to later plan | Electron 42 compatibility issue with V8 API changes, will add when needed | 01-01 | 2026-05-24 |
-| Tailwind v4 @theme without nested selectors | Tailwind v4 @theme blocks only accept custom properties, dark mode defined separately | 01-01 | 2026-05-24 |
-| Use TDD for theme and sidebar implementation | Ensures behavior is tested before implementation, catches regressions early | 01-02 | 2026-05-25 |
-| Theme toggle cycles through light → dark → system | Respects user's system preference as a first-class option | 01-02 | 2026-05-25 |
-| Store sidebar/theme state in localStorage | Simpler for Phase 1, will migrate to electron-store config in Plan 04 | 01-02 | 2026-05-25 |
-| Use lucide-react for icons | Lightweight (tree-shakeable), modern API, better TypeScript support | 01-02 | 2026-05-25 |
-| Defer Radix UI usage to Plan 03 | Avoid unused dependencies, install when actually needed for dialogs | 01-02 | 2026-05-25 |
-| Use JSON config file in project root instead of AppData | Easier debugging during development, simpler path resolution | 01-03 | 2026-05-25 |
-| Atomic file writes via temp file + rename | Prevents corruption if write interrupted | 01-03 | 2026-05-25 |
-| Web mode uses Vite dev server in development, Express in production | Preserve HMR in development, serve static files in production | 01-03 | 2026-05-25 |
-| System tray keeps app running when window closed | Quick access via tray icon, common desktop app pattern | 01-03 | 2026-05-25 |
-| Mode switching requires restart | Electron architecture requires restart to switch between native window and web server modes | 01-03 | 2026-05-25 |
-| Use winston with daily rotation for logging | Industry standard, automatic rotation, flexible transports | 01-04 | 2026-05-25 |
-| Separate log files for main and renderer processes | Easier debugging, clear separation of concerns | 01-04 | 2026-05-25 |
-| 7-day log retention | Balance between debugging history and disk space usage | 01-04 | 2026-05-25 |
-| Continue running on unhandledRejection | Promise rejections shouldn't crash the app | 01-04 | 2026-05-25 |
-| Relaunch on uncaughtException | Uncaught exceptions indicate critical failure, safest to restart | 01-04 | 2026-05-25 |
-| Better-sqlite3 prebuilt binaries work with Node.js 22.x | No rebuild needed, simplifies build process | 02-01 | 2026-05-25 |
-| Use raw SQL for table creation instead of Drizzle migrations | Simpler for Phase 2, migrations can be added later | 02-01 | 2026-05-25 |
-| Three FTS5 tables for different search modes | Provides flexibility for exact/stemmed/fuzzy search | 02-01 | 2026-05-25 |
-| Database initialized in app.whenReady before window creation | Ensures database ready before renderer process access | 02-01 | 2026-05-25 |
-| FTS5 rank is negative, multiply by 0.67 for recency boost | FTS5 rank values are negative (lower = better), so multiply recent notes by 0.67 to make them less negative (better ranking) | 02-03 | 2026-05-25 |
-| Recency boost: 7 days with 1.5x multiplier | Notes updated in last 7 days get 0.67x multiplier (equivalent to 1.5x boost) for better ranking | 02-03 | 2026-05-25 |
-| Fuzzy search limited to 20 results | Trigram tokenizer is slower than unicode61/porter, limit results to prevent performance issues | 02-03 | 2026-05-25 |
-| Case-sensitive tag names with duplicate prevention | Allows users to distinguish between "JavaScript" and "javascript" if needed | 02-04 | 2026-05-25 |
-| Tags created on-the-fly during addTagsToNote | Simplifies UX - users don't need to pre-create tags before using them | 02-04 | 2026-05-25 |
-| Junction table with CASCADE delete on both foreign keys | Automatically cleans up associations when tags or notes are deleted | 02-04 | 2026-05-25 |
-| Use gray-matter for YAML frontmatter | Standard package (10M+ weekly downloads), handles edge cases correctly | 02-06 | 2026-05-25 |
-| Convert wiki-links to standard markdown in export | Preserves link structure, compatible with other markdown tools | 02-06 | 2026-05-25 |
-| Preserve broken links as plain text in export | Maintains context without creating invalid markdown links | 02-06 | 2026-05-25 |
-| JSON export includes all relationships | Enables complete data export for backup/migration | 02-06 | 2026-05-25 |
-| Use Electron dialog API for export path selection | Native OS dialogs, secure path validation, prevents path traversal | 02-06 | 2026-05-25 |
-| electron-store already installed in Phase 1 | No additional installation needed for Phase 3 encrypted storage | 03-02 | 2026-05-25 |
-| Encryption key stored in separate plain Store | Low risk for single-user desktop app, future: migrate to safeStorage API | 03-02 | 2026-05-25 |
-| Store options include projectName and cwd | Enables test compatibility with ELECTRON_USER_DATA env var | 03-02 | 2026-05-25 |
-| DuckDuckGo scraping for web search | Free, no API keys, privacy-focused; trade-off: may break if HTML changes (accepted risk T-03-14) | 03-04 | 2026-05-25 |
-| Combined Tasks 1 & 2 in Plan 03-01 | Schema definitions and table creation are tightly coupled, implemented together for atomic consistency | 03-01 | 2026-05-25 |
-| CHECK constraint for role enum | Used SQL CHECK constraint rather than application-level validation for database-level enforcement | 03-01 | 2026-05-25 |
-| CASCADE delete for conversations | Conversations cascade to messages, messages cascade to citations - ensures referential integrity | 03-01 | 2026-05-25 |
-| OpenAI SDK for both OpenAI and DeepSeek | DeepSeek API is OpenAI-compatible, eliminates need for separate SDK, reduces bundle size | 03-07 | 2026-05-25 |
-| Skip retry on 401/403 errors | Authentication errors are not transient, retrying wastes time and risks rate limiting | 03-07 | 2026-05-25 |
-| Exponential backoff: 1s, 2s, 4s delays | Per D-03 specification, balances recovery time with user patience (max 7s total wait) | 03-07 | 2026-05-25 |
-| Register AI handlers after window creation | Enables streaming token events via mainWindow.webContents.send | 03-08 | 2026-05-25 |
-| Streaming token pattern with cleanup function | onToken returns cleanup function for easy React useEffect integration | 03-08 | 2026-05-25 |
+| Remove Electron entirely | User wants CLI + web, not desktop app. Trade-off: lose native menus/tray/dialogs, gain cross-platform simplicity and smaller bundle | Planning | 2026-05-29 |
+| Express.js for backend | Already used in v1 web mode, mature, handles static + API routes | Planning | 2026-05-29 |
+| WebSocket for real-time updates | Replace Electron IPC for streaming (AI tokens, graph updates) | Planning | 2026-05-29 |
+| HTML file input for uploads | Replace Electron dialog API, works in all browsers | Planning | 2026-05-29 |
+| File-based config | Replace electron-store, simpler, no Electron dependency | Planning | 2026-05-29 |
+| Open browser automatically | User wants "single command" experience, can disable with --no-browser | Planning | 2026-05-29 |
+| 5-phase roadmap structure | Natural grouping: Backend → Frontend → CLI → Packaging → Cross-Platform | Planning | 2026-05-29 |
+| Standard granularity (5 phases) | Balances coherent delivery boundaries with manageable scope | Planning | 2026-05-29 |
 
 ### Active TODOs
 
-- [ ] Execute Phase 5 Plan 05-03: Embeddings Service
-- [ ] Execute Phase 5 Plan 05-04: Auto-Linking
-- [ ] Execute Phase 5 Plan 05-05: Semantic Search UI
-- [ ] Monitor better-sqlite3 for Electron 42 compatibility updates
+- [ ] Plan Phase 1: Backend Extraction
+- [ ] Plan Phase 2: Frontend Adaptation
+- [ ] Plan Phase 3: CLI & Server Launcher
+- [ ] Plan Phase 4: Packaging & Distribution
+- [ ] Plan Phase 5: Cross-Platform Validation
 
 ### Known Blockers
 
@@ -169,9 +101,9 @@ None yet.
 
 ## Session Continuity
 
-**Last Session:** 2026-05-26T18:29:17.649Z
-**Session Goal:** Execute Phase 6 Plan 06-10 - Resizable Side Panel
-**Session Outcome:** ✓ Complete - Drag-to-resize side panel with 256-768px width clamping
+**Last Session:** 2026-05-29T00:00:00.000Z
+**Session Goal:** Create v2.0 roadmap
+**Session Outcome:** ✓ Complete - 5-phase roadmap created, 31/31 requirements mapped
 
 **Current Session:** N/A
 **Session Goal:** N/A
@@ -183,95 +115,22 @@ None yet.
 
 | Phase | Plan | Started | Completed | Duration | Outcome |
 |-------|------|---------|-----------|----------|---------|
-| 1 | 01-01 | 2026-05-24T16:36:44Z | 2026-05-24T16:51:17Z | 15 min | ✓ Complete - Electron + React + Vite foundation established |
-| 1 | 01-02 | 2026-05-24T16:54:30Z | 2026-05-25T00:07:00Z | 12 min | ✓ Complete - Theme system and collapsible sidebar with TDD |
-| 1 | 01-03 | 2026-05-25T00:13:54Z | 2026-05-25T07:47:50Z | 7h 34min | ✓ Complete - Mode switching, config management, system tray, Settings UI |
-| 1 | 01-04 | 2026-05-25T00:54:26Z | 2026-05-25T01:06:00Z | 11 min | ✓ Complete - Error handling, logging, offline detection |
-| 2 | 02-01 | 2026-05-25T02:13:42Z | 2026-05-25T02:24:22Z | 11 min | ✓ Complete - Database foundation with Drizzle ORM, FTS5, schema |
-| 2 | 02-02 | 2026-05-25T02:29:01Z | 2026-05-25T02:42:07Z | 13 min | ✓ Complete - Note CRUD services with wiki-link parsing and backlinks |
-| 2 | 02-03 | 2026-05-25T02:28:47Z | 2026-05-25T02:41:11Z | 12 min | ✓ Complete - Full-text search with FTS5, BM25 ranking, recency boost |
-| 2 | 02-04 | 2026-05-25T02:28:40Z | 2026-05-25T02:36:27Z | 8 min | ✓ Complete - Tags system with CRUD, associations, and filtering |
-| 2 | 02-05 | 2026-05-25T02:42:30Z | 2026-05-25T03:05:53Z | 23 min | ✓ Complete - Note editor UI with CodeMirror 6, backlinks panel, tags input |
-| 2 | 02-06 | 2026-05-25T03:07:48Z | 2026-05-25T03:17:04Z | 9 min | ✓ Complete - Export functionality with markdown and JSON formats |
-| 3 | 03-01 | 2026-05-25T09:53:05Z | 2026-05-25T10:02:19Z | 9 min | ✓ Complete - Database schema extension with conversations, messages, citations tables |
-| 3 | 03-02 | 2026-05-25T09:53:03Z | 2026-05-25T10:05:17Z | 12 min | ✓ Complete - Encrypted API key storage with electron-store, provider config CRUD |
-| 3 | 03-03 | 2026-05-25T10:07:54Z | 2026-05-25T10:12:22Z | 4 min | ✓ Complete - AIProvider interface and Claude provider with streaming support |
-| 3 | 03-04 | 2026-05-25T10:07:51Z | 2026-05-25T10:10:40Z | 3 min | ✓ Complete - Web search integration with DuckDuckGo, citation extraction |
-| 3 | 03-07 | 2026-05-25T10:15:55Z | 2026-05-25T10:19:10Z | 3 min | ✓ Complete - OpenAI and DeepSeek providers, AI service with retry logic |
-| 3 | 03-05 | 2026-05-25T10:22:46Z | 2026-05-25T10:30:13Z | 7 min | ✓ Complete - Conversation service with CRUD, AI chat handlers with streaming and web search |
-| 3 | 03-06 | 2026-05-25T10:37:06Z | 2026-05-25T10:57:06Z | 20 min | ✓ Complete - AI provider settings UI with API key input, model selection, and validation |
-| 3 | 03-08 | 2026-05-25T10:36:29Z | 2026-05-25T10:40:03Z | 4 min | ✓ Complete - IPC integration: AI handlers registered, chat APIs exposed to renderer |
-| 3 | 03-10 | 2026-05-25T11:13:14Z | 2026-05-25T11:16:19Z | 3 min | ✓ Complete - React hooks for chat operations with streaming support and conversation CRUD |
-| 3 | 03-11 | 2026-05-25T11:16:30Z | 2026-05-25T11:20:45Z | 4 min | ✓ Complete - Chat route with conversation list sidebar, navigation link |
-| 4 | 04-01 | 2026-05-25T14:47:01Z | 2026-05-25T14:49:27Z | 2 min | ✓ Complete - Database schema extension with content and content_tags tables, FTS5 for document search |
-| 4 | 04-02 | 2026-05-25T14:49:50Z | 2026-05-25T14:51:32Z | 2 min | ✓ Complete - File processing dependencies installed (file-type, pdf-parse, mammoth, sharp) |
-| 4 | 04-03 | 2026-05-25T14:53:39Z | 2026-05-25T15:03:39Z | 10 min | ✓ Complete - Content service with CRUD, file validation, text extraction, thumbnail generation |
-| 4 | 04-04 | 2026-05-25T15:07:15Z | 2026-05-25T15:10:19Z | 3 min | ✓ Complete - Content IPC handlers with file dialog integration, window.api.content exposure |
-| 4 | 04-05 | 2026-05-25T15:13:18Z | 2026-05-25T15:20:37Z | 7 min | ✓ Complete - Content UI components with upload, list, metadata display, Library route integration |
-| 5 | 05-02 | 2026-05-26T09:36:47Z | 2026-05-26T09:37:30Z | 43s | ✓ Complete - @xenova/transformers and sqlite-vec dependencies installed and verified |
-| 6 | 06-01 | 2026-05-26T03:10:52Z | 2026-05-26T03:11:15Z | 1 min 11s | ✓ Complete - Three.js, react-force-graph-3d, d3-force-3d, @types/three installed and verified |
-| 6 | 06-02 | 2026-05-26T03:19:00Z | 2026-05-26T03:20:00Z | 1 min | ✓ Complete - Graph service with getData, IPC handlers, window.api.graph exposure |
-| 6 | 06-03 | 2026-05-26T03:28:22Z | 2026-05-26T03:29:42Z | 1 min 20s | ✓ Complete - React components for 3D graph (useGraph hook, GraphView, GraphSidePanel, /graph route) |
-| 6 | 06-04 | 2026-05-26T03:29:42Z | 2026-05-26T04:14:42Z | 45 min | ✓ Complete - Instanced rendering, force simulation tuning, neighbor highlighting, navigation integration |
-| 6 | 06-05 | 2026-05-26T03:54:47Z | 2026-05-26T04:21:10Z | 15 min 10s | ✓ Complete - Real-time graph updates, search highlighting, 2D minimap, memory cleanup |
-| 6 | 06-07 | 2026-05-27T00:22:40Z | 2026-05-27T00:24:40Z | 2 min | ✓ Complete - Window resize and tab visibility handlers for graph auto-scaling and data refresh |
-| 6 | 06-08 | 2026-05-27T00:29:13Z | 2026-05-27T00:32:38Z | 3 min 25s | ✓ Complete - Fixed minimap node visibility with dark background, larger nodes, and cooldown configuration |
-| 6 | 06-10 | 2026-05-26T17:22:43Z | 2026-05-26T17:25:49Z | 3 min 6s | ✓ Complete - Resizable side panel with drag handle, 256-768px width clamping |
+| - | - | - | - | - | No phases executed yet |
 
 ---
 
 ## Notes
 
-- Research flags set for Phases 3, 5, and 6 based on technical complexity and unknowns
-- UI hints added to Phases 2, 3, 5, and 6 for downstream UI workflow detection
-- All 41 v1 requirements successfully mapped to phases with no orphans
-- Phase dependencies form clear sequential path: 1 → 2 → 3 → 4 → 5 → 6
-- **Phase 1 COMPLETE:** All 5 requirements (APP-01 through APP-05) fulfilled
-- **better-sqlite3 deferred:** Electron 42 compatibility issue, will be added in Phase 2 when database operations needed
-- **Tailwind v4 CSS-first config:** Using @theme directive in CSS, not tailwind.config.js
-- **Winston logging:** Main and renderer processes log separately with 7-day rotation
-- **Error handling:** React Error Boundaries + global crash handlers implemented
-- **Phase 2 IN PROGRESS:** 3/6 plans complete (02-01, 02-03, 02-04)
-- **better-sqlite3 works:** Prebuilt binaries compatible with Node.js 22.x, no rebuild needed
-- **TDD approach:** All Phase 2 tasks following RED → GREEN → REFACTOR cycle
-- **Plan 02-03 COMPLETE:** Full-text search with FTS5 (quick nav, full-text, fuzzy), BM25 ranking with recency boost, IPC handlers. All 23 tests passing.
-- **Plan 02-04 COMPLETE:** Tags system with CRUD operations, note-tag associations via junction table, tag-based filtering with soft-delete awareness. All 35 tests passing.
-- **Plan 02-05 COMPLETE:** Note editor UI with CodeMirror 6, backlinks panel, tags input, quick nav. All UI components integrated.
-- **Plan 02-06 COMPLETE:** Export functionality with markdown (YAML frontmatter, wiki-link conversion) and JSON (full relationships). All 11 tests passing.
-- **PHASE 2 COMPLETE:** All 6 plans complete, all requirements (KNOW-01 through KNOW-10) fulfilled. Total duration: 52 minutes.
-- **PHASE 3 IN PROGRESS:** 6/7 plans complete (03-01, 03-02, 03-03, 03-04, 03-05, 03-07, 03-08)
-- **Plan 03-01 COMPLETE:** Database schema extension with conversations, messages, citations tables. CASCADE delete, role enum constraint. All 33 tests passing.
-- **Plan 03-02 COMPLETE:** Encrypted API key storage with electron-store, provider config CRUD. All 11 tests passing.
-- **Plan 03-03 COMPLETE:** AIProvider interface and Claude provider with streaming support. All 14 tests passing.
-- **Plan 03-04 COMPLETE:** Web search integration with DuckDuckGo scraping, citation extraction, AI prompt formatting. All 11 tests passing.
-- **Plan 03-05 COMPLETE:** Conversation service with CRUD operations, AI chat handlers with streaming responses and parallel web search integration. All 16 tests passing.
-- **Plan 03-06 COMPLETE:** AI provider settings UI with masked API key input, model selection, validation before save. All 19 tests passing.
-- **Plan 03-07 COMPLETE:** OpenAI and DeepSeek providers, AI service with provider factory and retry logic. All 28 tests passing.
-- **Plan 03-08 COMPLETE:** IPC integration with AI handlers registered in main process, chat and conversation APIs exposed to renderer via contextBridge with TypeScript types.
-- **Plan 03-10 COMPLETE:** React hooks for chat operations (useSendMessage, useSummarizeNote, useChat) with streaming token accumulation and conversation CRUD hooks (useConversations, useConversation, useDeleteConversation). All 14 tests passing.
-- **Plan 03-11 COMPLETE:** Chat route with conversation list sidebar, navigation link in Sidebar, route registration in App.tsx. Added conversation:create IPC handler (missing from prior plans). All 12 tests passing.
-- **PHASE 3 COMPLETE:** All 8 plans complete, all requirements (AI-01 through AI-10) fulfilled. Total duration: 67 minutes.
-- **PHASE 4 IN PROGRESS:** 5/5 plans complete (04-01, 04-02, 04-03, 04-04, 04-05)
-- **Plan 04-01 COMPLETE:** Database schema extension with content and content_tags tables, FTS5 virtual table for document text search. All 10 tests passing (5 schema + 5 FTS5).
-- **Plan 04-02 COMPLETE:** File processing dependencies installed (file-type, pdf-parse, mammoth, sharp). Package legitimacy verified.
-- **Plan 04-03 COMPLETE:** Content service with CRUD operations, magic bytes file validation, atomic writes, PDF/DOCX text extraction, 200x200 JPEG thumbnail generation. All 32 tests passing.
-- **Plan 04-04 COMPLETE:** Content IPC handlers with file dialog integration, window.api.content exposure. All 21 tests passing.
-- **Plan 04-05 COMPLETE:** Content UI components (ContentUpload, ContentList) with React hooks (useContent, useUploadContent, useDeleteContent, useContentById), Library route integration with tab navigation. All 14 tests passing.
-- **PHASE 4 COMPLETE:** All 5 plans complete, all requirements (CONT-01 through CONT-06) fulfilled. Total duration: 23 minutes.
-- **PHASE 5 IN PROGRESS:** 1/5 plans complete (05-02)
-- **Plan 05-02 COMPLETE:** @xenova/transformers@2.17.2 installed for local embeddings generation, sqlite-vec binary (vec0.dll) downloaded and verified for vector similarity search. Package legitimacy verified by human. Duration: 43 seconds.
-- **PHASE 6 IN PROGRESS:** 4/5 plans complete (06-01, 06-02, 06-03, 06-04)
-- **Plan 06-01 COMPLETE:** Three.js 0.184.0, react-force-graph-3d 1.29.1, d3-force-3d 3.0.6, @types/three 0.184.1 installed. All packages verified by human before installation per security protocol. Duration: 1 min 11s.
-- **Plan 06-02 COMPLETE:** Graph service with getData function, IPC handlers for graph operations, window.api.graph exposure. All 7 tests passing. Duration: 1 min.
-- **Plan 06-03 COMPLETE:** React components for 3D graph visualization (useGraph hook, GraphView with ForceGraph3D, GraphSidePanel, /graph route). All 17 tests passing. Duration: 1 min 20s.
-- **Plan 06-04 COMPLETE:** Instanced rendering with Three.js InstancedMesh for 1000+ node performance, force simulation tuned per user decisions (moderate clustering, strong center gravity, short links), neighbor highlighting on click, thin link styling per D-13, navigation integration. User approved performance checkpoint without testing. Duration: 45 min.
-- **Plan 06-05 COMPLETE:** Real-time graph updates via IPC events (notes:created), search integration with existing useSearch hook (quickNav mode), matching nodes highlighted in yellow/gold, camera focuses on first result, 2D minimap using react-force-graph-2d in bottom-right corner, clicking minimap jumps camera, memory cleanup with pauseAnimation on unmount. All 42 graph tests passing. Duration: 15 min 10s.
-- **Plan 06-07 COMPLETE:** Window resize and tab visibility handlers for graph auto-scaling and data refresh. Duration: 2 min.
-- **Plan 06-08 COMPLETE:** Fixed minimap node visibility with dark background, larger nodes, and cooldown configuration. Duration: 3 min 25s.
-- **Plan 06-10 COMPLETE:** Resizable side panel with drag handle on left edge, width state (default 384px), mouse drag handlers, 256-768px clamping, smooth transitions, event listener cleanup. All 11 tests passing. Duration: 3 min 6s.
-- **PHASE 6 COMPLETE:** All 10 plans complete (5 original + 5 gap closure), all requirements (VIZ-01 through VIZ-05) fulfilled. Total duration: 72 min 12s.
+- v2.0 milestone initialized 2026-05-29
+- All 31 v2 requirements mapped to 5 phases with no orphans
+- Phase dependencies: 1 → 2 → 3 → 4 → 5
+- UI hint added to Phase 2 (Frontend Adaptation)
+- v1.0 milestone completed 2026-05-27 (6 phases, 41 plans, all requirements fulfilled)
+- Architecture shift: Electron → Node.js backend + web frontend
+- Target: Package size < 50MB (vs 120MB+ Electron bundle)
+- Cross-platform: Linux and Windows support required
 
 ---
 
-*State initialized: 2026-05-24*
-*Last updated: 2026-05-26 after Phase 6 Plan 06-10 completion*
+*State initialized: 2026-05-29*
+*Last updated: 2026-05-29 after roadmap creation*
