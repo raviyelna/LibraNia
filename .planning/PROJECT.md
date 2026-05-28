@@ -59,6 +59,22 @@ Answers must be verified by multiple AI models before storage — ensuring knowl
 | Desktop app with web mode | Native performance + web flexibility | — Pending |
 | Auto-linking via semantic analysis | Reduces manual work, discovers non-obvious connections | — Pending |
 
+## Milestones
+
+### v1.0 - AI-Powered Knowledge Management (COMPLETE)
+**Status:** Complete (2026-05-27)
+**Goal:** Desktop app with AI chat, knowledge management, semantic search, 3D visualization
+**Outcome:** All 6 phases complete, 41/41 requirements fulfilled
+
+### v2.0 - Cross-Platform Web Architecture (ACTIVE)
+**Status:** Planning (started 2026-05-29)
+**Goal:** Transform from Electron desktop to cross-platform CLI + web server accessible via browser
+**Key Changes:**
+- Remove Electron, migrate to Node.js backend + web frontend
+- Single CLI command (`librania start`) launches server + opens browser
+- Works identically on Linux and Windows
+- All v1 features accessible via web UI
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
@@ -77,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-24 after initialization*
+*Last updated: 2026-05-29 after v2 milestone initialization*
