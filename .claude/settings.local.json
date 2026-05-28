@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__librania__search_notes",
+      "WebSearch"
+    ]
+  }
+}
