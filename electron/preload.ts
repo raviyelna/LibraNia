@@ -161,4 +161,15 @@ contextBridge.exposeInMainWorld('api', {
   graph: {
     getData: () => ipcRenderer.invoke('graph:getData'),
   },
+
+  // AI operations
+  ai: {
+    chat: (data: {
+      conversationId: string;
+      messages: Array<{ role: string; content: string }>;
+      providerId?: string;
+      model?: string;
+    }) => ipcRenderer.invoke('ai:chat', data),
+    getMessages: (conversationId: string) => ipcRenderer.invoke('ai:getMessages', { conversationId }),
+  },
 });
