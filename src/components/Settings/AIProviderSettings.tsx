@@ -116,6 +116,7 @@ export function AIProviderSettings() {
     field: keyof ProviderFormState,
     value: string | boolean
   ) => {
+    console.log('[AIProviderSettings] Field change:', { providerId, field, value });
     setFormState((prev) => ({
       ...prev,
       [providerId]: {
