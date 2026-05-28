@@ -7,6 +7,9 @@ export interface GraphNode {
   id: string;
   title: string;
   tags: string[];
+  x?: number;
+  y?: number;
+  z?: number;
 }
 
 export interface GraphLink {
