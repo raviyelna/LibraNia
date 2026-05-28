@@ -3,21 +3,18 @@ import { logger } from '../logger';
 import {
   getAllTags,
   getNoteTags,
+  createTag,
+  deleteTag,
+  renameTag,
   addTagsToNote,
-  removeTagsFromNote,
-} from '../services/file-storage.service';
+  removeTagFromNote,
+} from '../services/tags.service';
 
 export function registerTagsHandlers() {
   ipcMain.handle('tags:getAll', async () => {
     try {
       logger.info('IPC: tags:getAll');
-      const tagNames = getAllTags();
-      // Convert string[] to Tag[] format expected by frontend
-      const tags = tagNames.map(name => ({
-        id: name, // Use name as id for file-based storage
-        name: name,
-        created_at: new Date(),
-      }));
+      const tags = await getAllTags();
       return tags;
     } catch (error) {
       logger.error('tags:getAll failed', error as Error);
@@ -61,13 +58,7 @@ export function registerTagsHandlers() {
   ipcMain.handle('tags:getForNote', async (event, data) => {
     try {
       logger.info('IPC: tags:getForNote', { noteId: data.noteId });
-      const tagNames = getNoteTags(data.noteId);
-      // Convert string[] to Tag[] format
-      const tags = tagNames.map(name => ({
-        id: name,
-        name: name,
-        created_at: new Date(),
-      }));
+      const tags = await getNoteTags(data.noteId);
       return tags;
     } catch (error) {
       logger.error('tags:getForNote failed', error as Error);
@@ -79,8 +70,8 @@ export function registerTagsHandlers() {
     try {
       logger.info('IPC: tags:addToNote', { noteId: data.noteId, tagNames: data.tagNames });
       const tags = Array.isArray(data.tagNames) ? data.tagNames : [data.tagNames];
-      const note = addTagsToNote(data.noteId, tags);
-      return { success: true, note };
+      await addTagsToNote(data.noteId, tags);
+      return { success: true };
     } catch (error) {
       logger.error('tags:addToNote failed', error as Error);
       throw error;
