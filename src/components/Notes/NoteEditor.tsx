@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
+import { defaultSchema } from 'rehype-sanitize';
 import { EditorView } from '@codemirror/view';
 import { markdown } from '@codemirror/lang-markdown';
 import { EditorState } from '@codemirror/state';
@@ -12,6 +13,15 @@ import { useNote, useUpdateNote, useDeleteNote } from '../../hooks/useNotes';
 import { BacklinksPanel } from './BacklinksPanel';
 import { RelatedPanel } from './RelatedPanel';
 import { Eye, Edit, Columns } from 'lucide-react';
+
+// Custom sanitize schema to allow librania:// protocol
+const customSchema = {
+  ...defaultSchema,
+  protocols: {
+    ...defaultSchema.protocols,
+    src: [...(defaultSchema.protocols?.src || []), 'librania']
+  }
+};
 
 interface NoteEditorProps {
   noteId: string;
@@ -269,7 +279,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                  rehypePlugins={[rehypeRaw, [rehypeSanitize, customSchema]]}
                   components={{
                     img: ({ node, src, ...props }) => {
                       // Convert absolute file paths to librania:// protocol
