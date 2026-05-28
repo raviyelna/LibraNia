@@ -280,15 +280,17 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeRaw, [rehypeSanitize, customSchema]]}
+                  urlTransform={(url) => {
+                    // Convert absolute file paths to librania:// protocol
+                    if (url && (url.startsWith('C:\\') || url.startsWith('/') || url.includes('AppData'))) {
+                      return `librania://${url.replace(/\\/g, '/')}`;
+                    }
+                    return url;
+                  }}
                   components={{
-                    img: ({ node, src, ...props }) => {
-                      // Convert absolute file paths to librania:// protocol
-                      let imgSrc = src;
-                      if (src && (src.startsWith('C:\\') || src.startsWith('/') || src.includes('AppData'))) {
-                        imgSrc = `librania://${src.replace(/\\/g, '/')}`;
-                      }
+                    img: ({ node, ...props }) => {
                       return (
-                        <img {...props} src={imgSrc} className="max-w-full h-auto rounded" loading="lazy" />
+                        <img {...props} className="max-w-full h-auto rounded" loading="lazy" />
                       );
                     },
                     code: ({ node, className, children, ...props }) => {
