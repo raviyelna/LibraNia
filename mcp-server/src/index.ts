@@ -9,7 +9,14 @@
  * 1. Check library (search_notes)
  * 2. If insufficient → web_search
  * 3. Create note with findings
- * 4. Return answer with sources
+ * 4. Link to related notes using [[Note Title]] syntax
+ * 5. Return answer with sources
+ *
+ * Backlinks:
+ * - LibraNia automatically creates bidirectional links from [[Note Title]] syntax
+ * - When creating notes, link to related existing notes using [[Title]]
+ * - Search for related notes first, then link in new note body
+ * - Example: "See also [[Docker Compose]] and [[Container Security]]"
  */
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -103,7 +110,7 @@ class LibraniaMCPServer {
         tools: [
           {
             name: 'search_notes',
-            description: 'Search LibraNia knowledge base for relevant notes. Returns matching notes with snippets and tags.',
+            description: 'Search LibraNia knowledge base for relevant notes. Returns matching notes with snippets and tags. Use before creating new notes to find related content for linking.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -135,7 +142,7 @@ class LibraniaMCPServer {
           },
           {
             name: 'create_note',
-            description: 'Create a new note in LibraNia. Use after web search to save findings.',
+            description: 'Create a new note in LibraNia. Use after web search to save findings. IMPORTANT: Link to related notes using [[Note Title]] syntax in body to create bidirectional backlinks. Search for related notes first, then reference them.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -145,7 +152,7 @@ class LibraniaMCPServer {
                 },
                 body: {
                   type: 'string',
-                  description: 'Note content in Markdown',
+                  description: 'Note content in Markdown. Use [[Note Title]] to link to other notes (creates automatic backlinks).',
                 },
                 tags: {
                   type: 'array',
