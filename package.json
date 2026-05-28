@@ -83,5 +83,20 @@
     "vite": "^8.0.14",
     "vite-plugin-electron": "^0.29.1",
     "vitest": "^4.1.7"
+  },
+  "build": {
+    "appId": "com.librania.app",
+    "productName": "LibraNia",
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "dir"
+    }
   }
-}
