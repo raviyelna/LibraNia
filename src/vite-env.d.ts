@@ -47,6 +47,7 @@ interface NotesAPI {
   getById: (id: string, includeDeleted?: boolean) => Promise<Note | null>;
   getAll: () => Promise<Note[]>;
   getDeleted: () => Promise<Note[]>;
+  syncFilesystemToDb: () => Promise<{ synced: number; deleted: number; skipped: number }>;
   onCreated: (callback: (note: Note) => void) => () => void;
   onUpdated: (callback: (note: Note) => void) => () => void;
 }

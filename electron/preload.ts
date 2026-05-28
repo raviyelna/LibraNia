@@ -75,6 +75,8 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.invoke('notes:getAll'),
     getDeleted: () =>
       ipcRenderer.invoke('notes:getDeleted'),
+    syncFilesystemToDb: () =>
+      ipcRenderer.invoke('notes:syncFilesystemToDb'),
     onCreated: (callback: (note: any) => void) => {
       const listener = (_event: any, note: any) => callback(note);
       ipcRenderer.on('notes:created', listener);

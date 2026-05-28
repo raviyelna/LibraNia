@@ -7,6 +7,7 @@ import {
   restoreNote,
   getNoteById,
   getAllNotes,
+  syncFilesystemToDb,
 } from '../services/file-storage.service';
 import { getBacklinks, getSemanticLinks } from '../services/links.service';
 
@@ -133,6 +134,18 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
       return [];
     } catch (error) {
       logger.error('links:getSemanticLinks failed', error as Error);
+      throw error;
+    }
+  });
+
+  // Sync filesystem to database
+  ipcMain.handle('notes:syncFilesystemToDb', async () => {
+    try {
+      logger.info('IPC: notes:syncFilesystemToDb');
+      const result = await syncFilesystemToDb();
+      return result;
+    } catch (error) {
+      logger.error('notes:syncFilesystemToDb failed', error as Error);
       throw error;
     }
   });

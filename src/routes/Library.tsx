@@ -8,12 +8,13 @@ import { ExportDialog } from '../components/Export/ExportDialog';
 import { ContentUpload } from '../components/ContentUpload';
 import { ContentList } from '../components/ContentList';
 import { useContent, useDeleteContent } from '../hooks/useContent';
-import { Download } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 
 export function LibraryPage() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'notes' | 'content'>('notes');
+  const [syncing, setSyncing] = useState(false);
 
   const { content, loading: contentLoading, refetch: refetchContent } = useContent();
   const { deleteContent } = useDeleteContent();
@@ -27,10 +28,32 @@ export function LibraryPage() {
     await refetchContent();
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const result = await window.api.notes.syncFilesystemToDb();
+      alert(`Sync complete!\nSynced: ${result.synced}\nDeleted: ${result.deleted}\nSkipped: ${result.skipped}`);
+      // Refresh notes list
+      window.location.reload();
+    } catch (error) {
+      alert(`Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="library-layout flex h-screen">
       <aside className="notes-sidebar w-64 border-r border-border overflow-y-auto">
-        <div className="p-4 border-b border-border">
+        <div className="p-4 border-b border-border space-y-2">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-primary/10 hover:bg-primary/20 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Syncing...' : 'Sync Notes'}
+          </button>
           <button
             onClick={() => setExportDialogOpen(true)}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/10 hover:bg-accent/20 rounded-md transition-colors"
