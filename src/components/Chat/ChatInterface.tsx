@@ -41,8 +41,18 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
     if (models && models.length > 0) {
       setSelectedModel(models[0].id);
     }
-    setUseCustomModel(false);
-    setCustomModel('');
+
+    // Load custom model from localStorage
+    const savedCustomModel = localStorage.getItem(`customModel_${selectedProvider}`);
+    const savedUseCustom = localStorage.getItem(`useCustomModel_${selectedProvider}`) === 'true';
+
+    if (savedCustomModel) {
+      setCustomModel(savedCustomModel);
+      setUseCustomModel(savedUseCustom);
+    } else {
+      setUseCustomModel(false);
+      setCustomModel('');
+    }
   }, [selectedProvider]);
 
   // Load messages when conversation changes
@@ -70,6 +80,14 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
   const handleSendMessage = async (message: string) => {
     if (!conversationId) return;
+
+    // Save custom model to localStorage when used
+    if (useCustomModel && customModel) {
+      localStorage.setItem(`customModel_${selectedProvider}`, customModel);
+      localStorage.setItem(`useCustomModel_${selectedProvider}`, 'true');
+    } else {
+      localStorage.setItem(`useCustomModel_${selectedProvider}`, 'false');
+    }
 
     // Check for /research command
     const isResearchMode = message.trim().startsWith('/research');
