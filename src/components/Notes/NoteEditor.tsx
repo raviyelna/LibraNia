@@ -71,19 +71,29 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
             try {
               const reader = new FileReader();
-              reader.onload = (e) => {
+              reader.onload = async (e) => {
                 const arrayBuffer = e.target?.result as ArrayBuffer;
-                const blob = new Blob([arrayBuffer], { type: file.type });
-                const dataUrl = URL.createObjectURL(blob);
 
-                // Insert markdown image syntax
-                const view = editorViewRef.current;
-                if (view) {
-                  const pos = view.state.selection.main.head;
-                  const imageMarkdown = `![${file.name}](${dataUrl})\n`;
-                  view.dispatch({
-                    changes: { from: pos, insert: imageMarkdown }
+                try {
+                  // Save image to disk
+                  const result = await window.api.content.saveImage({
+                    buffer: arrayBuffer,
+                    filename: file.name || 'image.png',
+                    noteId: noteId,
                   });
+
+                  // Insert markdown with file path
+                  const view = editorViewRef.current;
+                  if (view) {
+                    const pos = view.state.selection.main.head;
+                    const imageMarkdown = `![${file.name}](${result.filePath})\n`;
+                    view.dispatch({
+                      changes: { from: pos, insert: imageMarkdown }
+                    });
+                  }
+                } catch (error) {
+                  console.error('Failed to save pasted image:', error);
+                  alert('Failed to save image. Please try again.');
                 }
               };
               reader.readAsArrayBuffer(file);
@@ -261,9 +271,16 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeRaw, rehypeSanitize]}
                   components={{
-                    img: ({ node, ...props }) => (
-                      <img {...props} className="max-w-full h-auto rounded" loading="lazy" />
-                    ),
+                    img: ({ node, src, ...props }) => {
+                      // Convert absolute file paths to file:// URLs
+                      let imgSrc = src;
+                      if (src && (src.startsWith('C:\\') || src.startsWith('/') || src.includes('AppData'))) {
+                        imgSrc = `file:///${src.replace(/\\/g, '/')}`;
+                      }
+                      return (
+                        <img {...props} src={imgSrc} className="max-w-full h-auto rounded" loading="lazy" />
+                      );
+                    },
                     code: ({ node, className, children, ...props }) => {
                       const inline = !className;
                       return inline ? (

@@ -1,5 +1,8 @@
-import { ipcMain, dialog } from 'electron';
+import { ipcMain, dialog, app } from 'electron';
 import { logger } from '../logger';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 
 /**
  * Register IPC handlers for content operations
@@ -25,6 +28,37 @@ export function registerContentHandlers() {
       };
     } catch (error) {
       logger.error('content:upload failed', error as Error);
+      throw error;
+    }
+  });
+
+  // Save pasted image
+  ipcMain.handle('content:saveImage', async (event, data: { buffer: ArrayBuffer; filename: string; noteId: string }) => {
+    try {
+      logger.info('IPC: content:saveImage', { filename: data.filename, noteId: data.noteId });
+
+      // Create attachments directory
+      const attachmentsDir = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'attachments', data.noteId);
+      if (!fs.existsSync(attachmentsDir)) {
+        fs.mkdirSync(attachmentsDir, { recursive: true });
+      }
+
+      // Generate unique filename
+      const timestamp = Date.now();
+      const ext = path.extname(data.filename) || '.png';
+      const basename = path.basename(data.filename, ext);
+      const filename = `${basename}-${timestamp}${ext}`;
+      const filePath = path.join(attachmentsDir, filename);
+
+      // Write file
+      const buffer = Buffer.from(data.buffer);
+      fs.writeFileSync(filePath, buffer);
+
+      logger.info('Image saved', { filePath });
+
+      return { filePath };
+    } catch (error) {
+      logger.error('content:saveImage failed', error as Error);
       throw error;
     }
   });
