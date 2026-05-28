@@ -395,12 +395,14 @@ export function registerAIHandlers(mainWindow?: BrowserWindow) {
       let tools = undefined;
 
       if (request.researchMode) {
+        logger.info('Research mode enabled - adding system prompt and tools');
         // Add research system prompt
         messagesToSend = [
           { role: 'system', content: RESEARCH_SYSTEM_PROMPT },
           ...request.messages.filter(m => m.role !== 'system')
         ];
         tools = RESEARCH_TOOLS;
+        logger.info('Tools configured:', { toolCount: tools.length, toolNames: tools.map(t => t.name) });
       }
 
       // Progress callback for tool execution
