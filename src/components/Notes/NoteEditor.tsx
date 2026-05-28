@@ -110,7 +110,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
             }
           }),
           EditorView.domEventHandlers({
-            paste: (event, view) => {
+            paste: (event) => {
               handlePaste(event);
               return false;
             }
