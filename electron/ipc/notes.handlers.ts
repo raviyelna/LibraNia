@@ -1,6 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron';
 import { logger } from '../logger';
-import { getORM } from '../database/connection';
 import {
   createNote,
   updateNote,
@@ -8,22 +7,19 @@ import {
   restoreNote,
   getNoteById,
   getAllNotes,
-  getDeletedNotes,
-} from '../services/notes.service';
+} from '../services/file-storage.service';
 import { getBacklinks, getSemanticLinks } from '../services/links.service';
 
 /**
  * Register IPC handlers for note operations
- * Called from main.ts after database initialization
+ * Called from main.ts after file storage initialization
  */
 export function registerNotesHandlers(mainWindow?: BrowserWindow) {
-  const orm = getORM();
-
   // Create note
   ipcMain.handle('notes:create', async (event, data) => {
     try {
       logger.info('IPC: notes:create', { title: data.title });
-      const note = await createNote(data, orm);
+      const note = createNote(data);
 
       // Emit real-time event to all renderer processes
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -42,7 +38,7 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
     try {
       logger.info('IPC: notes:update', { id: data.id });
       const { id, ...updates } = data;
-      const note = await updateNote(id, updates, orm);
+      const note = updateNote(id, updates);
 
       // Emit real-time event to all renderer processes
       if (mainWindow && !mainWindow.isDestroyed()) {
@@ -56,11 +52,11 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
     }
   });
 
-  // Delete note (soft or hard)
+  // Delete note (soft delete only for file storage)
   ipcMain.handle('notes:delete', async (event, data) => {
     try {
-      logger.info('IPC: notes:delete', { id: data.id, hard: data.hard });
-      const success = await deleteNote(data.id, data.hard || false, orm);
+      logger.info('IPC: notes:delete', { id: data.id });
+      const success = deleteNote(data.id);
       return { success };
     } catch (error) {
       logger.error('notes:delete failed', error as Error);
@@ -72,7 +68,7 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
   ipcMain.handle('notes:restore', async (event, data) => {
     try {
       logger.info('IPC: notes:restore', { id: data.id });
-      const note = await restoreNote(data.id, orm);
+      const note = restoreNote(data.id);
       return note;
     } catch (error) {
       logger.error('notes:restore failed', error as Error);
@@ -84,7 +80,7 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
   ipcMain.handle('notes:getById', async (event, data) => {
     try {
       logger.info('IPC: notes:getById', { id: data.id });
-      const note = await getNoteById(data.id, orm, data.includeDeleted || false);
+      const note = getNoteById(data.id, data.includeDeleted || false);
       return note;
     } catch (error) {
       logger.error('notes:getById failed', error as Error);
@@ -96,7 +92,7 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
   ipcMain.handle('notes:getAll', async (event) => {
     try {
       logger.info('IPC: notes:getAll');
-      const notes = await getAllNotes(orm);
+      const notes = getAllNotes();
       return notes;
     } catch (error) {
       logger.error('notes:getAll failed', error as Error);
@@ -104,11 +100,12 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
     }
   });
 
-  // Get deleted notes (trash view)
+  // Get deleted notes (trash view) - filter from getAllNotes
   ipcMain.handle('notes:getDeleted', async (event) => {
     try {
       logger.info('IPC: notes:getDeleted');
-      const notes = await getDeletedNotes(orm);
+      // File storage doesn't have separate getDeleted, filter manually
+      const notes = getAllNotes().filter(n => n.deleted_at !== null);
       return notes;
     } catch (error) {
       logger.error('notes:getDeleted failed', error as Error);
@@ -116,24 +113,24 @@ export function registerNotesHandlers(mainWindow?: BrowserWindow) {
     }
   });
 
-  // Get backlinks for a note
+  // Get backlinks for a note - disabled for now
   ipcMain.handle('links:getBacklinks', async (event, data) => {
     try {
       logger.info('IPC: links:getBacklinks', { noteId: data.noteId });
-      const backlinks = await getBacklinks(data.noteId, orm);
-      return backlinks;
+      // TODO: implement file-based link tracking
+      return [];
     } catch (error) {
       logger.error('links:getBacklinks failed', error as Error);
       throw error;
     }
   });
 
-  // Get semantic links for a note
+  // Get semantic links for a note - disabled for now
   ipcMain.handle('links:getSemanticLinks', async (event, data) => {
     try {
       logger.info('IPC: links:getSemanticLinks', { noteId: data.noteId });
-      const semanticLinks = await getSemanticLinks(data.noteId, orm);
-      return semanticLinks;
+      // TODO: implement file-based semantic link tracking
+      return [];
     } catch (error) {
       logger.error('links:getSemanticLinks failed', error as Error);
       throw error;

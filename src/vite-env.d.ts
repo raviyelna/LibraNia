@@ -23,6 +23,8 @@ interface ElectronAPI {
   logError: (error: { message: string; stack?: string; componentStack?: string }) => Promise<void>;
   openLogsDirectory: () => Promise<void>;
   reloadApp: () => void;
+  on: (channel: string, callback: (...args: any[]) => void) => void;
+  off: (channel: string, callback: (...args: any[]) => void) => void;
 }
 
 interface TagsAPI {
@@ -135,6 +137,7 @@ interface ConversationAPI {
   getAll: () => Promise<Conversation[]>;
   get: (conversationId: string) => Promise<Conversation | null>;
   delete: (conversationId: string) => Promise<{ success: boolean }>;
+  rename: (conversationId: string, title: string) => Promise<{ success: boolean }>;
 }
 
 interface ProviderConfig {
@@ -205,6 +208,16 @@ interface WindowAPI {
   content: ContentAPI;
   graph: {
     getData: () => Promise<any>;
+  };
+  ai: {
+    chat: (data: {
+      conversationId: string;
+      messages: Array<{ role: string; content: string }>;
+      providerId?: string;
+      model?: string;
+      researchMode?: boolean;
+    }) => Promise<{ success: boolean; content?: string; error?: string }>;
+    getMessages: (conversationId: string) => Promise<{ success: boolean; messages?: Message[]; error?: string }>;
   };
 }
 

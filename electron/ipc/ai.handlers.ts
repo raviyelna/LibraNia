@@ -1,369 +1,466 @@
 import { ipcMain, BrowserWindow } from 'electron';
 import { logger } from '../logger';
-import { getORM } from '../database/connection';
-import {
-  createConversation,
-  addMessage,
-  addCitations,
-  getConversation,
-  getAllConversations,
-  deleteConversation,
-} from '../services/conversation.service';
-import { getAIService } from '../services/ai/ai.service';
-import { WebSearchService } from '../services/ai/websearch.service';
-import { getNoteById } from '../services/notes.service';
-import {
-  setProviderConfig,
-  getProviderConfig,
-  getAllProviderConfigs,
-  deleteProviderConfig,
-  type ProviderConfig,
-} from '../store/secure.store';
+import { loadProviderFromEnv } from '../store/env.store';
+import { createMessage, getMessagesByConversation } from '../services/message.service';
+import { RESEARCH_SYSTEM_PROMPT } from '../prompts/research.system';
+import { RESEARCH_TOOLS, executeToolCall } from '../tools/research.tools';
 
-/**
- * Register IPC handlers for AI and chat operations
- * Called from main.ts after database initialization
- * @param mainWindow BrowserWindow instance for streaming tokens
- * @param webSearchService Optional WebSearchService instance (for testing)
- */
-export function registerAIHandlers(
-  mainWindow: BrowserWindow,
-  webSearchService?: WebSearchService
-) {
-  const orm = getORM();
-  const aiService = getAIService();
-  const searchService = webSearchService || new WebSearchService();
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+}
 
-  // For testing: return handlers object
-  const handlers: Record<string, (data: any) => Promise<any>> = {};
+interface ChatRequest {
+  conversationId: string;
+  messages: ChatMessage[];
+  providerId?: string;
+  model?: string;
+  researchMode?: boolean;
+}
 
-  /**
-   * chat:send - Send message and get AI response
-   * Per D-12: parallel execution of web search + AI generation
-   * Per D-02: streaming tokens via mainWindow.webContents.send
-   * Per D-06, D-23: store provider_id and model metadata
-   * Per D-19: store citations from web search
-   */
-  handlers['chat:send'] = async (data: {
-    conversationId: string | null;
-    message: string;
-    providerId: string;
-    model: string;
-    useWebSearch: boolean;
-  }) => {
+export async function callDeepSeek(
+  messages: ChatMessage[],
+  apiKey: string,
+  model: string,
+  tools?: any[],
+  onProgress?: (status: string) => void
+): Promise<string> {
+  const requestBody: any = {
+    model,
+    messages,
+    stream: false,
+  };
+
+  if (tools && tools.length > 0) {
+    // Convert Claude tool format to OpenAI function format (DeepSeek uses OpenAI format)
+    requestBody.tools = tools.map((tool: any) => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.input_schema,
+      },
+    }));
+  }
+
+  let response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`DeepSeek API error: ${response.status} ${error}`);
+  }
+
+  let data = await response.json();
+
+  // Handle tool calls loop (same as OpenAI)
+  const maxIterations = 10;
+  let iteration = 0;
+  const conversationMessages = [...messages];
+
+  while (data.choices[0].message.tool_calls && iteration < maxIterations) {
+    iteration++;
+    logger.info(`Tool call iteration ${iteration}`);
+
+    const assistantMessage = data.choices[0].message;
+    conversationMessages.push(assistantMessage);
+
+    // Execute tool calls
+    for (const toolCall of assistantMessage.tool_calls) {
+      logger.info(`Executing tool: ${toolCall.function.name}`, toolCall.function.arguments);
+      if (onProgress) {
+        onProgress(`Executing: ${toolCall.function.name}...`);
+      }
+
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        const result = await executeToolCall(toolCall.function.name, args);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        } as any);
+      } catch (error: any) {
+        logger.error(`Tool execution failed: ${toolCall.function.name}`, error);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: `Error: ${error.message}`,
+        } as any);
+      }
+    }
+
+    // Continue conversation
+    response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: conversationMessages,
+        tools: requestBody.tools,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`DeepSeek API error: ${response.status} ${error}`);
+    }
+
+    data = await response.json();
+  }
+
+  return data.choices[0].message.content;
+}
+
+export async function callClaude(
+  messages: ChatMessage[],
+  apiKey: string,
+  model: string,
+  baseURL?: string,
+  tools?: any[],
+  onProgress?: (status: string) => void
+): Promise<string> {
+  // Extract system message if present
+  const systemMessage = messages.find(m => m.role === 'system');
+  const conversationMessages = messages.filter(m => m.role !== 'system');
+
+  const url = baseURL ? `${baseURL}/v1/messages` : 'https://api.anthropic.com/v1/messages';
+
+  const requestBody: any = {
+    model,
+    max_tokens: 4096,
+    system: systemMessage?.content,
+    messages: conversationMessages,
+  };
+
+  if (tools && tools.length > 0) {
+    requestBody.tools = tools;
+  }
+
+  let response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Claude API error: ${response.status} ${error}`);
+  }
+
+  let data = await response.json();
+
+  // Handle tool use loop
+  const maxIterations = 10;
+  let iteration = 0;
+  while (data.stop_reason === 'tool_use' && iteration < maxIterations) {
+    iteration++;
+    logger.info(`Tool use iteration ${iteration}`, { stopReason: data.stop_reason });
+
+    // Extract tool calls
+    const toolUseBlocks = data.content.filter((block: any) => block.type === 'tool_use');
+    const textBlocks = data.content.filter((block: any) => block.type === 'text');
+
+    logger.info(`Found ${toolUseBlocks.length} tool calls`, {
+      tools: toolUseBlocks.map((t: any) => t.name)
+    });
+
+    // Execute tools
+    const toolResults = [];
+    for (const toolUse of toolUseBlocks) {
+      logger.info(`Executing tool: ${toolUse.name}`, { input: toolUse.input });
+      if (onProgress) {
+        onProgress(`Executing: ${toolUse.name}...`);
+      }
+
+      try {
+        const result = await executeToolCall(toolUse.name, toolUse.input);
+        logger.info(`Tool ${toolUse.name} succeeded`, { resultLength: JSON.stringify(result).length });
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: JSON.stringify(result),
+        });
+      } catch (error: any) {
+        logger.error(`Tool execution failed: ${toolUse.name}`, error);
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: `Error: ${error.message}`,
+          is_error: true,
+        });
+      }
+    }
+
+    // Continue conversation with tool results
+    conversationMessages.push({
+      role: 'assistant',
+      content: data.content,
+    });
+    conversationMessages.push({
+      role: 'user',
+      content: toolResults,
+    });
+
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        system: systemMessage?.content,
+        messages: conversationMessages,
+        tools: tools,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Claude API error: ${response.status} ${error}`);
+    }
+
+    data = await response.json();
+  }
+
+  // Extract final text response
+  const textContent = data.content.find((block: any) => block.type === 'text');
+  return textContent?.text || '';
+}
+
+export async function callOpenAI(
+  messages: ChatMessage[],
+  apiKey: string,
+  model: string,
+  baseURL?: string,
+  tools?: any[],
+  onProgress?: (status: string) => void
+): Promise<string> {
+  const url = baseURL ? `${baseURL}/chat/completions` : 'https://api.openai.com/v1/chat/completions';
+
+  const requestBody: any = {
+    model,
+    messages,
+    stream: false,
+  };
+
+  if (tools && tools.length > 0) {
+    // Convert Claude tool format to OpenAI function format
+    requestBody.tools = tools.map((tool: any) => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.input_schema,
+      },
+    }));
+  }
+
+  let response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenAI API error: ${response.status} ${error}`);
+  }
+
+  let data = await response.json();
+
+  // Handle tool calls loop
+  const maxIterations = 10;
+  let iteration = 0;
+  const conversationMessages = [...messages];
+
+  while (data.choices[0].message.tool_calls && iteration < maxIterations) {
+    iteration++;
+    logger.info(`Tool call iteration ${iteration}`);
+
+    const assistantMessage = data.choices[0].message;
+    conversationMessages.push(assistantMessage);
+
+    // Execute tool calls
+    for (const toolCall of assistantMessage.tool_calls) {
+      logger.info(`Executing tool: ${toolCall.function.name}`, toolCall.function.arguments);
+      if (onProgress) {
+        onProgress(`Executing: ${toolCall.function.name}...`);
+      }
+
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        const result = await executeToolCall(toolCall.function.name, args);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        } as any);
+      } catch (error: any) {
+        logger.error(`Tool execution failed: ${toolCall.function.name}`, error);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: `Error: ${error.message}`,
+        } as any);
+      }
+    }
+
+    // Continue conversation
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: conversationMessages,
+        tools: requestBody.tools,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} ${error}`);
+    }
+
+    data = await response.json();
+  }
+
+  return data.choices[0].message.content;
+}
+
+export function registerAIHandlers(mainWindow?: BrowserWindow) {
+  ipcMain.handle('ai:chat', async (event, request: ChatRequest) => {
     try {
-      logger.info('IPC: chat:send', {
-        conversationId: data.conversationId,
-        providerId: data.providerId,
-        useWebSearch: data.useWebSearch,
+      logger.info('IPC: ai:chat', {
+        conversationId: request.conversationId,
+        messageCount: request.messages.length,
+        providerId: request.providerId,
+        model: request.model,
+        researchMode: request.researchMode
       });
 
-      let conversationId = data.conversationId;
+      // Determine provider
+      const providerId = request.providerId || 'deepseek';
+      const config = loadProviderFromEnv(providerId);
 
-      // Create new conversation if needed (per D-11: auto-generate title from first 50 chars)
-      if (!conversationId) {
-        const title = data.message.slice(0, 50);
-        const conversation = await createConversation({ title }, orm);
-        conversationId = conversation.id;
+      if (!config) {
+        throw new Error(`Provider ${providerId} not configured. Please add API key in Settings.`);
       }
 
-      // Add user message
-      const userMessage = await addMessage(
-        {
-          conversation_id: conversationId,
-          role: 'user',
-          content: data.message,
-        },
-        orm
-      );
+      // Use model from request or fall back to config
+      const model = request.model || config.model;
 
-      // Parallel execution: web search + AI generation per D-12
-      let webSearchResults: any[] = [];
-      let webSearchContext = '';
-      let citations: any[] = [];
+      logger.info('Using provider:', {
+        id: config.id,
+        model: model,
+        hasApiKey: !!config.apiKey
+      });
 
-      if (data.useWebSearch) {
-        try {
-          // Run web search (per D-14: top 5 results, per D-22: 10s timeout)
-          webSearchResults = await Promise.race([
-            searchService.search(data.message, 5),
-            new Promise<any[]>((_, reject) =>
-              setTimeout(() => reject(new Error('Search timeout')), 10000)
-            ),
-          ]);
+      // Save user message to DB
+      const userMessage = request.messages[request.messages.length - 1];
+      if (userMessage.role === 'user') {
+        await createMessage({
+          conversation_id: request.conversationId,
+          role: userMessage.role,
+          content: userMessage.content,
+        });
+      }
 
-          // Format results for AI prompt per D-16
-          webSearchContext = searchService.formatResultsForPrompt(webSearchResults);
+      // Prepare messages with system prompt for research mode
+      let messagesToSend = [...request.messages];
+      let tools = undefined;
 
-          // Extract citations for storage per D-19
-          citations = searchService.extractCitations(webSearchResults);
-        } catch (error) {
-          logger.error('Web search failed, continuing without search results', error as Error);
-          // Continue with AI response even if search fails per D-22
-          citations = []; // Ensure citations is always an array
+      if (request.researchMode) {
+        logger.info('Research mode enabled - adding system prompt and tools');
+        // Add research system prompt
+        messagesToSend = [
+          { role: 'system', content: RESEARCH_SYSTEM_PROMPT },
+          ...request.messages.filter(m => m.role !== 'system')
+        ];
+        tools = RESEARCH_TOOLS;
+        logger.info('Tools configured:', { toolCount: tools.length, toolNames: tools.map(t => t.name) });
+      }
+
+      // Progress callback for tool execution
+      const onProgress = (status: string) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('ai:progress', {
+            conversationId: request.conversationId,
+            status
+          });
         }
-      }
-
-      // Build messages array for AI
-      const messages = [
-        {
-          role: 'user' as const,
-          content: data.message + webSearchContext,
-        },
-      ];
-
-      // Generate AI response with streaming per D-02
-      const response = await aiService.generateResponse(
-        data.providerId,
-        data.model,
-        messages,
-        {
-          onToken: (token: string) => {
-            mainWindow.webContents.send('chat:token', {
-              conversationId,
-              token,
-            });
-          },
-        }
-      );
-
-      // Add assistant message with provider metadata per D-06, D-23
-      const assistantMessage = await addMessage(
-        {
-          conversation_id: conversationId,
-          role: 'assistant',
-          content: response,
-          provider_id: data.providerId,
-          model: data.model,
-        },
-        orm
-      );
-
-      // Store citations if web search was used per D-19
-      if (citations.length > 0) {
-        const citationsWithMessageId = citations.map((c) => ({
-          ...c,
-          message_id: assistantMessage.id,
-        }));
-        await addCitations(citationsWithMessageId, orm);
-      }
-
-      return {
-        conversationId,
-        messageId: assistantMessage.id,
-        response,
       };
-    } catch (error) {
-      logger.error('chat:send failed', error as Error);
-      throw error;
-    }
-  };
 
-  /**
-   * chat:summarizeNote - Generate summary of note content
-   * Per AI-07: AI can generate summaries of notes
-   */
-  handlers['chat:summarizeNote'] = async (data: { noteId: string }) => {
-    try {
-      logger.info('IPC: chat:summarizeNote', { noteId: data.noteId });
-
-      const note = await getNoteById(data.noteId, orm, false);
-      if (!note) {
-        throw new Error(`Note with id ${data.noteId} not found`);
-      }
-
-      // Create system prompt for summarization
-      const messages = [
-        {
-          role: 'system' as const,
-          content: 'Summarize the following note concisely:',
-        },
-        {
-          role: 'user' as const,
-          content: `Title: ${note.title}\n\n${note.body}`,
-        },
-      ];
-
-      // Use default provider (claude) for summarization
-      const summary = await aiService.generateResponse(
-        'claude',
-        'claude-sonnet-4',
-        messages,
-        {
-          onToken: () => {}, // No streaming for summarization
-        }
-      );
-
-      return { summary };
-    } catch (error) {
-      logger.error('chat:summarizeNote failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * conversation:getAll - Get all conversations
-   */
-  handlers['conversation:getAll'] = async () => {
-    try {
-      logger.info('IPC: conversation:getAll');
-      const conversations = await getAllConversations(orm);
-      return conversations;
-    } catch (error) {
-      logger.error('conversation:getAll failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * conversation:create - Create a new conversation
-   */
-  handlers['conversation:create'] = async (data: { title: string }) => {
-    try {
-      logger.info('IPC: conversation:create', { title: data.title });
-      const conversation = await createConversation({ title: data.title }, orm);
-      return conversation;
-    } catch (error) {
-      logger.error('conversation:create failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * conversation:get - Get conversation with messages and citations
-   */
-  handlers['conversation:get'] = async (data: { conversationId: string }) => {
-    try {
-      logger.info('IPC: conversation:get', { conversationId: data.conversationId });
-      const conversation = await getConversation(data.conversationId, orm);
-      return conversation;
-    } catch (error) {
-      logger.error('conversation:get failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * conversation:delete - Delete conversation
-   */
-  handlers['conversation:delete'] = async (data: { conversationId: string }) => {
-    try {
-      logger.info('IPC: conversation:delete', { conversationId: data.conversationId });
-      await deleteConversation(data.conversationId, orm);
-      return { success: true };
-    } catch (error) {
-      logger.error('conversation:delete failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * provider:setConfig - Save provider configuration
-   * Per D-24: encrypted storage via electron-store
-   */
-  handlers['provider:setConfig'] = async (data: ProviderConfig) => {
-    try {
-      logger.info('IPC: provider:setConfig', { providerId: data.id });
-      await setProviderConfig(data);
-      return { success: true };
-    } catch (error) {
-      logger.error('provider:setConfig failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * provider:getConfig - Retrieve provider configuration
-   */
-  handlers['provider:getConfig'] = async (data: { providerId: string }) => {
-    try {
-      logger.info('IPC: provider:getConfig', { providerId: data.providerId });
-      const config = await getProviderConfig(data.providerId);
-      return config;
-    } catch (error) {
-      logger.error('provider:getConfig failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * provider:getAllConfigs - Get all provider configurations
-   */
-  handlers['provider:getAllConfigs'] = async () => {
-    try {
-      logger.info('IPC: provider:getAllConfigs');
-      const configs = await getAllProviderConfigs();
-      return configs;
-    } catch (error) {
-      logger.error('provider:getAllConfigs failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * provider:deleteConfig - Delete provider configuration
-   */
-  handlers['provider:deleteConfig'] = async (data: { providerId: string }) => {
-    try {
-      logger.info('IPC: provider:deleteConfig', { providerId: data.providerId });
-      await deleteProviderConfig(data.providerId);
-      return { success: true };
-    } catch (error) {
-      logger.error('provider:deleteConfig failed', error as Error);
-      throw error;
-    }
-  };
-
-  /**
-   * provider:validate - Validate API key
-   * Per D-05: validate API keys on save
-   * Creates provider instance directly with provided credentials (not from stored config)
-   */
-  handlers['provider:validate'] = async (data: {
-    providerId: string;
-    apiKey: string;
-    baseURL?: string;
-  }) => {
-    try {
-      logger.info('IPC: provider:validate', { providerId: data.providerId });
-
-      // Import provider classes directly for validation
-      const { ClaudeProvider } = await import('../services/ai/providers/claude.provider');
-      const { OpenAIProvider } = await import('../services/ai/providers/openai.provider');
-      const { DeepSeekProvider } = await import('../services/ai/providers/deepseek.provider');
-
-      // Create temporary provider instance with provided credentials
-      let provider;
-      switch (data.providerId) {
+      // Call appropriate API
+      let response: string;
+      switch (config.id) {
+        case 'deepseek':
+          response = await callDeepSeek(messagesToSend, config.apiKey, model, tools, onProgress);
+          break;
         case 'claude':
-          provider = new ClaudeProvider(data.apiKey, data.baseURL);
+          response = await callClaude(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
           break;
         case 'openai':
-          provider = new OpenAIProvider(data.apiKey, data.baseURL);
-          break;
-        case 'deepseek':
-          provider = new DeepSeekProvider(data.apiKey, data.baseURL);
+          response = await callOpenAI(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
           break;
         default:
-          throw new Error(`Unknown provider: ${data.providerId}`);
+          throw new Error(`Unsupported provider: ${config.id}`);
       }
 
-      const result = await provider.validateApiKey(data.apiKey, data.baseURL);
+      logger.info('AI response received', { length: response.length });
 
-      return result;
-    } catch (error) {
-      logger.error('provider:validate failed', error as Error);
-      throw error;
+      // Save assistant message to DB
+      await createMessage({
+        conversation_id: request.conversationId,
+        role: 'assistant',
+        content: response,
+        provider_id: config.id,
+        model: model,
+      });
+
+      return { success: true, content: response };
+
+    } catch (error: any) {
+      logger.error('ai:chat failed', error);
+      return { success: false, error: error.message };
     }
-  };
+  });
 
-  // Register all handlers with ipcMain
-  Object.entries(handlers).forEach(([channel, handler]) => {
-    ipcMain.handle(channel, async (event, data) => handler(data));
+  // Get messages for a conversation
+  ipcMain.handle('ai:getMessages', async (event, data: { conversationId: string }) => {
+    try {
+      logger.info('IPC: ai:getMessages', { conversationId: data.conversationId });
+      const msgs = await getMessagesByConversation(data.conversationId);
+      return { success: true, messages: msgs };
+    } catch (error: any) {
+      logger.error('ai:getMessages failed', error);
+      return { success: false, error: error.message };
+    }
   });
 
   logger.info('AI IPC handlers registered');
-
-  // Return handlers for testing
-  return handlers;
 }

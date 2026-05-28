@@ -209,11 +209,17 @@ export async function getNotesByTag(tagId: string) {
 export async function setNoteTags(noteId: string, tagNames: string[]): Promise<void> {
   const orm = getORM();
 
+  console.log('[TagsService] setNoteTags called:', { noteId, tagNames, count: tagNames.length });
+
   // Delete existing associations
   await orm.delete(noteTags).where(eq(noteTags.note_id, noteId));
+  console.log('[TagsService] Deleted existing tags for note:', noteId);
 
   // Add new associations
   if (tagNames.length > 0) {
     await addTagsToNote(noteId, tagNames);
+    console.log('[TagsService] Added new tags:', tagNames);
+  } else {
+    console.log('[TagsService] No tags to add (empty array)');
   }
 }

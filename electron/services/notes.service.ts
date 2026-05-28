@@ -96,23 +96,36 @@ export async function updateNote(
   data: UpdateNoteInput,
   db: BetterSQLite3Database<typeof schema>
 ): Promise<Note> {
+  console.log('[Notes] updateNote called for id:', id);
   const now = new Date();
 
+  console.log('[Notes] About to call getNoteById');
   // Check if note exists and is not deleted
   const existing = await getNoteById(id, db, false);
+  console.log('[Notes] getNoteById returned:', existing ? 'found' : 'not found');
   if (!existing) {
     throw new Error(`Note with id ${id} not found or is deleted`);
   }
 
-  const [updated] = await db
-    .update(notes)
-    .set({
-      ...data,
-      updated_at: now,
-    })
-    .where(and(eq(notes.id, id), isNull(notes.deleted_at)))
-    .returning();
+  console.log('[Notes] About to run update query for note:', id);
 
+  // Use raw SQL with better-sqlite3
+  const rawDb = getDatabase();
+  const stmt = rawDb.prepare(
+    'UPDATE notes SET title = ?, body = ?, metadata = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL'
+  );
+  stmt.run(
+    data.title ?? existing.title,
+    data.body ?? existing.body,
+    data.metadata ?? existing.metadata,
+    now.getTime(),
+    id
+  );
+
+  console.log('[Notes] Update completed, fetching updated note');
+
+  // Fetch updated note separately
+  const updated = await getNoteById(id, db, false);
   if (!updated) {
     throw new Error(`Failed to update note with id ${id}`);
   }
