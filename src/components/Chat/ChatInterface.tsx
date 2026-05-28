@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
+import { useAIProviders } from '../../hooks/useAIProviders';
+import { PROVIDER_MODELS } from '../../constants/models';
 
 interface ChatInterfaceProps {
   conversationId?: string;
@@ -9,21 +11,94 @@ interface ChatInterfaceProps {
 export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<any[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<string>('deepseek');
+  const [selectedModel, setSelectedModel] = useState<string>('deepseek-chat');
+  const [customModel, setCustomModel] = useState<string>('');
+  const [useCustomModel, setUseCustomModel] = useState<boolean>(false);
+  const { providers } = useAIProviders();
+
+  // Update model when provider changes
+  useEffect(() => {
+    const models = PROVIDER_MODELS[selectedProvider as keyof typeof PROVIDER_MODELS];
+    if (models && models.length > 0) {
+      setSelectedModel(models[0].id);
+    }
+    setUseCustomModel(false);
+    setCustomModel('');
+  }, [selectedProvider]);
+
+  // Load messages when conversation changes
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+
+    const loadMessages = async () => {
+      try {
+        console.log('[ChatInterface] Loading messages for:', conversationId);
+        const response = await window.api.ai.getMessages(conversationId);
+        if (response.success && response.messages) {
+          console.log('[ChatInterface] Loaded messages:', response.messages.length);
+          setMessages(response.messages);
+        }
+      } catch (error) {
+        console.error('[ChatInterface] Failed to load messages:', error);
+      }
+    };
+
+    loadMessages();
+  }, [conversationId]);
 
   const handleSendMessage = async (message: string) => {
+    if (!conversationId) return;
+
     setIsSending(true);
     try {
-      // Placeholder: hooks will be added in Plan 10
-      console.log('Sending message:', message, 'to conversation:', conversationId);
-
-      // For now, just add the message to local state
-      const newMessage = {
+      // Add user message optimistically
+      const userMessage = {
         id: Date.now().toString(),
         role: 'user' as const,
         content: message,
         created_at: new Date(),
       };
-      setMessages([...messages, newMessage]);
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+
+      // Call AI with selected provider and model
+      const modelToUse = useCustomModel && customModel ? customModel : selectedModel;
+      console.log('[ChatInterface] Calling AI:', { provider: selectedProvider, model: modelToUse });
+      const response = await window.api.ai.chat({
+        conversationId,
+        messages: updatedMessages.map(m => ({
+          role: m.role,
+          content: m.content
+        })),
+        providerId: selectedProvider,
+        model: modelToUse
+      });
+
+      console.log('[ChatInterface] AI response:', response);
+
+      if (response.success && response.content) {
+        // Reload messages from DB to get saved IDs
+        const reloadResponse = await window.api.ai.getMessages(conversationId);
+        if (reloadResponse.success && reloadResponse.messages) {
+          setMessages(reloadResponse.messages);
+        }
+      } else {
+        console.error('[ChatInterface] AI error:', response.error);
+        // Show error message
+        const errorMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant' as const,
+          content: `Error: ${response.error || 'Failed to get response'}`,
+          created_at: new Date(),
+        };
+        setMessages([...updatedMessages, errorMessage]);
+      }
+    } catch (error) {
+      console.error('[ChatInterface] Failed to send message:', error);
     } finally {
       setIsSending(false);
     }
@@ -43,6 +118,62 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
   return (
     <div className="chat-interface flex flex-col h-full bg-background text-foreground">
+      {/* Provider and model selector */}
+      <div className="border-b border-border p-3">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-secondary">Provider:</label>
+            <select
+              value={selectedProvider}
+              onChange={(e) => setSelectedProvider(e.target.value)}
+              className="px-3 py-1 border border-border rounded-md bg-background text-foreground text-sm"
+            >
+              {providers.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.id.charAt(0).toUpperCase() + p.id.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-secondary">Model:</label>
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              disabled={useCustomModel}
+              className="px-3 py-1 border border-border rounded-md bg-background text-foreground text-sm disabled:opacity-50"
+            >
+              {PROVIDER_MODELS[selectedProvider as keyof typeof PROVIDER_MODELS]?.map(model => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1 text-sm text-secondary cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useCustomModel}
+                onChange={(e) => setUseCustomModel(e.target.checked)}
+                className="rounded"
+              />
+              Custom:
+            </label>
+            <input
+              type="text"
+              value={customModel}
+              onChange={(e) => setCustomModel(e.target.value)}
+              disabled={!useCustomModel}
+              placeholder="e.g. claude-opus-4-7"
+              className="px-3 py-1 border border-border rounded-md bg-background text-foreground text-sm disabled:opacity-50 w-48"
+            />
+          </div>
+        </div>
+      </div>
+
       <MessageList messages={messages} />
       <MessageInput onSend={handleSendMessage} isSending={isSending} />
     </div>
