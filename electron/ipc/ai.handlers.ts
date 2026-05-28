@@ -2,6 +2,8 @@ import { ipcMain, BrowserWindow } from 'electron';
 import { logger } from '../logger';
 import { loadProviderFromEnv } from '../store/env.store';
 import { createMessage, getMessagesByConversation } from '../services/message.service';
+import { RESEARCH_SYSTEM_PROMPT } from '../prompts/research.system';
+import { RESEARCH_TOOLS, executeToolCall } from '../tools/research.tools';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -13,20 +15,41 @@ interface ChatRequest {
   messages: ChatMessage[];
   providerId?: string;
   model?: string;
+  researchMode?: boolean;
 }
 
-export async function callDeepSeek(messages: ChatMessage[], apiKey: string, model: string): Promise<string> {
-  const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+export async function callDeepSeek(
+  messages: ChatMessage[],
+  apiKey: string,
+  model: string,
+  tools?: any[],
+  onProgress?: (status: string) => void
+): Promise<string> {
+  const requestBody: any = {
+    model,
+    messages,
+    stream: false,
+  };
+
+  if (tools && tools.length > 0) {
+    // Convert Claude tool format to OpenAI function format (DeepSeek uses OpenAI format)
+    requestBody.tools = tools.map((tool: any) => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.input_schema,
+      },
+    }));
+  }
+
+  let response = await fetch('https://api.deepseek.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      stream: false,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -34,30 +57,104 @@ export async function callDeepSeek(messages: ChatMessage[], apiKey: string, mode
     throw new Error(`DeepSeek API error: ${response.status} ${error}`);
   }
 
-  const data = await response.json();
+  let data = await response.json();
+
+  // Handle tool calls loop (same as OpenAI)
+  const maxIterations = 10;
+  let iteration = 0;
+  const conversationMessages = [...messages];
+
+  while (data.choices[0].message.tool_calls && iteration < maxIterations) {
+    iteration++;
+    logger.info(`Tool call iteration ${iteration}`);
+
+    const assistantMessage = data.choices[0].message;
+    conversationMessages.push(assistantMessage);
+
+    // Execute tool calls
+    for (const toolCall of assistantMessage.tool_calls) {
+      logger.info(`Executing tool: ${toolCall.function.name}`, toolCall.function.arguments);
+      if (onProgress) {
+        onProgress(`Executing: ${toolCall.function.name}...`);
+      }
+
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        const result = await executeToolCall(toolCall.function.name, args);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        } as any);
+      } catch (error: any) {
+        logger.error(`Tool execution failed: ${toolCall.function.name}`, error);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: `Error: ${error.message}`,
+        } as any);
+      }
+    }
+
+    // Continue conversation
+    response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: conversationMessages,
+        tools: requestBody.tools,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`DeepSeek API error: ${response.status} ${error}`);
+    }
+
+    data = await response.json();
+  }
+
   return data.choices[0].message.content;
 }
 
-export async function callClaude(messages: ChatMessage[], apiKey: string, model: string, baseURL?: string): Promise<string> {
+export async function callClaude(
+  messages: ChatMessage[],
+  apiKey: string,
+  model: string,
+  baseURL?: string,
+  tools?: any[],
+  onProgress?: (status: string) => void
+): Promise<string> {
   // Extract system message if present
   const systemMessage = messages.find(m => m.role === 'system');
   const conversationMessages = messages.filter(m => m.role !== 'system');
 
   const url = baseURL ? `${baseURL}/v1/messages` : 'https://api.anthropic.com/v1/messages';
 
-  const response = await fetch(url, {
+  const requestBody: any = {
+    model,
+    max_tokens: 4096,
+    system: systemMessage?.content,
+    messages: conversationMessages,
+  };
+
+  if (tools && tools.length > 0) {
+    requestBody.tools = tools;
+  }
+
+  let response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': apiKey,
       'anthropic-version': '2023-06-01',
     },
-    body: JSON.stringify({
-      model,
-      max_tokens: 4096,
-      system: systemMessage?.content,
-      messages: conversationMessages,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -65,24 +162,119 @@ export async function callClaude(messages: ChatMessage[], apiKey: string, model:
     throw new Error(`Claude API error: ${response.status} ${error}`);
   }
 
-  const data = await response.json();
-  return data.content[0].text;
+  let data = await response.json();
+
+  // Handle tool use loop
+  const maxIterations = 10;
+  let iteration = 0;
+  while (data.stop_reason === 'tool_use' && iteration < maxIterations) {
+    iteration++;
+    logger.info(`Tool use iteration ${iteration}`);
+
+    // Extract tool calls
+    const toolUseBlocks = data.content.filter((block: any) => block.type === 'tool_use');
+    const textBlocks = data.content.filter((block: any) => block.type === 'text');
+
+    // Execute tools
+    const toolResults = [];
+    for (const toolUse of toolUseBlocks) {
+      logger.info(`Executing tool: ${toolUse.name}`, toolUse.input);
+      if (onProgress) {
+        onProgress(`Executing: ${toolUse.name}...`);
+      }
+
+      try {
+        const result = await executeToolCall(toolUse.name, toolUse.input);
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: JSON.stringify(result),
+        });
+      } catch (error: any) {
+        logger.error(`Tool execution failed: ${toolUse.name}`, error);
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: `Error: ${error.message}`,
+          is_error: true,
+        });
+      }
+    }
+
+    // Continue conversation with tool results
+    conversationMessages.push({
+      role: 'assistant',
+      content: data.content,
+    });
+    conversationMessages.push({
+      role: 'user',
+      content: toolResults,
+    });
+
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        system: systemMessage?.content,
+        messages: conversationMessages,
+        tools: tools,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Claude API error: ${response.status} ${error}`);
+    }
+
+    data = await response.json();
+  }
+
+  // Extract final text response
+  const textContent = data.content.find((block: any) => block.type === 'text');
+  return textContent?.text || '';
 }
 
-export async function callOpenAI(messages: ChatMessage[], apiKey: string, model: string, baseURL?: string): Promise<string> {
+export async function callOpenAI(
+  messages: ChatMessage[],
+  apiKey: string,
+  model: string,
+  baseURL?: string,
+  tools?: any[],
+  onProgress?: (status: string) => void
+): Promise<string> {
   const url = baseURL ? `${baseURL}/chat/completions` : 'https://api.openai.com/v1/chat/completions';
 
-  const response = await fetch(url, {
+  const requestBody: any = {
+    model,
+    messages,
+    stream: false,
+  };
+
+  if (tools && tools.length > 0) {
+    // Convert Claude tool format to OpenAI function format
+    requestBody.tools = tools.map((tool: any) => ({
+      type: 'function',
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.input_schema,
+      },
+    }));
+  }
+
+  let response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      stream: false,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -90,7 +282,68 @@ export async function callOpenAI(messages: ChatMessage[], apiKey: string, model:
     throw new Error(`OpenAI API error: ${response.status} ${error}`);
   }
 
-  const data = await response.json();
+  let data = await response.json();
+
+  // Handle tool calls loop
+  const maxIterations = 10;
+  let iteration = 0;
+  const conversationMessages = [...messages];
+
+  while (data.choices[0].message.tool_calls && iteration < maxIterations) {
+    iteration++;
+    logger.info(`Tool call iteration ${iteration}`);
+
+    const assistantMessage = data.choices[0].message;
+    conversationMessages.push(assistantMessage);
+
+    // Execute tool calls
+    for (const toolCall of assistantMessage.tool_calls) {
+      logger.info(`Executing tool: ${toolCall.function.name}`, toolCall.function.arguments);
+      if (onProgress) {
+        onProgress(`Executing: ${toolCall.function.name}...`);
+      }
+
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        const result = await executeToolCall(toolCall.function.name, args);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        } as any);
+      } catch (error: any) {
+        logger.error(`Tool execution failed: ${toolCall.function.name}`, error);
+        conversationMessages.push({
+          role: 'tool',
+          tool_call_id: toolCall.id,
+          content: `Error: ${error.message}`,
+        } as any);
+      }
+    }
+
+    // Continue conversation
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: conversationMessages,
+        tools: requestBody.tools,
+        stream: false,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OpenAI API error: ${response.status} ${error}`);
+    }
+
+    data = await response.json();
+  }
+
   return data.choices[0].message.content;
 }
 
@@ -101,7 +354,8 @@ export function registerAIHandlers(mainWindow?: BrowserWindow) {
         conversationId: request.conversationId,
         messageCount: request.messages.length,
         providerId: request.providerId,
-        model: request.model
+        model: request.model,
+        researchMode: request.researchMode
       });
 
       // Determine provider
@@ -131,17 +385,40 @@ export function registerAIHandlers(mainWindow?: BrowserWindow) {
         });
       }
 
+      // Prepare messages with system prompt for research mode
+      let messagesToSend = [...request.messages];
+      let tools = undefined;
+
+      if (request.researchMode) {
+        // Add research system prompt
+        messagesToSend = [
+          { role: 'system', content: RESEARCH_SYSTEM_PROMPT },
+          ...request.messages.filter(m => m.role !== 'system')
+        ];
+        tools = RESEARCH_TOOLS;
+      }
+
+      // Progress callback for tool execution
+      const onProgress = (status: string) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('ai:progress', {
+            conversationId: request.conversationId,
+            status
+          });
+        }
+      };
+
       // Call appropriate API
       let response: string;
       switch (config.id) {
         case 'deepseek':
-          response = await callDeepSeek(request.messages, config.apiKey, model);
+          response = await callDeepSeek(messagesToSend, config.apiKey, model, tools, onProgress);
           break;
         case 'claude':
-          response = await callClaude(request.messages, config.apiKey, model, config.baseURL);
+          response = await callClaude(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
           break;
         case 'openai':
-          response = await callOpenAI(request.messages, config.apiKey, model, config.baseURL);
+          response = await callOpenAI(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
           break;
         default:
           throw new Error(`Unsupported provider: ${config.id}`);

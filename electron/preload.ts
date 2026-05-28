@@ -8,7 +8,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   logError: (error: { message: string; stack?: string; componentStack?: string }) =>
     ipcRenderer.invoke('log:error', error),
   openLogsDirectory: () => ipcRenderer.invoke('logs:open'),
-  reloadApp: () => ipcRenderer.send('app:reload')
+  reloadApp: () => ipcRenderer.send('app:reload'),
+  // Event listeners
+  on: (channel: string, callback: (...args: any[]) => void) => {
+    ipcRenderer.on(channel, (_event, ...args) => callback(...args));
+  },
+  off: (channel: string, callback: (...args: any[]) => void) => {
+    ipcRenderer.removeListener(channel, callback);
+  },
 });
 
 // Keep legacy 'api' namespace for backward compatibility
@@ -170,6 +177,7 @@ contextBridge.exposeInMainWorld('api', {
       messages: Array<{ role: string; content: string }>;
       providerId?: string;
       model?: string;
+      researchMode?: boolean;
     }) => ipcRenderer.invoke('ai:chat', data),
     getMessages: (conversationId: string) => ipcRenderer.invoke('ai:getMessages', { conversationId }),
   },
