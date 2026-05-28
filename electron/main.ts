@@ -40,6 +40,19 @@ setupCrashHandlers();
 // CJS globals work in bundled output
 const __dirname = __dirname || path.dirname(__filename);
 
+// Register custom protocol scheme before app is ready
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'librania',
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: false
+    }
+  }
+]);
+
 // Initialize electron-store for config
 // const store = new Store(); // Disabled - ESM-only in v11
 
