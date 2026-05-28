@@ -217,7 +217,7 @@ export async function callClaude(
         const tavilyApiKey = env.TAVILY_API_KEY;
         const webSearchFn = tavilyApiKey
           ? async (query: string) => await searchWeb(query, tavilyApiKey)
-          : undefined;
+          : async (query: string) => await searchWithClaude(query, apiKey, baseURL);
 
         const result = await executeToolCall(toolUse.name, toolUse.input, webSearchFn);
         logger.info(`Tool ${toolUse.name} succeeded`, { resultLength: JSON.stringify(result).length });
