@@ -15,11 +15,19 @@ LibraNia is a personal knowledge management system that visualizes information a
 
 ## Tech Stack
 
-- **Desktop:** Electron 42.x + TypeScript 5.7+
-- **Frontend:** React 19 + Zustand + TanStack Query
-- **3D Visualization:** Three.js + react-force-graph-3d
+### Backend
+- **Runtime:** Node.js 18+ (pure Node, no Electron)
+- **HTTP API:** Express 5.x
+- **WebSocket:** Socket.IO for real-time streaming
 - **Database:** SQLite (better-sqlite3) + sqlite-vec for vector search
+- **ORM:** Drizzle ORM for type-safe queries
 - **AI Integration:** @anthropic-ai/sdk, openai, @xenova/transformers
+
+### Frontend
+- **Framework:** React 19 + TypeScript 5.7+
+- **State:** Zustand + TanStack Query
+- **3D Visualization:** Three.js + react-force-graph-3d
+- **Build Tool:** Vite 6
 - **UI:** Tailwind CSS 4 + Radix UI + shadcn/ui
 
 ## Installation
@@ -113,11 +121,11 @@ npm run format
 
 ## Architecture
 
-- **Main Process:** Node.js (file system, SQLite, window management)
-- **Renderer Process:** React + Vite (UI, 3D visualization)
-- **IPC:** contextBridge for secure main-renderer communication
-- **Storage:** SQLite for metadata, filesystem for documents/images
+- **Backend:** Node.js server with Express (HTTP API) and Socket.IO (WebSocket streaming)
+- **Frontend:** React SPA served as static files, accessed via browser
+- **Database:** SQLite for metadata, filesystem for documents/images
 - **Vector Search:** sqlite-vec extension for semantic search
+- **Deployment:** CLI server, web UI accessed at http://localhost:3000
 
 ## Requirements
 
