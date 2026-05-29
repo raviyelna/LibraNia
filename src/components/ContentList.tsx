@@ -15,7 +15,7 @@ export const ContentList: React.FC<ContentListProps> = ({ content, onDelete, onS
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const formatDate = (date: Date): string => {
+  const formatDate = (date: Date | string): string => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',

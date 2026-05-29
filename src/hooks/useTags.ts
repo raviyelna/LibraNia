@@ -47,9 +47,9 @@ export function useNoteTags(noteId: string) {
     fetchTags();
   }, [fetchTags]);
 
-  const addTag = useCallback(async (tagName: string) => {
+  const addTag = useCallback(async (tagId: string) => {
     try {
-      await tagsAPI.addToNote(noteId, [tagName]);
+      await tagsAPI.addToNote(noteId, tagId);
       await fetchTags();
     } catch (err) {
       handleAPIError(err);

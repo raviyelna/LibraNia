@@ -1,25 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { aiAPI } from '../api';
+import { aiAPI, AIProvider, ProviderConfig, ValidationResult } from '../api';
 import { handleAPIError } from '../utils/toast';
-
-interface ProviderConfig {
-  id: 'claude' | 'openai' | 'deepseek';
-  apiKey: string;
-  baseURL?: string;
-  model: string;
-}
-
-interface ValidationResult {
-  valid: boolean;
-  error?: string;
-}
 
 /**
  * Hook for managing AI provider configurations
  * Follows useNotes.ts pattern from Phase 2
  */
 export function useAIProviders() {
-  const [providers, setProviders] = useState<ProviderConfig[]>([]);
+  const [providers, setProviders] = useState<AIProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

@@ -6,12 +6,19 @@ import { apiRequest } from './client';
 
 export interface Content {
   id: string;
-  filename: string;
-  filepath: string;
-  mimetype: string;
-  size: number;
+  file_path: string;
+  thumbnail_path: string | null;
+  mime_type: string;
+  original_filename: string;
+  file_size: number;
+  extracted_text: string | null;
   source: 'manual' | 'ai-generated';
+  confidence_score: number | null;
+  metadata: string | null;
+  note_id: string | null;
+  message_id: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export const contentAPI = {
