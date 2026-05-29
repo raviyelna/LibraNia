@@ -1,17 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { notesAPI } from '../api';
+import { notesAPI, Note } from '../api';
 import { handleAPIError } from '../utils/toast';
 import { useSocket } from '../contexts/SocketContext';
-
-interface Note {
-  id: string;
-  title: string;
-  body: string;
-  metadata: string | null;
-  created_at: Date;
-  updated_at: Date;
-  deleted_at: Date | null;
-}
 
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -39,7 +29,7 @@ export function useNotes() {
   return { notes, loading, error, refetch: fetchNotes };
 }
 
-export function useNote(id: string, includeDeleted = false) {
+export function useNote(id: string) {
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -48,7 +38,7 @@ export function useNote(id: string, includeDeleted = false) {
   const fetchNote = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await notesAPI.getById(id, includeDeleted);
+      const data = await notesAPI.getById(id);
       setNote(data);
       setError(null);
     } catch (err) {
@@ -57,7 +47,7 @@ export function useNote(id: string, includeDeleted = false) {
     } finally {
       setLoading(false);
     }
-  }, [id, includeDeleted]);
+  }, [id]);
 
   useEffect(() => {
     fetchNote();
@@ -108,7 +98,8 @@ export function useUpdateNote() {
   const updateNote = useCallback(async (data: { id: string; title?: string; body?: string; metadata?: string }) => {
     setLoading(true);
     try {
-      const note = await notesAPI.update(data);
+      const { id, ...updateData } = data;
+      const note = await notesAPI.update(id, updateData);
       return note;
     } catch (err) {
       handleAPIError(err);
@@ -124,10 +115,10 @@ export function useUpdateNote() {
 export function useDeleteNote() {
   const [loading, setLoading] = useState(false);
 
-  const deleteNote = useCallback(async (id: string, hard: boolean) => {
+  const deleteNote = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      await notesAPI.delete(id, hard);
+      await notesAPI.delete(id);
     } catch (err) {
       handleAPIError(err);
       throw err;

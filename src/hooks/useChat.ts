@@ -90,9 +90,9 @@ export function useSummarizeNote(noteId: string) {
       setError(null);
 
       try {
-        const response = await chatAPI.summarizeNote(noteId);
-        setSummary(response.summary);
-        return response;
+        const summary = await chatAPI.summarizeNote(noteId);
+        setSummary(summary);
+        return { summary };
       } catch (err) {
         handleAPIError(err);
         setError(err as Error);

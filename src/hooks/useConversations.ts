@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { conversationsAPI } from '../api';
+import { conversationsAPI, Conversation } from '../api';
 import { handleAPIError } from '../utils/toast';
 
 interface Message {
@@ -19,15 +19,6 @@ interface Citation {
   url: string;
   snippet?: string;
   position: number;
-}
-
-interface Conversation {
-  id: string;
-  title: string;
-  created_at: Date;
-  updated_at: Date;
-  messages?: Message[];
-  citations?: Citation[];
 }
 
 export function useConversations() {

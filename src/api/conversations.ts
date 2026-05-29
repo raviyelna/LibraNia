@@ -9,6 +9,7 @@ export interface Conversation {
   title: string;
   created_at: string;
   updated_at: string;
+  messages?: Message[];  // Optional - fetched separately via getMessages
 }
 
 export interface Message {

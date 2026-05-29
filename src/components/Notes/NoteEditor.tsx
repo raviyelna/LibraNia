@@ -175,7 +175,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
   const handleDelete = async () => {
     if (confirm(`Delete note "${title}"?`)) {
-      await deleteNote(noteId, false); // Soft delete
+      await deleteNote(noteId); // Soft delete
     }
   };
 
