@@ -97,6 +97,15 @@ None currently.
 
 None yet.
 
+## Deferred Items
+
+Items acknowledged and deferred at milestone close on 2026-05-29:
+
+| Category | Item | Status |
+|----------|------|--------|
+| debug | content-create-crash | diagnosed |
+| uat_gaps | Phase 06: 06-UAT.md | partial |
+
 ---
 
 ## Session Continuity
@@ -125,7 +134,7 @@ None yet.
 - All 31 v2 requirements mapped to 5 phases with no orphans
 - Phase dependencies: 1 → 2 → 3 → 4 → 5
 - UI hint added to Phase 2 (Frontend Adaptation)
-- v1.0 milestone completed 2026-05-27 (6 phases, 41 plans, all requirements fulfilled)
+- v1.0 milestone archived 2026-05-29 (6 phases, 41 plans, 30/41 requirements complete)
 - Architecture shift: Electron → Node.js backend + web frontend
 - Target: Package size < 50MB (vs 120MB+ Electron bundle)
 - Cross-platform: Linux and Windows support required
@@ -133,4 +142,4 @@ None yet.
 ---
 
 *State initialized: 2026-05-29*
-*Last updated: 2026-05-29 after roadmap creation*
+*Last updated: 2026-05-29 after v1.0 milestone archival*
