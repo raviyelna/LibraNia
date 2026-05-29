@@ -1,6 +1,7 @@
 {
   "name": "librania",
   "version": "0.1.0",
+  "type": "module",
   "description": "AI-Powered Knowledge Management with Multi-Model Verification",
   "main": "dist-electron/main.js",
   "bin": {
@@ -15,7 +16,7 @@
     "rebuild": "electron-rebuild",
     "test": "vitest",
     "test:api": "tsx test-api.ts",
-    "start:cli": "node bin/librania.js start"
+    "start:cli": "tsx bin/librania.js start"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
