@@ -11,3 +11,5 @@ out
 *.sqlite-shm
 *.sqlite-wal
 content/
+.env.development
+.env.production
