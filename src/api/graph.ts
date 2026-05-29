@@ -10,8 +10,8 @@ export interface GraphNode {
   tags: string[];
 }
 
-export interface GraphEdge {
-  id: string;
+export interface GraphLink {
+  id?: string;
   source: string;
   target: string;
   type: 'manual' | 'semantic' | 'citation';
@@ -19,13 +19,17 @@ export interface GraphEdge {
 
 export interface GraphData {
   nodes: GraphNode[];
-  edges: GraphEdge[];
+  links: GraphLink[];
 }
 
 export const graphAPI = {
   async getData(): Promise<GraphData> {
-    const response = await apiRequest<{ success: boolean; data: GraphData }>('/api/graph');
-    return response.data;
+    const response = await apiRequest<{ success: boolean; data: { nodes: GraphNode[]; edges: GraphLink[] } }>('/api/graph');
+    // Backend returns 'edges', frontend expects 'links'
+    return {
+      nodes: response.data.nodes,
+      links: response.data.edges,
+    };
   },
 
   async createNode(data: { title: string; tags?: string[] }): Promise<GraphNode> {
@@ -50,8 +54,8 @@ export const graphAPI = {
     });
   },
 
-  async createEdge(data: { source: string; target: string; type?: string }): Promise<GraphEdge> {
-    const response = await apiRequest<{ success: boolean; data: GraphEdge }>('/api/graph/edges', {
+  async createEdge(data: { source: string; target: string; type?: string }): Promise<GraphLink> {
+    const response = await apiRequest<{ success: boolean; data: GraphLink }>('/api/graph/edges', {
       method: 'POST',
       body: JSON.stringify(data),
     });
