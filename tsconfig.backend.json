@@ -5,13 +5,21 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "outDir": "./electron",
-    "rootDir": "./electron",
+    "rootDir": ".",
     "noEmit": false,
+    "allowImportingTsExtensions": false,
     "declaration": false,
     "sourceMap": false,
     "removeComments": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": false,
+    "strictFunctionTypes": false,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": false,
+    "alwaysStrict": false
   },
-  "include": ["electron/**/*.ts"],
-  "exclude": ["electron/**/*.test.ts", "node_modules"]
+  "include": ["electron/**/*.ts", "src/**/*.ts"],
+  "exclude": ["electron/**/*.test.ts", "src/**/*.test.ts", "node_modules"]
 }
