@@ -259,7 +259,11 @@ export async function syncFilesystemToDb(): Promise<{
 }> {
   const Database = require('better-sqlite3');
   const os = require('os');
-  const dbPath = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'librania.db');
+
+  // Use LIBRANIA_DATA_DIR env var (set by CLI), fallback to ~/.librania
+  // Database is stored in data/ subdirectory per bin/librania.js structure
+  const dataDir = process.env.LIBRANIA_DATA_DIR || path.join(os.homedir(), '.librania');
+  const dbPath = path.join(dataDir, 'data', 'librania.db');
 
   const db = new Database(dbPath);
   const dir = getNotesDir();
