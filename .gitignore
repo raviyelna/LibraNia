@@ -13,3 +13,10 @@ out
 content/
 .env.development
 .env.production
+
+# Compiled backend JavaScript (TypeScript compilation output)
+electron/**/*.js
+electron/**/*.js.map
+src/**/*.js
+src/**/*.js.map
+!electron/electron-env.d.ts
