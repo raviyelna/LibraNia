@@ -150,7 +150,17 @@ Plans:
 5. better-sqlite3 builds and runs on both platforms
 6. sharp builds and runs on both platforms (thumbnail generation works)
 
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
+
+Plans:
+**Wave 1** *(parallel execution)*
+
+- [ ] 05-01-PLAN.md — Fix hardcoded Windows paths (content.handlers.ts, file-storage.service.ts)
+- [ ] 05-02-PLAN.md — Enhanced error messages (platform context, build tool instructions)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 05-03-PLAN.md — Manual testing protocol (Ubuntu 22.04 + Windows 10, native modules, path edge cases)
 
 ## Progress
 
@@ -159,8 +169,8 @@ Plans:
 | 1. Backend Extraction | 2/4 | In progress | - |
 | 2. Frontend Adaptation | 4/4 | Complete | 2026-05-29 |
 | 3. CLI & Server Launcher | 2/2 | Complete | 2026-05-29 |
-| 4. Packaging & Distribution | 5/5 | Complete   | 2026-05-29 |
-| 5. Cross-Platform Validation | 0/0 | Not started | - |
+| 4. Packaging & Distribution | 3/3 | Complete   | 2026-05-29 |
+| 5. Cross-Platform Validation | 0/3 | Not started | - |
 
 ## Coverage
 
@@ -201,4 +211,4 @@ All 31 v2 requirements mapped:
 ---
 
 *Roadmap created: 2026-05-29*
-*Next: `/gsd-plan-phase 1`*
+*Next: `/gsd:execute-phase 5`*
