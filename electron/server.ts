@@ -40,8 +40,14 @@ export async function startServer(
   app.use(express.static(path.join(__dirname, '../dist')));
 
   // SPA routing: catch-all route returns index.html
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  // Use a function-based route to avoid path-to-regexp issues with wildcards
+  app.use((req, res, next) => {
+    // Only handle GET requests that don't start with /api
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      res.sendFile(path.join(__dirname, '../dist/index.html'));
+    } else {
+      next();
+    }
   });
 
   // Create HTTP server
