@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiClient } from '../../lib/api-client';
 
 interface Backlink {
   id: string;
@@ -19,7 +20,7 @@ export function BacklinksPanel({ noteId, onNavigate }: BacklinksPanelProps) {
     async function fetchBacklinks() {
       try {
         setLoading(true);
-        const data = await window.api.links.getBacklinks(noteId);
+        const data = await apiClient.links.getBacklinks(noteId);
         setBacklinks(data);
       } catch (error) {
         console.error('Failed to fetch backlinks:', error);
