@@ -2,8 +2,8 @@
 phase: 01
 slug: backend-extraction
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-05-29
 ---
 
@@ -51,12 +51,12 @@ created: 2026-05-29
 
 ## Wave 0 Requirements
 
-- [ ] `tests/server.test.ts` — stubs for BACK-01 (server starts without Electron)
-- [ ] `tests/database.test.ts` — stubs for BACK-02 (database operations with Node.js paths)
-- [ ] `tests/file-ops.test.ts` — stubs for BACK-03 (file operations with Node.js fs)
-- [ ] `tests/config.test.ts` — stubs for BACK-04 (config storage with JSON files)
-- [ ] `tests/encryption.test.ts` — stubs for BACK-05 (API key encryption with Node.js crypto)
-- [ ] `tests/endpoints.test.ts` — stubs for BACK-06 (IPC handlers converted to HTTP/WebSocket)
+- [x] `tests/server.test.ts` — stubs for BACK-01 (server starts without Electron)
+- [x] `tests/database.test.ts` — stubs for BACK-02 (database operations with Node.js paths)
+- [x] `tests/file-ops.test.ts` — stubs for BACK-03 (file operations with Node.js fs)
+- [x] `tests/config.test.ts` — stubs for BACK-04 (config storage with JSON files)
+- [x] `tests/encryption.test.ts` — stubs for BACK-05 (API key encryption with Node.js crypto)
+- [x] `tests/endpoints.test.ts` — stubs for BACK-06 (IPC handlers converted to HTTP/WebSocket)
 
 ---
 
@@ -72,11 +72,11 @@ created: 2026-05-29
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved
