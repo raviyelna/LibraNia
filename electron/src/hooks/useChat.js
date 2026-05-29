@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSocket } from '../contexts/SocketContext';
-import { chatAPI } from '../api';
-import { handleAPIError } from '../utils/toast';
+import { useSocket } from '../contexts/SocketContext.js';
+import { chatAPI } from '../api.js';
+import { handleAPIError } from '../utils/toast.js';
 export function useSendMessage(conversationId) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);

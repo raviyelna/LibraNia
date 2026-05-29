@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest } from './client.js';
 export const aiAPI = {
     async getModels() {
         const response = await apiRequest('/api/ai/models');

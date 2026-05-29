@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { aiAPI } from '../api';
-import { handleAPIError } from '../utils/toast';
+import { aiAPI } from '../api.js';
+import { handleAPIError } from '../utils/toast.js';
 export function useAIProviders() {
     const [providers, setProviders] = useState([]);
     const [loading, setLoading] = useState(true);

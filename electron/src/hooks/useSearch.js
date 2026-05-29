@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { searchAPI } from '../api';
-import { handleAPIError } from '../utils/toast';
+import { searchAPI } from '../api.js';
+import { handleAPIError } from '../utils/toast.js';
 export function useSearch() {
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);

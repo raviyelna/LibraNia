@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { graphAPI } from '../api';
-import { handleAPIError } from '../utils/toast';
-import { useSocket } from '../contexts/SocketContext';
+import { graphAPI } from '../api.js';
+import { handleAPIError } from '../utils/toast.js';
+import { useSocket } from '../contexts/SocketContext.js';
 export function useGraph() {
     const [graphData, setGraphData] = useState({ nodes: [], links: [] });
     const [loading, setLoading] = useState(true);

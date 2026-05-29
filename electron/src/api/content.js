@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest } from './client.js';
 export const contentAPI = {
     async getAll() {
         const response = await apiRequest('/api/content');

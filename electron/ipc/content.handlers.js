@@ -1,5 +1,5 @@
 import { ipcMain, dialog } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
