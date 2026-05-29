@@ -121,7 +121,16 @@ Plans:
 4. User runs `librania --help` and sees usage instructions
 5. Package size < 50MB (vs 120MB+ Electron bundle)
 
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Package configuration & TypeScript compilation (files whitelist, optionalDependencies, tsconfig.backend.json)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 04-02-PLAN.md — Build scripts & publish preparation (build:package, prepublishOnly, postinstall, README.md)
 
 ### Phase 5: Cross-Platform Validation
 
