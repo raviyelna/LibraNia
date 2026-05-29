@@ -1,326 +1,210 @@
-# Phase 3: AI Integration - Discussion Log
+# Phase 3: CLI & Server Launcher - Discussion Log
 
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
 > Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
 
-**Date:** 2026-05-25
-**Phase:** 3-AI Integration
-**Areas discussed:** Provider abstraction, Chat UI pattern, Research flow, Citation format, Model selection UX, API key storage
+**Date:** 2026-05-29
+**Phase:** 03-CLI & Server Launcher
+**Areas discussed:** CLI command structure, Browser launch behavior, Server lifecycle management, Configuration & data paths
 
 ---
 
-## Provider Abstraction
+## CLI Command Structure
 
-### Question 1: How should AI providers be abstracted?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Unified interface (Recommended) | Single interface (AIProvider.generate()), each provider implements it. Easier to add new providers, cleaner code. Matches existing service pattern (notes.service). | ✓ |
-| Provider-specific modules | Separate modules (claude.ts, openai.ts, deepseek.ts) with provider-specific logic. More flexibility for provider quirks, but harder to maintain. | |
-| Claude's discretion | You decide based on extensibility needs | |
-
-**User's choice:** Unified interface (Recommended)
-
-### Question 2: Should AI responses stream or wait for completion?
+### Question 1: Command structure
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Streaming (Recommended) | Streaming responses (tokens arrive as they're generated). Better UX, feels responsive. Requires SSE or WebSocket handling. | ✓ |
-| Non-streaming | Wait for complete response before displaying. Simpler implementation, but feels slower for long answers. | |
-| Claude's discretion | You decide based on UX priorities | |
+| Single command: librania start | Simple, matches user expectation from ROADMAP ('librania start'). Can add subcommands later if needed. | ✓ |
+| Subcommands: librania <start\|stop\|status> | More structured, supports future commands (stop/status/logs). Slightly more complex for v1. | |
+| Zero-arg: librania (no subcommand) | Minimal, just 'librania' launches server. Shortest command but less explicit. | |
 
-**User's choice:** Streaming (Recommended)
+**User's choice:** Single command: librania start (Recommended)
+**Notes:** None
 
-### Question 3: How should API failures be handled?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Retry with backoff (Recommended) | Retry with exponential backoff (1s, 2s, 4s). Handles transient failures, better UX. Standard pattern for API calls. | ✓ |
-| Fail fast | Fail immediately, show error to user. Simpler, but frustrating for network hiccups. | |
-| Claude's discretion | You decide based on reliability needs | |
-
-**User's choice:** Retry with backoff (Recommended)
-
-### Question 4: Where should provider configurations be stored?
+### Question 2: Flags
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Main config file (Recommended) | Provider config stored in main config.json (existing pattern). Simple, consistent with Phase 1 decisions. | ✓ |
-| Separate config file | Separate ai-providers.json file. Isolates AI config, easier to backup/share settings separately. | |
-| Claude's discretion | You decide based on config management patterns | |
+| --port, --no-browser, --data-dir | Standard pattern for server CLIs. Covers common use cases without bloat. | ✓ |
+| Minimal flags, prefer env vars | Minimal flags, rely on env vars (LIBRANIA_PORT, LIBRANIA_DATA_DIR) for customization. | |
+| Extended flags for power users | Comprehensive flags including --log-level, --host, --cors-origin, --config-file. | |
 
-**User's choice:** Main config file (Recommended)
+**User's choice:** --port, --no-browser, --data-dir (Recommended)
+**Notes:** None
 
-### Question 5: When should API keys and base URLs be validated?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Validate on save (Recommended) | Validate on save (test connection when user saves config). Immediate feedback, catches errors early. | ✓ |
-| Validate on use | Validate on first use (test when user sends first message). Defers validation, faster config save. | |
-| No validation | No validation (trust user input). Simplest, but errors surface during chat. | |
-| Claude's discretion | You decide based on UX priorities | |
-
-**User's choice:** Validate on save (Recommended)
-
-### Question 6: Should the active provider be visible during chat?
+### Question 3: CLI framework
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Show provider (Recommended) | Show provider name in chat UI (e.g., 'Claude Sonnet 4' badge). User always knows which AI is responding. | ✓ |
-| Hide provider | Hide provider, show generic 'AI' label. Cleaner UI, but less transparency. | |
-| Claude's discretion | You decide based on transparency needs | |
+| commander.js | Standard CLI library with arg parsing, help text, version command. Mature, 50M+ weekly downloads. | ✓ |
+| yargs | Lightweight alternative, simpler API. 10M+ weekly downloads, smaller bundle. | |
+| Manual parsing (no library) | Minimal, manual parsing with process.argv. No dependencies but more code to write. | |
 
-**User's choice:** Show provider (Recommended)
+**User's choice:** commander.js (Recommended)
+**Notes:** None
 
-### Question 7: Can users switch providers mid-conversation?
+### Question 4: Executable structure
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Switch mid-conversation (Recommended) | Allow switching mid-conversation (dropdown in chat UI). Flexible, user can compare providers on same question. | ✓ |
-| Lock per conversation | Lock provider per conversation (set at start, can't change). Simpler, avoids context confusion. | |
-| Claude's discretion | You decide based on flexibility needs | |
+| #!/usr/bin/env node shebang | Standard npm bin pattern. Works cross-platform, npm handles shebang. | ✓ |
+| Compiled binary (pkg/nexe) | Compile TypeScript CLI to native binary with pkg or nexe. Larger bundle, no Node.js required. | |
+| TypeScript via tsx | Keep as TypeScript, run via tsx. Simpler but requires tsx installed. | |
 
-**User's choice:** Switch mid-conversation (Recommended)
+**User's choice:** #!/usr/bin/env node shebang (Recommended)
+**Notes:** None
 
 ---
 
-## Chat UI Pattern
+## Browser Launch Behavior
 
-### Question 1: Where should the chat interface live?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Main content area (Recommended) | Main content area (replaces note editor when active). Integrated with existing layout, easy navigation. Matches existing pattern (notes in main area). | ✓ |
-| Sidebar panel | Sidebar panel (like Backlinks). Always visible, but limited width. Good for quick questions while editing notes. | |
-| Separate window | Separate window (like Settings). Independent, can position anywhere. More complex window management. | |
-| Claude's discretion | You decide based on UX priorities | |
-
-**User's choice:** Main content area (Recommended)
-
-### Question 2: Should chat conversations be saved or ephemeral?
+### Question 1: Auto-open behavior
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Persistent (Recommended) | Persistent conversations (saved to database, can resume later). Better for research sessions, matches note persistence pattern. | ✓ |
-| Ephemeral | Ephemeral (cleared on close). Simpler, no storage needed. Good for quick questions. | |
-| Claude's discretion | You decide based on use case | |
+| Auto-open by default | Standard behavior for local dev servers. User can disable with --no-browser flag. | ✓ |
+| Manual open (opt-in with --browser) | Safer, user explicitly opts in with --browser flag. More typing for common case. | |
+| Prompt on first launch | Ask on first launch, remember preference. More complex, adds config state. | |
 
-**User's choice:** Persistent (Recommended)
+**User's choice:** Auto-open by default (Recommended)
+**Notes:** None
 
-### Question 3: How should users access past conversations?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Sidebar list (Recommended) | Conversation list in sidebar (like note list). Easy to browse history, switch between conversations. Matches existing navigation pattern. | ✓ |
-| Dropdown menu | Dropdown menu in chat header. More compact, but harder to browse many conversations. | |
-| Separate view | Separate conversations view (new route). Dedicated space, but adds navigation step. | |
-| Claude's discretion | You decide based on navigation patterns | |
-
-**User's choice:** Sidebar list (Recommended)
-
-### Question 4: How should conversations be titled?
+### Question 2: Browser opening mechanism
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Auto-generate (Recommended) | Auto-generate from first message (e.g., first 50 chars). Simple, no user input needed. Matches note title pattern. | ✓ |
-| User-provided title | Prompt user for title when creating conversation. More control, but adds friction. | |
-| Timestamp-based | Timestamp-based (e.g., 'Chat - May 25, 2026 10:30 AM'). No ambiguity, but less descriptive. | |
-| Claude's discretion | You decide based on UX priorities | |
+| open package | Cross-platform npm package. Handles OS-specific browser commands. 20M+ weekly downloads. | ✓ |
+| Manual OS detection | Manual commands per OS (xdg-open/start/open). More code, handles edge cases yourself. | |
+| child_process.spawn | Node.js child_process with platform checks. No dependency but more complex. | |
 
-**User's choice:** Auto-generate (Recommended)
+**User's choice:** open package (Recommended)
+**Notes:** None
+
+### Question 3: Timing
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Wait for server ready | Wait for server to be ready before opening browser. Prevents 'connection refused' errors. | ✓ |
+| Open immediately | Open immediately after server.listen() call. Faster but may race with server startup. | |
+| Fixed delay (500ms) | Wait fixed time (e.g., 500ms) before opening. Simple but arbitrary delay. | |
+
+**User's choice:** Wait for server ready (Recommended)
+**Notes:** None
+
+### Question 4: Failure handling
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Log warning, continue | Log warning, continue running. User can manually open browser. Non-blocking. | ✓ |
+| Exit with error | Exit with error. Forces user to fix browser issue or use --no-browser. | |
+| Retry with backoff | Retry 2-3 times with delay. More resilient but adds complexity. | |
+
+**User's choice:** Log warning, continue (Recommended)
+**Notes:** None
 
 ---
 
-## Research Flow
+## Server Lifecycle Management
 
-### Question 1: Should web search and model knowledge run in parallel or sequentially?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Parallel (Recommended) | Parallel (web search + model knowledge at same time, merge results). Faster, better UX. More complex implementation. | ✓ |
-| Sequential | Sequential (web search first, then model uses those results). Simpler, model can reference web findings. Slower overall. | |
-| Claude's discretion | You decide based on speed vs complexity tradeoff | |
-
-**User's choice:** Parallel (Recommended)
-
-### Question 2: How should web search be implemented?
+### Question 1: Run mode
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Built-in search (Recommended) | Built-in web search (Brave Search API, DuckDuckGo, or similar). Integrated, no external dependencies. Requires API key. | ✓ |
-| Provider-native search | Delegate to AI provider (Claude/GPT can search web via their APIs). Simpler, but depends on provider support. | |
-| Defer web search | No web search in Phase 3 (defer to Phase 4). Simplifies scope, model knowledge only. | |
-| Claude's discretion | You decide based on implementation complexity | |
+| Ctrl+C only (foreground) | Simple, standard for foreground processes. User keeps terminal open, Ctrl+C stops server. | ✓ |
+| Daemon mode with PID file | Background daemon with PID file. Supports 'librania stop'. More complex, needs process management. | |
+| Both foreground and daemon | Both modes: default foreground, --daemon flag for background. Most flexible but adds complexity. | |
 
-**User's choice:** Built-in search (Recommended)
+**User's choice:** Ctrl+C only (foreground) (Recommended)
+**Notes:** None
 
-### Question 3: How many web search results should be fetched per query?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Top 5 (Recommended) | Top 5 results. Balances coverage with noise. Standard for search APIs. | ✓ |
-| Top 3 | Top 3 results. Faster, less noise. May miss relevant sources. | |
-| Top 10 | Top 10 results. More comprehensive, but slower and more noise. | |
-| Claude's discretion | You decide based on quality vs speed tradeoff | |
-
-**User's choice:** Top 5 (Recommended)
-
-### Question 4: Should research progress be visible to the user?
+### Question 2: Shutdown behavior
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Show progress (Recommended) | Show progress indicator (e.g., 'Searching web...', 'Generating answer...'). Better UX, user knows what's happening. | ✓ |
-| Silent loading | Silent (just show loading spinner). Simpler, but less informative. | |
-| Claude's discretion | You decide based on UX priorities | |
+| Close connections gracefully | Close HTTP server, close Socket.IO connections, flush logs. Standard graceful shutdown. | ✓ |
+| Save state before exit | Also save in-progress state (pending AI requests, unsaved data). More complex. | |
+| Immediate exit (process.exit) | Immediate exit, no cleanup. Fastest but may leave connections hanging. | |
 
-**User's choice:** Show progress (Recommended)
+**User's choice:** Close connections gracefully (Recommended)
+**Notes:** None
+
+### Question 3: Startup output
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Log startup message | Standard startup message with URL. Clean, informative. | ✓ |
+| ASCII art banner | ASCII art banner + startup info. More visual, fun for CLI tools. | |
+| Minimal (URL only) | Minimal output, just URL. Quieter for scripting. | |
+
+**User's choice:** Log startup message (Recommended)
+**Notes:** None
+
+### Question 4: Port conflict handling
+
+| Option | Description | Selected |
+|--------|-------------|----------|
+| Auto-increment port (try 5 ports) | Server already handles port conflicts (tries port+1). Extend to try up to 5 ports. | ✓ |
+| Exit with error | Exit with error immediately. User must manually specify different port. | |
+| Kill existing process | Kill existing process on port, then start. Dangerous, could kill unrelated services. | |
+
+**User's choice:** Auto-increment port (try 5 ports) (Recommended)
+**Notes:** None
 
 ---
 
-## Citation Format
+## Configuration & Data Paths
 
-### Question 1: How should citations be displayed in AI answers?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Inline footnotes (Recommended) | Inline footnotes [1], [2] with sources list at bottom. Standard academic format, doesn't break reading flow. | ✓ |
-| Sidebar panel | Sidebar panel (like Backlinks). Sources always visible, but takes screen space. | |
-| Hover tooltips | Hover tooltips (show source on hover). Clean UI, but less discoverable. | |
-| Claude's discretion | You decide based on readability priorities | |
-
-**User's choice:** Inline footnotes (Recommended)
-
-### Question 2: Should citation URLs be clickable or plain text?
+### Question 1: Default data location
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Clickable links (Recommended) | Clickable links (open in external browser). Standard web behavior, easy to verify sources. | ✓ |
-| Copy button | Copy-to-clipboard button. User can paste URL elsewhere. Less direct. | |
-| Plain text | Plain text URLs (not clickable). Simplest, but requires manual copy/paste. | |
-| Claude's discretion | You decide based on UX priorities | |
+| XDG/AppData standard paths | Follows XDG Base Directory spec on Linux, AppData on Windows. Standard for cross-platform apps. | |
+| Home directory (~/.librania) | Simple, works everywhere. Less standard but easier to find. | |
+| Current directory (./data) | Current working directory. Portable but clutters user's workspace. | ✓ |
 
-**User's choice:** Clickable links (Recommended)
+**User's choice:** Current directory (./data)
+**Notes:** User chose current directory over XDG/AppData standard
 
-### Question 3: What information should be shown for each citation?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Title + domain (Recommended) | Title + domain (e.g., 'React Docs - react.dev'). Descriptive, user knows what they're clicking. | ✓ |
-| Domain only | Just domain (e.g., 'react.dev'). Compact, but less context. | |
-| Full URL | Full URL (e.g., 'https://react.dev/learn/...'). Complete info, but cluttered. | |
-| Claude's discretion | You decide based on clarity vs space tradeoff | |
-
-**User's choice:** Title + domain (Recommended)
-
-### Question 4: Should citations be stored with AI-generated answers?
+### Question 2: Configuration precedence
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Store with answer (Recommended) | Store citations with answer (in database). Preserved when answer saved to library. Better for long-term reference. | ✓ |
-| Ephemeral | Ephemeral (only shown during chat). Simpler, but lost when conversation closed. | |
-| Claude's discretion | You decide based on persistence needs | |
+| --data-dir > env var > ./data | Flags override env vars, env vars override defaults. Standard precedence for CLIs. | ✓ |
+| Env var only (LIBRANIA_DATA_DIR) | Only env vars, no flag override. Simpler but less flexible. | |
+| Flag only (--data-dir) | Only flags, no env var support. More explicit but less flexible for scripting. | |
 
-**User's choice:** Store with answer (Recommended)
+**User's choice:** --data-dir > env var > ./data (Recommended)
+**Notes:** None
 
----
-
-## Model Selection UX
-
-### Question 1: Should model selection be per-provider or global?
+### Question 3: Directory organization
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Per-provider (Recommended) | Per-provider dropdown (Claude: sonnet/opus, GPT: 4/4o, DeepSeek: chat/coder). Flexible, user can pick best model per provider. | ✓ |
-| Global default | Single global default (one model across all providers). Simpler, but less flexible. | |
-| Claude's discretion | You decide based on flexibility needs | |
+| Separate data/ and config/ dirs | Separate data (database, uploads) from config (settings.json). Clean separation, easier backups. | ✓ |
+| Single directory (all files together) | Everything in one directory. Simpler structure but harder to backup selectively. | |
+| Multiple subdirectories by type | Split by type: database/, uploads/, config/, logs/. Most organized but more complex. | |
 
-**User's choice:** Per-provider (Recommended)
+**User's choice:** Separate data/ and config/ dirs (Recommended)
+**Notes:** None
 
-### Question 2: Where should users configure model selection?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Settings panel (Recommended) | Settings panel (like Mode Settings). Centralized config, clear separation from chat. Matches existing pattern. | ✓ |
-| Chat UI dropdown | Chat UI dropdown (switch model mid-conversation). More convenient, but clutters chat interface. | |
-| Both settings + chat | Both (settings for default, chat dropdown to override). Most flexible, but more complex. | |
-| Claude's discretion | You decide based on UX priorities | |
-
-**User's choice:** Settings panel (Recommended)
-
-### Question 3: How should available models be populated in the dropdown?
+### Question 4: Missing directory handling
 
 | Option | Description | Selected |
 |--------|-------------|----------|
-| Hardcoded list (Recommended) | Hardcoded list (sonnet/opus for Claude, 4/4o for GPT, etc.). Simple, works for known models. Needs code update for new models. | ✓ |
-| Fetch from API | Fetch from provider API (dynamic model list). Always up-to-date, but requires API call and error handling. | |
-| Free-form input | Free-form text input (user types model name). Most flexible, but error-prone. | |
-| Claude's discretion | You decide based on maintainability | |
+| Auto-create on startup | Create directories automatically on first launch. User-friendly, no manual setup. | ✓ |
+| Require init command | Require user to run 'librania init' first. More explicit but extra step. | |
+| Exit if missing | Exit with error if directories missing. Forces user awareness but less convenient. | |
 
-**User's choice:** Hardcoded list (Recommended)
-
-### Question 4: Should the active model be visible during chat?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Show model name (Recommended) | Show model name in chat UI (e.g., 'Claude Sonnet 4' badge next to provider). Full transparency, user knows exact model. | ✓ |
-| Show provider only | Show provider only (e.g., 'Claude' badge). Simpler, but less specific. | |
-| Hide both | Hide both (no badge). Cleanest UI, but no transparency. | |
-| Claude's discretion | You decide based on transparency needs | |
-
-**User's choice:** Show model name (Recommended)
-
----
-
-## API Key Storage
-
-### Question 1: How should API keys be stored?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Encrypted (Recommended) | Encrypted storage (electron-store with encryption). More secure, protects keys at rest. Requires encryption key management. | ✓ |
-| Plain JSON | Plain JSON (current config pattern). Simpler, consistent with Phase 1. Keys visible in config file. | |
-| System keychain | System keychain (macOS Keychain, Windows Credential Manager). Most secure, OS-managed. Platform-specific implementation. | |
-| Claude's discretion | You decide based on security priorities | |
-
-**User's choice:** Encrypted (Recommended)
-
-### Question 2: Should API keys be masked in the settings UI?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Masked input (Recommended) | Masked input (show dots, reveal button). Standard password field behavior. Prevents shoulder-surfing. | ✓ |
-| Plain text | Plain text input (always visible). Easier to verify, but less secure. | |
-| Claude's discretion | You decide based on security vs usability tradeoff | |
-
-**User's choice:** Masked input (Recommended)
-
-### Question 3: How should the encryption key be managed?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Separate key (Recommended) | Separate encryption key (generated on first launch, stored in OS keychain). Most secure, keys encrypted with separate key. | ✓ |
-| Machine-specific | Machine-specific key (derived from hardware ID). Simpler, but keys tied to machine. | |
-| User passphrase | User-provided passphrase (user enters passphrase to unlock). Most secure, but adds friction. | |
-| Claude's discretion | You decide based on security vs UX tradeoff | |
-
-**User's choice:** Separate key (Recommended)
-
-### Question 4: Should users be warned about API key storage security?
-
-| Option | Description | Selected |
-|--------|-------------|----------|
-| Show warning (Recommended) | Show warning (e.g., 'API keys are encrypted but stored locally. Keep your machine secure.'). Transparent, sets expectations. | ✓ |
-| No warning | No warning (assume user understands). Cleaner UI, but less transparent. | |
-| Claude's discretion | You decide based on transparency priorities | |
-
-**User's choice:** Show warning (Recommended)
+**User's choice:** Auto-create on startup (Recommended)
+**Notes:** None
 
 ---
 
 ## Claude's Discretion
 
-None — all areas had explicit decisions.
+None — all areas had explicit user decisions.
 
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
+None — discussion stayed within phase scope.
