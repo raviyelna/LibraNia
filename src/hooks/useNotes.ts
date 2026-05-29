@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { notesAPI } from '../api';
+import { handleAPIError } from '../utils/toast';
+import { useSocket } from '../contexts/SocketContext';
 
 interface Note {
   id: string;
@@ -18,10 +21,11 @@ export function useNotes() {
   const fetchNotes = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.notes.getAll();
+      const data = await notesAPI.getAll();
       setNotes(data);
       setError(null);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -39,14 +43,16 @@ export function useNote(id: string, includeDeleted = false) {
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const { socket } = useSocket();
 
   const fetchNote = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.notes.getById(id, includeDeleted);
+      const data = await notesAPI.getById(id, includeDeleted);
       setNote(data);
       setError(null);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -57,16 +63,22 @@ export function useNote(id: string, includeDeleted = false) {
     fetchNote();
   }, [fetchNote]);
 
-  // Listen for real-time note updates
+  // Listen for real-time note updates via Socket.IO
   useEffect(() => {
-    const unsubscribe = window.api.notes.onUpdated?.((updatedNote: Note) => {
+    if (!socket) return;
+
+    const handleNoteUpdated = (updatedNote: Note) => {
       if (updatedNote.id === id) {
         setNote(updatedNote);
       }
-    });
+    };
 
-    return unsubscribe;
-  }, [id]);
+    socket.on('note:updated', handleNoteUpdated);
+
+    return () => {
+      socket.off('note:updated', handleNoteUpdated);
+    };
+  }, [socket, id]);
 
   return { note, loading, error, refetch: fetchNote };
 }
@@ -77,8 +89,11 @@ export function useCreateNote() {
   const createNote = useCallback(async (data: { title: string; body: string; metadata?: string }) => {
     setLoading(true);
     try {
-      const note = await window.api.notes.create(data);
+      const note = await notesAPI.create(data);
       return note;
+    } catch (err) {
+      handleAPIError(err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -93,8 +108,11 @@ export function useUpdateNote() {
   const updateNote = useCallback(async (data: { id: string; title?: string; body?: string; metadata?: string }) => {
     setLoading(true);
     try {
-      const note = await window.api.notes.update(data);
+      const note = await notesAPI.update(data);
       return note;
+    } catch (err) {
+      handleAPIError(err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -109,7 +127,10 @@ export function useDeleteNote() {
   const deleteNote = useCallback(async (id: string, hard: boolean) => {
     setLoading(true);
     try {
-      await window.api.notes.delete(id, hard);
+      await notesAPI.delete(id, hard);
+    } catch (err) {
+      handleAPIError(err);
+      throw err;
     } finally {
       setLoading(false);
     }
