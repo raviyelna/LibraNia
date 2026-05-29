@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAIProviders, useProviderValidation } from '../../hooks/useAIProviders';
 import { Button } from '../ui/Button';
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
+import { configAPI } from '../../api';
 
 type ProviderId = 'claude' | 'openai' | 'deepseek';
 
