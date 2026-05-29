@@ -171,8 +171,8 @@ All 31 v2 requirements mapped:
 | FRONT-05 | Phase 2 | Pending |
 | CLI-01 | Phase 3 | Complete |
 | CLI-02 | Phase 3 | Complete |
-| CLI-03 | Phase 3 | Pending |
-| CLI-04 | Phase 3 | Pending |
+| CLI-03 | Phase 3 | Complete |
+| CLI-04 | Phase 3 | Complete |
 | CLI-05 | Phase 3 | Complete |
 | CLI-06 | Phase 3 | Complete |
 | PKG-01 | Phase 4 | Pending |
