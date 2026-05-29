@@ -1,4 +1,3 @@
-import { app } from 'electron';
 import path from 'path';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
@@ -12,10 +11,23 @@ import * as schema from '../database/schema.js';
 let embeddingPipeline: any = null;
 
 /**
+ * Get models directory path from environment or default
+ */
+function getModelsDir(): string {
+  if (process.env.LIBRANIA_MODELS_DIR) {
+    return process.env.LIBRANIA_MODELS_DIR;
+  }
+  if (process.env.LIBRANIA_DATA_DIR) {
+    return path.join(process.env.LIBRANIA_DATA_DIR, 'models');
+  }
+  return path.join(process.cwd(), 'data', 'models');
+}
+
+/**
  * Generate 384-dimensional embedding from text using all-MiniLM-L6-v2 model
  *
  * Lazy loads the transformer model on first call and caches it for subsequent calls.
- * The model is downloaded (~80MB) on first use and cached in userData/models directory.
+ * The model is downloaded (~80MB) on first use and cached in models directory.
  *
  * @param text - Text to generate embedding for (combined title + body)
  * @returns Float32Array of 384 dimensions, normalized (L2 norm ≈ 1.0)
@@ -32,7 +44,7 @@ export async function generateEmbedding(text: string): Promise<Float32Array> {
     embeddingPipeline = await pipeline(
       'feature-extraction',
       'Xenova/all-MiniLM-L6-v2',
-      { cache_dir: path.join(app.getPath('userData'), 'models') }
+      { cache_dir: getModelsDir() }
     );
   }
 
