@@ -97,7 +97,13 @@ Plans:
 5. Server shuts down gracefully on Ctrl+C (closes connections, saves state)
 6. CLI works in bash/zsh on Linux and cmd/PowerShell on Windows
 
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave
+
+Plans:
+**Wave 1** *(parallel execution)*
+
+- [ ] 03-01-PLAN.md — CLI Entry Point (commander.js, argument parsing, server startup)
+- [ ] 03-02-PLAN.md — Browser Launch & Graceful Shutdown (open package, SIGINT handler)
 
 ### Phase 4: Packaging & Distribution
 
@@ -142,7 +148,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Backend Extraction | 2/4 | In progress | - |
 | 2. Frontend Adaptation | 1/4 | In progress | - |
-| 3. CLI & Server Launcher | 0/0 | Not started | - |
+| 3. CLI & Server Launcher | 0/2 | Not started | - |
 | 4. Packaging & Distribution | 0/0 | Not started | - |
 | 5. Cross-Platform Validation | 0/0 | Not started | - |
 
