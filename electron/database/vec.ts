@@ -34,7 +34,22 @@ export function setupVectorExtension(db: Database.Database): void {
       extensionPath = path.join(__dirname, '../extensions/vec0.dylib');
       break;
     default:
-      throw new Error(`Unsupported platform for sqlite-vec: ${process.platform}`);
+      const platform = process.platform;
+      const nodeVersion = process.version;
+
+      const errorMessage = `
+Failed to load sqlite-vec extension
+
+Platform: ${platform}
+Node.js: ${nodeVersion}
+Reason: Platform '${platform}' is not supported
+
+Supported platforms: win32 (Windows), linux (Linux), darwin (macOS)
+
+See: https://github.com/asg017/sqlite-vec#installation
+      `.trim();
+
+      throw new Error(errorMessage);
   }
 
   try {
@@ -47,9 +62,36 @@ export function setupVectorExtension(db: Database.Database): void {
       throw new Error('sqlite-vec extension loaded but vec_version() not available');
     }
   } catch (error) {
-    throw new Error(
-      `Failed to load sqlite-vec extension from ${extensionPath}: ${error instanceof Error ? error.message : String(error)}`
-    );
+    const platform = process.platform;
+    const nodeVersion = process.version;
+
+    // Build platform-specific guidance
+    let platformGuidance = '';
+    if (platform === 'win32') {
+      platformGuidance = 'Ensure vec0.dll is present in electron/extensions/';
+    } else if (platform === 'linux') {
+      platformGuidance = 'Ensure vec0.so is present in electron/extensions/';
+    } else if (platform === 'darwin') {
+      platformGuidance = 'Ensure vec0.dylib is present in electron/extensions/';
+    } else {
+      platformGuidance = `Platform '${platform}' is not supported. Supported platforms: win32, linux, darwin`;
+    }
+
+    const errorMessage = `
+Failed to load sqlite-vec extension
+
+Platform: ${platform}
+Node.js: ${nodeVersion}
+Extension path: ${extensionPath}
+${platformGuidance}
+
+Original error: ${error instanceof Error ? error.message : String(error)}
+
+If the extension file exists but fails to load, you may be missing build tools.
+See: https://github.com/asg017/sqlite-vec#installation
+    `.trim();
+
+    throw new Error(errorMessage);
   }
 }
 
