@@ -61,12 +61,12 @@ export async function startServer(
     setupSocketHandlers(io);
 
     // Serve static files from dist directory
-    app.use(express.static(path.join(__dirname, '../dist')));
+    app.use(express.static(distPath));
 
     // SPA routing: catch-all route returns index.html
     app.use((req, res, next) => {
       if (req.method === 'GET' && !req.path.startsWith('/api')) {
-        res.sendFile(path.join(__dirname, '../dist/index.html'));
+        res.sendFile(path.join(distPath, 'index.html'));
       } else {
         next();
       }
