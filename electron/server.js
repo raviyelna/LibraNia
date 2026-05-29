@@ -73,6 +73,8 @@ export async function startServer(port = process.env.LIBRANIA_PORT ? parseInt(pr
     }
     catch (error) {
         console.warn('Running in minimal mode - API routes unavailable (electron dependencies not loaded)');
+        console.error('Error loading API routes:', error.message);
+        console.error('Stack:', error.stack);
         const server = http.createServer(app);
         const io = new SocketIOServer(server, {
             cors: {
