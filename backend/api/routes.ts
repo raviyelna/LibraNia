@@ -188,8 +188,8 @@ router.post('/api/chat', async (req, res) => {
       });
     }
 
-    // Import AI handlers
-    const { callDeepSeek, callClaude, callOpenAI } = await import('../ipc/ai.handlers');
+    // Import AI handlers from service
+    const { callDeepSeek, callClaude, callOpenAI } = await import('../services/ai/ai-chat.service.js');
 
     // Get provider config
     const provider = providerId || 'deepseek';
