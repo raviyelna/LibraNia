@@ -13,7 +13,7 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 
 - [ ] **Phase 1: Backend Extraction** - Extract Electron main process to standalone Node.js server
 - [x] **Phase 2: Frontend Adaptation** - Replace Electron IPC with HTTP/WebSocket clients ✓ 2026-05-29
-- [ ] **Phase 3: CLI & Server Launcher** - Create CLI entry point with auto-browser launch
+- [x] **Phase 3: CLI & Server Launcher** - Create CLI entry point with auto-browser launch ✓ 2026-05-29
 - [ ] **Phase 4: Packaging & Distribution** - Bundle as npm package with binary
 - [ ] **Phase 5: Cross-Platform Validation** - Test on Linux and Windows, verify native dependencies
 
@@ -102,8 +102,8 @@ Plans:
 Plans:
 **Wave 1** *(parallel execution)*
 
-- [ ] 03-01-PLAN.md — CLI Entry Point (commander.js, argument parsing, server startup)
-- [ ] 03-02-PLAN.md — Browser Launch & Graceful Shutdown (open package, SIGINT handler)
+- [x] 03-01-PLAN.md — CLI Entry Point (commander.js, argument parsing, server startup) ✓ 2026-05-29
+- [x] 03-02-PLAN.md — Browser Launch & Graceful Shutdown (open package, SIGINT handler) ✓ 2026-05-29
 
 ### Phase 4: Packaging & Distribution
 
@@ -147,8 +147,8 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Extraction | 2/4 | In progress | - |
-| 2. Frontend Adaptation | 1/4 | In progress | - |
-| 3. CLI & Server Launcher | 0/2 | Not started | - |
+| 2. Frontend Adaptation | 4/4 | Complete | 2026-05-29 |
+| 3. CLI & Server Launcher | 2/2 | Complete | 2026-05-29 |
 | 4. Packaging & Distribution | 0/0 | Not started | - |
 | 5. Cross-Platform Validation | 0/0 | Not started | - |
 
@@ -169,12 +169,12 @@ All 31 v2 requirements mapped:
 | FRONT-03 | Phase 2 | Pending |
 | FRONT-04 | Phase 2 | Pending |
 | FRONT-05 | Phase 2 | Pending |
-| CLI-01 | Phase 3 | Pending |
-| CLI-02 | Phase 3 | Pending |
+| CLI-01 | Phase 3 | Complete |
+| CLI-02 | Phase 3 | Complete |
 | CLI-03 | Phase 3 | Pending |
 | CLI-04 | Phase 3 | Pending |
-| CLI-05 | Phase 3 | Pending |
-| CLI-06 | Phase 3 | Pending |
+| CLI-05 | Phase 3 | Complete |
+| CLI-06 | Phase 3 | Complete |
 | PKG-01 | Phase 4 | Pending |
 | PKG-02 | Phase 4 | Pending |
 | PKG-03 | Phase 4 | Pending |
