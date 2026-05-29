@@ -37,8 +37,10 @@ export function registerContentHandlers() {
     try {
       logger.info('IPC: content:saveImage', { filename: data.filename, noteId: data.noteId });
 
-      // Create attachments directory
-      const attachmentsDir = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'attachments', data.noteId);
+      // Create attachments directory using cross-platform path resolution
+      // Use LIBRANIA_DATA_DIR env var (set by CLI), fallback to ~/.librania
+      const dataDir = process.env.LIBRANIA_DATA_DIR || path.join(os.homedir(), '.librania');
+      const attachmentsDir = path.join(dataDir, 'attachments', data.noteId);
       if (!fs.existsSync(attachmentsDir)) {
         fs.mkdirSync(attachmentsDir, { recursive: true });
       }
