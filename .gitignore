@@ -15,7 +15,7 @@ content/
 .env.production
 
 # Compiled backend JavaScript (TypeScript compilation output)
-electron/**/*.js
+# Note: electron/**/*.js is committed for npm package distribution
 electron/**/*.js.map
 src/**/*.js
 src/**/*.js.map
