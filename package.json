@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "AI-Powered Knowledge Management with Multi-Model Verification",
   "main": "dist-electron/main.js",
+  "bin": {
+    "librania": "./bin/librania.js"
+  },
   "author": "LibraNia Team",
   "license": "MIT",
   "scripts": {
@@ -11,7 +14,8 @@
     "preview": "vite preview",
     "rebuild": "electron-rebuild",
     "test": "vitest",
-    "test:api": "tsx test-api.ts"
+    "test:api": "tsx test-api.ts",
+    "start:cli": "node bin/librania.js start"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
