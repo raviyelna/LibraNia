@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from '../ui/Dialog';
 import { Button } from '../ui/Button';
+import { configAPI } from '../../api';
 
 type AppMode = 'desktop' | 'web';
 
@@ -28,7 +29,7 @@ export function ModeSettings() {
     // Load current mode from config
     const loadConfig = async () => {
       try {
-        const config: AppConfig = await window.api.getConfig();
+        const config = await configAPI.get() as AppConfig;
         setCurrentMode(config.mode);
         setSelectedMode(config.mode);
       } catch (error) {
@@ -49,8 +50,10 @@ export function ModeSettings() {
 
   const handleRestart = async () => {
     try {
-      await window.api.switchMode(selectedMode);
-      // The app will restart automatically
+      await configAPI.update({ mode: selectedMode });
+      // TODO: implement app restart in web mode
+      alert('Mode updated. Please restart the app manually.');
+      setShowRestartDialog(false);
     } catch (error) {
       console.error('Failed to switch mode:', error);
       setShowRestartDialog(false);
