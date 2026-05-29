@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { contentAPI, uploadContent } from '../api/content';
+import { handleAPIError } from '../utils/toast';
 
 export interface Content {
   id: string;
@@ -25,10 +27,11 @@ export function useContent() {
   const fetchContent = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.content.getAll();
+      const data = await contentAPI.getAll();
       setContent(data);
       setError(null);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -44,34 +47,24 @@ export function useContent() {
 
 export function useUploadContent() {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<Error | null>(null);
 
   const upload = useCallback(
     async (
+      file: File,
       source: 'manual' | 'ai-generated',
       options?: { confidence_score?: number; note_id?: string; message_id?: string }
-    ): Promise<Content | null> => {
+    ): Promise<Content> => {
       setUploading(true);
+      setProgress(0);
       setError(null);
 
       try {
-        // Show file picker
-        const uploadResult = await window.api.content.upload();
-
-        // User canceled
-        if (uploadResult.canceled) {
-          return null;
-        }
-
-        // Create content record
-        const content = await window.api.content.create({
-          filePath: uploadResult.filePath,
-          source,
-          ...options,
-        });
-
+        const content = await uploadContent(file, source, (percent) => setProgress(percent));
         return content;
       } catch (err) {
+        handleAPIError(err);
         setError(err as Error);
         throw err;
       } finally {
@@ -81,21 +74,21 @@ export function useUploadContent() {
     []
   );
 
-  return { upload, uploading, error };
+  return { upload, uploading, progress, error };
 }
 
 export function useDeleteContent() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
-  const deleteContent = useCallback(async (id: string): Promise<boolean> => {
+  const deleteContent = useCallback(async (id: string): Promise<void> => {
     setDeleting(true);
     setError(null);
 
     try {
-      const success = await window.api.content.delete(id);
-      return success;
+      await contentAPI.delete(id);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
       throw err;
     } finally {
@@ -121,10 +114,11 @@ export function useContentById(id: string | null) {
     const fetchContent = async () => {
       try {
         setLoading(true);
-        const data = await window.api.content.getById(id);
+        const data = await contentAPI.getById(id);
         setContent(data);
         setError(null);
       } catch (err) {
+        handleAPIError(err);
         setError(err as Error);
       } finally {
         setLoading(false);
