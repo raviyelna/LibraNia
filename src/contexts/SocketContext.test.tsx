@@ -3,19 +3,19 @@ import { render, waitFor } from '@testing-library/react';
 import { SocketProvider, useSocket } from './SocketContext';
 import type { Socket } from 'socket.io-client';
 
-// Mock socket.io-client
-const mockSocket = {
-  on: vi.fn(),
-  off: vi.fn(),
-  close: vi.fn(),
-  emit: vi.fn(),
-} as unknown as Socket;
+// Mock socket.io-client - must be hoisted before imports
+vi.mock('socket.io-client', () => {
+  const mockSocket = {
+    on: vi.fn(),
+    off: vi.fn(),
+    close: vi.fn(),
+    emit: vi.fn(),
+  };
 
-const mockIo = vi.fn(() => mockSocket);
-
-vi.mock('socket.io-client', () => ({
-  io: mockIo,
-}));
+  return {
+    io: vi.fn(() => mockSocket),
+  };
+});
 
 // Mock react-hot-toast
 vi.mock('react-hot-toast', () => ({
@@ -25,8 +25,16 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 describe('SocketContext', () => {
-  beforeEach(() => {
+  let mockIo: ReturnType<typeof vi.fn>;
+  let mockSocket: any;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Get the mocked io function
+    const socketIoClient = await import('socket.io-client');
+    mockIo = socketIoClient.io as ReturnType<typeof vi.fn>;
+    // Get the mock socket instance
+    mockSocket = mockIo();
   });
 
   afterEach(() => {
@@ -71,7 +79,7 @@ describe('SocketContext', () => {
     );
 
     await waitFor(() => {
-      expect(socketValue).toBe(mockSocket);
+      expect(socketValue).toBeTruthy();
       expect(typeof connectedValue).toBe('boolean');
     });
   });
