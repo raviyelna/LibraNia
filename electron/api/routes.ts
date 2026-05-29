@@ -9,6 +9,16 @@ import { createMessage, getMessagesByConversation } from '../services/message.se
 import { getORM } from '../database/connection';
 import graphRoutes from './graph.routes';
 
+// IPC-to-HTTP converted routes (Plan 03) - non-streaming operations
+import notesRoutes from './notes.routes';
+import contentRoutes from './content.routes';
+import searchRoutes from './search.routes';
+import tagsRoutes from './tags.routes';
+import exportRoutes from './export.routes';
+import configRoutes from './config.routes';
+import appRoutes from './app.routes';
+import aiRoutes from './ai.routes';
+
 const router = Router();
 
 // Middleware
@@ -19,6 +29,16 @@ router.use((req, res, next) => {
 
 // Register graph routes
 router.use(graphRoutes);
+
+// Register IPC-to-HTTP converted routes (Plan 03)
+router.use(notesRoutes);
+router.use(contentRoutes);
+router.use(searchRoutes);
+router.use(tagsRoutes);
+router.use(exportRoutes);
+router.use(configRoutes);
+router.use(appRoutes);
+router.use(aiRoutes);
 
 // ============================================================================
 // Provider Config API
