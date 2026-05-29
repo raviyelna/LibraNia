@@ -24,20 +24,42 @@ LibraNia is a personal knowledge management system that visualizes information a
 
 ## Installation
 
+### Global Installation (Recommended)
+
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/LibraNia.git
-cd LibraNia
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
+npm install -g librania
 ```
+
+After installation, run:
+
+```bash
+librania start
+```
+
+### One-Time Usage (No Installation)
+
+```bash
+npx librania start
+```
+
+### Requirements
+
+LibraNia requires the following to compile native dependencies during installation:
+
+- **Node.js:** 18.0 or higher
+- **npm:** 7.0 or higher
+- **Build Tools:**
+  - **Linux:** `build-essential` and `python3`
+    ```bash
+    sudo apt-get install build-essential python3
+    ```
+  - **Windows:** Visual Studio Build Tools (install via [Visual Studio Installer](https://visualstudio.microsoft.com/downloads/))
+  - **macOS:** Xcode Command Line Tools
+    ```bash
+    xcode-select --install
+    ```
+
+Native dependencies (`better-sqlite3`, `sharp`) will compile automatically during installation.
 
 ## Configuration
 
@@ -48,6 +70,27 @@ Configure AI providers in the app settings:
 - **DeepSeek:** Requires DeepSeek API key and base URL
 
 ## Usage
+
+### CLI Commands
+
+```bash
+# Show version
+librania --version
+
+# Show help
+librania --help
+
+# Start server (default port 3000)
+librania start
+
+# Start server on custom port
+librania start --port 3001
+
+# Start server without opening browser
+librania start --no-browser
+```
+
+### Using the Application
 
 1. **Ask a Question** — Type your question in the search bar
 2. **AI Research** — Selected AI models research the topic
