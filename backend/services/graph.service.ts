@@ -1,4 +1,5 @@
-import { getAllNotes } from './file-storage.service.js';
+import { getAllNotes } from './notes.service.js';
+import { getORM } from '../database/connection.js';
 import type { GraphData, GraphNode, GraphLink } from '../../src/types/graph.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
@@ -19,12 +20,13 @@ function extractWikiLinks(body: string): string[] {
 }
 
 /**
- * Get graph data for 3D visualization from file storage
+ * Get graph data for 3D visualization from database
  * Builds graph by parsing wiki-links in note bodies
  * @returns GraphData with nodes (id, title, tags) and links (source, target, type)
  */
-export function getGraphData(): GraphData {
-  const notes = getAllNotes();
+export async function getGraphData(): Promise<GraphData> {
+  const db = getORM();
+  const notes = await getAllNotes(db);
 
   // Create title-to-id map for link resolution
   const titleToId = new Map<string, string>();
@@ -32,11 +34,11 @@ export function getGraphData(): GraphData {
     titleToId.set(note.title.toLowerCase(), note.id);
   });
 
-  // Build nodes array - ensure tags is always an array
+  // Build nodes array - notes from DB don't have tags field yet
   const graphNodes: GraphNode[] = notes.map(note => ({
     id: note.id,
     title: note.title,
-    tags: Array.isArray(note.tags) ? note.tags : [],
+    tags: [], // TODO: add tags support to notes table
   }));
 
   // Extract links from note bodies
