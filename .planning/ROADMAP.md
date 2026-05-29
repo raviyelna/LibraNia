@@ -141,7 +141,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Backend Extraction | 0/4 | Planning complete | - |
-| 2. Frontend Adaptation | 0/0 | Not started | - |
+| 2. Frontend Adaptation | 0/4 | Planning complete | - |
 | 3. CLI & Server Launcher | 0/0 | Not started | - |
 | 4. Packaging & Distribution | 0/0 | Not started | - |
 | 5. Cross-Platform Validation | 0/0 | Not started | - |
