@@ -21,24 +21,24 @@ export const notesAPI = {
   },
 
   async getById(id: string): Promise<Note> {
-    const response = await apiRequest<{ success: boolean; note: Note }>(`/api/notes/${id}`);
-    return response.note;
+    const response = await apiRequest<{ success: boolean; data: Note }>(`/api/notes/${id}`);
+    return response.data;
   },
 
   async create(data: { title: string; body: string; metadata?: string }): Promise<Note> {
-    const response = await apiRequest<{ success: boolean; note: Note }>('/api/notes', {
+    const response = await apiRequest<{ success: boolean; data: Note }>('/api/notes', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.note;
+    return response.data;
   },
 
   async update(id: string, data: { title?: string; body?: string; metadata?: string }): Promise<Note> {
-    const response = await apiRequest<{ success: boolean; note: Note }>(`/api/notes/${id}`, {
+    const response = await apiRequest<{ success: boolean; data: Note }>(`/api/notes/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return response.note;
+    return response.data;
   },
 
   async delete(id: string): Promise<void> {
@@ -48,10 +48,10 @@ export const notesAPI = {
   },
 
   async restore(id: string): Promise<Note> {
-    const response = await apiRequest<{ success: boolean; note: Note }>(`/api/notes/${id}/restore`, {
+    const response = await apiRequest<{ success: boolean; data: Note }>(`/api/notes/${id}/restore`, {
       method: 'POST',
     });
-    return response.note;
+    return response.data;
   },
 
   async getDeleted(): Promise<Note[]> {
