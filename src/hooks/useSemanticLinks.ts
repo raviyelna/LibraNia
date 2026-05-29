@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { apiClient } from '../lib/api-client';
 
 interface Backlink {
   id: string;
@@ -20,14 +21,9 @@ export function useSemanticLinks(noteId: string) {
   const fetchSemanticLinks = useCallback(async () => {
     try {
       setLoading(true);
-      const data: Backlink[] = await window.api.links.getSemanticLinks(noteId);
-      // Convert Backlink to SemanticLink (linkCount → similarity)
-      const semanticLinks: SemanticLink[] = data.map(link => ({
-        id: link.id,
-        title: link.title,
-        similarity: link.linkCount / 10, // Normalize linkCount to similarity score
-      }));
-      setLinks(semanticLinks);
+      const data = await apiClient.links.getRelated(noteId);
+      // API returns empty array for now (semantic links not implemented)
+      setLinks(data);
       setError(null);
     } catch (err) {
       setError(err as Error);
