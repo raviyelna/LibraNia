@@ -37,8 +37,8 @@ export const aiAPI = {
   },
 
   async getProviders(): Promise<AIProvider[]> {
-    const response = await apiRequest<{ success: boolean; providers: AIProvider[] }>('/api/ai/providers');
-    return response.providers;
+    const response = await apiRequest<{ success: boolean; data: AIProvider[] }>('/api/ai/providers');
+    return response.data || [];
   },
 
   async validateKey(providerId: string, apiKey: string, baseURL?: string): Promise<ValidationResult> {
