@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { aiAPI } from '../api';
+import { handleAPIError } from '../utils/toast';
 
 interface ProviderConfig {
   id: 'claude' | 'openai' | 'deepseek';
@@ -25,13 +27,14 @@ export function useAIProviders() {
     try {
       setLoading(true);
       console.log('[useAIProviders] Fetching providers...');
-      const data = await window.api.providers.getAllConfigs();
+      const data = await aiAPI.getProviders();
       console.log('[useAIProviders] Received data:', data);
       console.log('[useAIProviders] Data type:', typeof data, 'Array:', Array.isArray(data));
       setProviders(data);
       setError(null);
     } catch (err) {
       console.error('[useAIProviders] Error:', err);
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -50,12 +53,13 @@ export function useAIProviders() {
         apiKeyLength: config.apiKey?.length,
         model: config.model
       });
-      await window.api.providers.setConfig(config);
+      await aiAPI.setConfig(config);
       console.log('[useAIProviders] Config saved, refetching...');
       await fetchProviders(); // Refetch all configs
       console.log('[useAIProviders] Refetch complete');
     } catch (err) {
       console.error('[useAIProviders] setConfig error:', err);
+      handleAPIError(err);
       setError(err as Error);
       throw err;
     }
@@ -63,9 +67,10 @@ export function useAIProviders() {
 
   const deleteConfig = useCallback(async (providerId: string) => {
     try {
-      await window.api.providers.deleteConfig(providerId);
+      await aiAPI.deleteConfig(providerId);
       await fetchProviders(); // Refetch all configs
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
       throw err;
     }
@@ -96,7 +101,7 @@ export function useProviderValidation() {
   ) => {
     try {
       setValidating(true);
-      const result = await window.api.providers.validate(providerId, apiKey, baseURL);
+      const result = await aiAPI.validateKey(providerId, apiKey, baseURL);
       setValidationResult(result);
       return result;
     } catch (err) {
