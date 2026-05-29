@@ -14,6 +14,7 @@ import {
   getAllNotes,
   getDeletedNotes,
 } from '../services/notes.service.js';
+import { getBacklinks } from '../services/links.service.js';
 
 const router = Router();
 
@@ -183,6 +184,38 @@ router.get('/api/notes/deleted', async (req, res) => {
     res.json({ success: true, data: notes });
   } catch (error: any) {
     console.error('[Notes API] Get deleted failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/notes/:id/backlinks - Get backlinks for a note
+ * Returns: 200 with array of backlinks
+ */
+router.get('/api/notes/:id/backlinks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getORM();
+    const backlinks = await getBacklinks(id, db);
+
+    res.json({ success: true, data: backlinks });
+  } catch (error: any) {
+    console.error('[Notes API] Get backlinks failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/notes/:id/related - Get related notes (semantic links)
+ * Returns: 200 with array of related notes
+ */
+router.get('/api/notes/:id/related', async (req, res) => {
+  try {
+    const { id } = req.params;
+    // TODO: implement semantic links when sqlite-vec available
+    res.json({ success: true, data: [] });
+  } catch (error: any) {
+    console.error('[Notes API] Get related failed:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
