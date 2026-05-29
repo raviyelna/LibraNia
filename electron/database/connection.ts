@@ -4,9 +4,30 @@ import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { setupFTS5, setupContentFTS5 } from './fts';
 import { setupVectorExtension } from './vec';
 import * as schema from './schema';
+import fs from 'fs/promises';
+import path from 'path';
 
 let db: Database.Database | null = null;
 let orm: BetterSQLite3Database<typeof schema> | null = null;
+
+/**
+ * Get database path with priority: LIBRANIA_DB_PATH > LIBRANIA_DATA_DIR/librania.db > ./data/librania.db
+ * @returns Resolved database path
+ */
+function getDatabasePath(): string {
+  // Priority 1: Explicit database path from environment
+  if (process.env.LIBRANIA_DB_PATH) {
+    return process.env.LIBRANIA_DB_PATH;
+  }
+
+  // Priority 2: Data directory from environment + default filename
+  if (process.env.LIBRANIA_DATA_DIR) {
+    return path.join(process.env.LIBRANIA_DATA_DIR, 'librania.db');
+  }
+
+  // Priority 3: Default to ./data/librania.db in current working directory
+  return path.join(process.cwd(), 'data', 'librania.db');
+}
 
 /**
  * Get the singleton database instance
@@ -34,16 +55,23 @@ export function getORM(): BetterSQLite3Database<typeof schema> {
 
 /**
  * Initialize the database connection and create tables
- * @param dbPath Path to the database file
+ * @param dbPath Optional path to the database file. If not provided, uses getDatabasePath()
  */
-export async function initDatabase(dbPath: string): Promise<void> {
+export async function initDatabase(dbPath?: string): Promise<void> {
   // Close existing connection if any
   if (db) {
     db.close();
   }
 
+  // Resolve database path
+  const resolvedPath = dbPath || getDatabasePath();
+
+  // Ensure parent directory exists
+  const dbDir = path.dirname(resolvedPath);
+  await fs.mkdir(dbDir, { recursive: true });
+
   // Create new database connection
-  db = new Database(dbPath);
+  db = new Database(resolvedPath);
 
   // CRITICAL: Disable recursive triggers to prevent SQLITE_CORRUPT_VTAB
   db.pragma('recursive_triggers = OFF');
