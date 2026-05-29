@@ -4,7 +4,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "outDir": "./electron",
+    "outDir": "./dist",
     "rootDir": ".",
     "noEmit": false,
     "allowImportingTsExtensions": false,
@@ -20,6 +20,6 @@
     "noImplicitThis": false,
     "alwaysStrict": false
   },
-  "include": ["electron/**/*.ts", "src/**/*.ts"],
+  "include": ["backend/**/*.ts", "src/**/*.ts"],
   "exclude": ["electron/**/*.test.ts", "src/**/*.test.ts", "node_modules"]
 }
