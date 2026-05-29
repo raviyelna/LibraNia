@@ -117,14 +117,23 @@ program
 
       // Handle graceful shutdown
       const shutdown = async () => {
-        console.log('\nShutting down server...');
+        console.log('\nShutting down gracefully...');
+
+        // Set 5-second timeout to prevent hanging
+        const timeoutId = setTimeout(() => {
+          console.warn('Warning: Shutdown timeout exceeded (5s), forcing exit');
+          process.exit(1);
+        }, 5000);
+
         try {
           const { stopServer } = await import('../electron/server.ts');
           await stopServer(instance);
+          clearTimeout(timeoutId);
           console.log('Server stopped gracefully');
           process.exit(0);
         } catch (error) {
-          console.error('Error during shutdown:', error);
+          clearTimeout(timeoutId);
+          console.error('Error during shutdown:', error.message);
           process.exit(1);
         }
       };
