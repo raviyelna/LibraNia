@@ -34,7 +34,13 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 5. API key encryption works using Node.js crypto (no Electron safeStorage)
 6. All IPC handlers converted to HTTP POST/GET or WebSocket endpoints
 
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
+
+Plans:
+- [ ] 01-01-PLAN.md — Core infrastructure (Socket.IO, Multer, encryption service)
+- [ ] 01-02-PLAN.md — Database & config migration (path resolution, env vars)
+- [ ] 01-03-PLAN.md — Convert IPC handlers to HTTP routes (notes, content, search, tags, export, config)
+- [ ] 01-04-PLAN.md — WebSocket handlers for AI streaming and graph updates
 
 ### Phase 2: Frontend Adaptation
 **Goal**: Frontend communicates with backend via HTTP/WebSocket instead of Electron IPC
@@ -110,7 +116,7 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Extraction | 0/0 | Not started | - |
+| 1. Backend Extraction | 0/4 | Planning complete | - |
 | 2. Frontend Adaptation | 0/0 | Not started | - |
 | 3. CLI & Server Launcher | 0/0 | Not started | - |
 | 4. Packaging & Distribution | 0/0 | Not started | - |
