@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GraphData, GraphNode, GraphLink } from '../types/graph';
-import { graphAPI } from '../api';
+import { graphAPI, GraphData as APIGraphData } from '../api';
 import { handleAPIError } from '../utils/toast';
 import { useSocket } from '../contexts/SocketContext';
 

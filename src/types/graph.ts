@@ -15,7 +15,7 @@ export interface GraphNode {
 export interface GraphLink {
   source: string;
   target: string;
-  type: 'manual' | 'semantic';
+  type: 'manual' | 'semantic' | 'citation';
   similarity?: number;
 }
 
