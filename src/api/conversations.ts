@@ -24,21 +24,21 @@ export interface Message {
 
 export const conversationsAPI = {
   async getAll(): Promise<Conversation[]> {
-    const response = await apiRequest<{ success: boolean; conversations: Conversation[] }>('/api/conversations');
-    return response.conversations;
+    const response = await apiRequest<{ success: boolean; data: Conversation[] }>('/api/conversations');
+    return response.data || [];
   },
 
   async getById(id: string): Promise<Conversation> {
-    const response = await apiRequest<{ success: boolean; conversation: Conversation }>(`/api/conversations/${id}`);
-    return response.conversation;
+    const response = await apiRequest<{ success: boolean; data: Conversation }>(`/api/conversations/${id}`);
+    return response.data;
   },
 
   async create(data: { title: string }): Promise<Conversation> {
-    const response = await apiRequest<{ success: boolean; conversation: Conversation }>('/api/conversations', {
+    const response = await apiRequest<{ success: boolean; data: Conversation }>('/api/conversations', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.conversation;
+    return response.data;
   },
 
   async update(id: string, data: { title: string }): Promise<void> {
