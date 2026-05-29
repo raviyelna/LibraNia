@@ -4,6 +4,7 @@ import path from 'path';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import apiRoutes from './api/routes';
+import { setupSocketHandlers } from './websocket/socket.handlers';
 
 export interface ServerInstance {
   server: http.Server;
@@ -55,14 +56,8 @@ export async function startServer(
     }
   });
 
-  // Socket.IO connection handling
-  io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
-
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
-    });
-  });
+  // Setup WebSocket handlers
+  setupSocketHandlers(io);
 
   // Start server
   return new Promise((resolve, reject) => {
