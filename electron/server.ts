@@ -37,12 +37,11 @@ export async function startServer(
   app.use(apiRoutes);
 
   // Serve static files from dist directory
-  app.use(express.static(distPath));
+  app.use(express.static(path.join(__dirname, '../dist')));
 
   // SPA routing: catch-all route returns index.html
-  app.use((_req, res) => {
-    const indexPath = path.resolve(distPath, 'index.html');
-    res.sendFile(indexPath);
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
   });
 
   // Create HTTP server
