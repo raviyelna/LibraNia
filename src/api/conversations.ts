@@ -55,7 +55,7 @@ export const conversationsAPI = {
   },
 
   async getMessages(id: string): Promise<Message[]> {
-    const response = await apiRequest<{ success: boolean; messages: Message[] }>(`/api/conversations/${id}/messages`);
-    return response.messages;
+    const response = await apiRequest<{ success: boolean; data: Message[] }>(`/api/conversations/${id}/messages`);
+    return response.data || [];
   },
 };
