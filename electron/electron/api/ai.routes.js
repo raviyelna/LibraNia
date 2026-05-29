@@ -1,0 +1,82 @@
+import { Router } from 'express';
+import { loadAllProvidersFromEnv } from '../store/env.store';
+const router = Router();
+router.use((req, res, next) => {
+    console.log(`[AI API] ${req.method} ${req.path}`);
+    next();
+});
+router.get('/api/ai/models', async (req, res) => {
+    try {
+        const models = [
+            {
+                id: 'deepseek-chat',
+                name: 'DeepSeek Chat',
+                provider: 'deepseek',
+                description: 'DeepSeek conversational model',
+            },
+            {
+                id: 'claude-3-5-sonnet-20241022',
+                name: 'Claude 3.5 Sonnet',
+                provider: 'claude',
+                description: 'Anthropic Claude 3.5 Sonnet',
+            },
+            {
+                id: 'gpt-4o',
+                name: 'GPT-4o',
+                provider: 'openai',
+                description: 'OpenAI GPT-4o',
+            },
+            {
+                id: 'gpt-4o-mini',
+                name: 'GPT-4o Mini',
+                provider: 'openai',
+                description: 'OpenAI GPT-4o Mini',
+            },
+        ];
+        res.json({ success: true, data: models });
+    }
+    catch (error) {
+        console.error('[AI API] Get models failed:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+router.get('/api/ai/providers', async (req, res) => {
+    try {
+        const providers = loadAllProvidersFromEnv();
+        const providerStatus = Object.entries(providers).map(([id, config]) => ({
+            id,
+            configured: !!config.apiKey,
+            model: config.model,
+            baseURL: config.baseURL,
+        }));
+        res.json({ success: true, data: providerStatus });
+    }
+    catch (error) {
+        console.error('[AI API] Get providers failed:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+router.post('/api/ai/validate-key', async (req, res) => {
+    try {
+        const { provider, apiKey } = req.body;
+        if (!provider || !apiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: provider, apiKey',
+            });
+        }
+        const isValid = apiKey.length > 0;
+        res.json({
+            success: true,
+            data: {
+                valid: isValid,
+                provider,
+            },
+        });
+    }
+    catch (error) {
+        console.error('[AI API] Validate key failed:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+export default router;
