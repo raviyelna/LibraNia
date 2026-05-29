@@ -4,6 +4,8 @@ import path from 'path';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { fileURLToPath } from 'url';
+import { initDatabase } from './database/connection.js';
+import { initFileStorage } from './services/file-storage.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +21,12 @@ export async function startServer(
   distPath: string
 ): Promise<ServerInstance> {
   const app = express();
+
+  // Initialize database and file storage
+  const dataDir = process.env.LIBRANIA_DATA_DIR || path.join(process.cwd(), 'data');
+  await initDatabase();
+  initFileStorage(dataDir);
+  console.log('[Init] Database and file storage initialized');
 
   // Middleware
   app.use(express.json());
