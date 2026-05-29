@@ -1,10 +1,12 @@
 import express from 'express';
 import path from 'path';
 import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
 import apiRoutes from './api/routes';
 
 export interface ServerInstance {
   server: http.Server;
+  io: SocketIOServer;
   port: number;
 }
 
@@ -41,11 +43,31 @@ export async function startServer(
     res.sendFile(indexPath);
   });
 
+  // Create HTTP server
+  const server = http.createServer(app);
+
+  // Initialize Socket.IO with CORS configuration
+  const io = new SocketIOServer(server, {
+    cors: {
+      origin: process.env.CORS_ORIGIN || '*',
+      methods: ['GET', 'POST']
+    }
+  });
+
+  // Socket.IO connection handling
+  io.on('connection', (socket) => {
+    console.log('Client connected:', socket.id);
+
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
+    });
+  });
+
   // Start server
   return new Promise((resolve, reject) => {
-    const server = app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Web server started on http://localhost:${port}`);
-      resolve({ server, port });
+      resolve({ server, io, port });
     });
 
     server.on('error', (error: NodeJS.ErrnoException) => {
@@ -53,9 +75,9 @@ export async function startServer(
         console.error(`Port ${port} is already in use, trying ${port + 1}`);
         // Try next port
         const nextPort = port + 1;
-        app.listen(nextPort, () => {
+        server.listen(nextPort, () => {
           console.log(`Web server started on http://localhost:${nextPort}`);
-          resolve({ server, port: nextPort });
+          resolve({ server, io, port: nextPort });
         });
       } else {
         reject(error);
