@@ -40,7 +40,7 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 ### Packaging
 - [x] **PKG-01**: npm package with `librania` CLI binary ✓ 2026-05-29
 - [x] **PKG-02**: Bundled frontend assets in package ✓ 2026-05-29
-- [ ] **PKG-03**: Installation via `npm install -g librania`
+- [x] **PKG-03**: Installation via `npm install -g librania` ✓ 2026-05-29
 - [x] **PKG-04**: Version command `librania --version` ✓ 2026-05-29
 - [x] **PKG-05**: Help command `librania --help` ✓ 2026-05-29
 
@@ -67,7 +67,7 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 | CLI-06 | Phase 3 | Pending |
 | PKG-01 | Phase 4 | ✓ Complete (04-01) |
 | PKG-02 | Phase 4 | ✓ Complete (04-01) |
-| PKG-03 | Phase 4 | Pending |
+| PKG-03 | Phase 4 | ✓ Complete (04-02) |
 | PKG-04 | Phase 4 | ✓ Complete (04-01) |
 | PKG-05 | Phase 4 | ✓ Complete (04-01) |
 | PLAT-01 | Phase 5 | Pending |

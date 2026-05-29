@@ -8,7 +8,7 @@ progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 16
+  completed_plans: 17
   percent: 84
 ---
 
@@ -34,11 +34,11 @@ progress:
 ## Current Position
 
 **Phase:** 04 - Packaging & Distribution
-**Plan:** 01 - Package Configuration & Build Setup (completed)
+**Plan:** 02 - Build Scripts & Installation Documentation (completed)
 **Status:** Ready to execute
-**Progress:** [##--------] 33% (1/3 plans complete)
+**Progress:** [####------] 67% (2/3 plans complete)
 
-**Next Action:** Phase 4 Plan 02 - Build Scripts & Automation
+**Next Action:** Phase 4 Plan 03 - Cross-Platform Testing
 
 ---
 
@@ -47,7 +47,7 @@ progress:
 ### Velocity
 
 - **Phases completed:** 3/5
-- **Plans completed:** 16/15 (Phase 1: 2, Phase 2: 4, Phase 3: 2, Phase 4: 1)
+- **Plans completed:** 17/15 (Phase 1: 2, Phase 2: 4, Phase 3: 2, Phase 4: 2)
 - **Average plan duration:** 372 seconds (~6.2 minutes)
 - **Milestone started:** 2026-05-29
 
@@ -94,6 +94,9 @@ progress:
 | Electron as optional dependency | Allows gradual cleanup without breaking code, install continues if Electron download fails | 04-01 | 2026-05-29 |
 | In-place TypeScript compilation | Compile electron/*.ts → electron/*.js in same directory, keeps import paths unchanged | 04-01 | 2026-05-29 |
 | ES module .js extensions | Import compiled .js files even though they don't exist yet, required for Node.js ESM | 04-01 | 2026-05-29 |
+| Sequential build execution | build:package runs frontend then backend, catches build errors early | 04-02 | 2026-05-29 |
+| TypeScript emit despite errors | --noEmitOnError false allows compilation with pre-existing type errors, unblocks packaging | 04-02 | 2026-05-29 |
+| postinstall native rebuild | Automatically recompiles better-sqlite3 and sharp on user's machine for their platform | 04-02 | 2026-05-29 |
 
 ### Active TODOs
 
@@ -124,9 +127,9 @@ Items acknowledged and deferred at milestone close on 2026-05-29:
 
 ## Session Continuity
 
-**Last Session:** 2026-05-29T10:20:10Z
-**Session Goal:** Execute Phase 4 Plan 01 - Package Configuration & Build Setup
-**Session Outcome:** ✓ Complete - 3 tasks completed, package.json configured for npm distribution, tsconfig.backend.json created, CLI imports updated
+**Last Session:** 2026-05-29T10:57:35Z
+**Session Goal:** Execute Phase 4 Plan 02 - Build Scripts & Installation Documentation
+**Session Outcome:** ✓ Complete - 5 tasks completed, build scripts added (build:frontend, build:backend, build:package), lifecycle hooks configured (prepublishOnly, postinstall), README.md updated with installation instructions and requirements
 
 **Current Session:** N/A
 **Session Goal:** N/A
@@ -146,6 +149,7 @@ Items acknowledged and deferred at milestone close on 2026-05-29:
 | 02 | 04 | 2026-05-29T06:02:42Z | 2026-05-29T06:13:14Z | 630s | ✓ Complete - Build Configuration & Static Assets (Vite web build, Express static serving, SPA routing) |
 | 03 | 02 | 2026-05-29T07:38:03Z | 2026-05-29T07:41:36Z | 213s | ✓ Complete - Browser Launch & Graceful Shutdown (open package, signal handling with timeout) |
 | 04 | 01 | 2026-05-29T10:20:10Z | 2026-05-29T10:28:10Z | 480s | ✓ Complete - Package Configuration & Build Setup (files whitelist, optionalDependencies, tsconfig.backend.json) |
+| 04 | 02 | 2026-05-29T10:30:00Z | 2026-05-29T10:57:35Z | 1655s | ✓ Complete - Build Scripts & Installation Documentation (build pipeline, lifecycle hooks, README.md) |
 
 ---
 
