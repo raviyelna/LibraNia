@@ -32,11 +32,11 @@ export function getGraphData(): GraphData {
     titleToId.set(note.title.toLowerCase(), note.id);
   });
 
-  // Build nodes array
+  // Build nodes array - ensure tags is always an array
   const graphNodes: GraphNode[] = notes.map(note => ({
     id: note.id,
     title: note.title,
-    tags: note.tags,
+    tags: Array.isArray(note.tags) ? note.tags : [],
   }));
 
   // Extract links from note bodies
@@ -59,8 +59,8 @@ export function getGraphData(): GraphData {
   });
 
   return {
-    nodes: graphNodes,
-    links: graphLinks,
+    nodes: graphNodes || [],
+    links: graphLinks || [],
   };
 }
 
