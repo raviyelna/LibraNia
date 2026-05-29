@@ -38,11 +38,11 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 - [ ] **PLAT-05**: Native dependencies (better-sqlite3, sharp) build on both platforms
 
 ### Packaging
-- [ ] **PKG-01**: npm package with `librania` CLI binary
-- [ ] **PKG-02**: Bundled frontend assets in package
+- [x] **PKG-01**: npm package with `librania` CLI binary ✓ 2026-05-29
+- [x] **PKG-02**: Bundled frontend assets in package ✓ 2026-05-29
 - [ ] **PKG-03**: Installation via `npm install -g librania`
-- [ ] **PKG-04**: Version command `librania --version`
-- [ ] **PKG-05**: Help command `librania --help`
+- [x] **PKG-04**: Version command `librania --version` ✓ 2026-05-29
+- [x] **PKG-05**: Help command `librania --help` ✓ 2026-05-29
 
 ## Traceability
 
@@ -65,11 +65,11 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 | CLI-04 | Phase 3 | Pending |
 | CLI-05 | Phase 3 | Pending |
 | CLI-06 | Phase 3 | Pending |
-| PKG-01 | Phase 4 | Pending |
-| PKG-02 | Phase 4 | Pending |
+| PKG-01 | Phase 4 | ✓ Complete (04-01) |
+| PKG-02 | Phase 4 | ✓ Complete (04-01) |
 | PKG-03 | Phase 4 | Pending |
-| PKG-04 | Phase 4 | Pending |
-| PKG-05 | Phase 4 | Pending |
+| PKG-04 | Phase 4 | ✓ Complete (04-01) |
+| PKG-05 | Phase 4 | ✓ Complete (04-01) |
 | PLAT-01 | Phase 5 | Pending |
 | PLAT-02 | Phase 5 | Pending |
 | PLAT-03 | Phase 5 | Pending |
