@@ -18,6 +18,7 @@ export interface CreateContentInput {
   confidence_score?: number;
   note_id?: string;
   message_id?: string;
+  originalFilename?: string;
 }
 
 /**
@@ -81,7 +82,9 @@ const MAX_TEXT_SIZE = 102400;
  */
 export async function validateFileType(buffer: Buffer, filePath: string): Promise<{ mime: string; ext: string }> {
   const { fileTypeFromBuffer } = await import('file-type');
-  const fileType = await fileTypeFromBuffer(buffer);
+  // Convert Buffer to Uint8Array for file-type library
+  const uint8Array = new Uint8Array(buffer);
+  const fileType = await fileTypeFromBuffer(uint8Array);
 
   // Primary validation: magic bytes
   if (fileType) {
@@ -243,7 +246,7 @@ export async function createContent(
   const thumbnailPath = await generateThumbnail(destinationPath, mime);
 
   // Get original filename
-  const originalFilename = path.basename(data.filePath);
+  const originalFilename = data.originalFilename || path.basename(data.filePath);
 
   // Insert metadata to database
   const now = new Date();
