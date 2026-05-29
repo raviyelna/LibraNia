@@ -159,7 +159,7 @@ Plans:
 | 1. Backend Extraction | 2/4 | In progress | - |
 | 2. Frontend Adaptation | 4/4 | Complete | 2026-05-29 |
 | 3. CLI & Server Launcher | 2/2 | Complete | 2026-05-29 |
-| 4. Packaging & Distribution | 3/3 | Complete | 2026-05-29 |
+| 4. Packaging & Distribution | 5/5 | Complete   | 2026-05-29 |
 | 5. Cross-Platform Validation | 0/0 | Not started | - |
 
 ## Coverage
