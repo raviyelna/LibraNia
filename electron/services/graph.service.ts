@@ -1,5 +1,6 @@
 import { getAllNotes } from './file-storage.service';
 import type { GraphData, GraphNode, GraphLink } from '../../src/types/graph';
+import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
 /**
  * Extract wiki-links from note body
@@ -61,4 +62,76 @@ export function getGraphData(): GraphData {
     nodes: graphNodes,
     links: graphLinks,
   };
+}
+
+/**
+ * Create a new graph node
+ */
+export async function createNode(
+  data: { title: string; tags: string[] },
+  db: BetterSQLite3Database
+): Promise<GraphNode> {
+  // For now, return mock data since we're using file-based storage
+  // In future, this will integrate with database
+  const id = `node-${Date.now()}`;
+  return {
+    id,
+    title: data.title,
+    tags: data.tags,
+  };
+}
+
+/**
+ * Update an existing graph node
+ */
+export async function updateNode(
+  id: string,
+  data: { title: string; tags: string[] },
+  db: BetterSQLite3Database
+): Promise<GraphNode> {
+  // For now, return mock data since we're using file-based storage
+  return {
+    id,
+    title: data.title,
+    tags: data.tags,
+  };
+}
+
+/**
+ * Delete a graph node
+ */
+export async function deleteNode(
+  id: string,
+  db: BetterSQLite3Database
+): Promise<boolean> {
+  // For now, return success since we're using file-based storage
+  return true;
+}
+
+/**
+ * Create a new graph edge
+ */
+export async function createEdge(
+  data: { source: string; target: string; type: string },
+  db: BetterSQLite3Database
+): Promise<GraphLink & { id: string }> {
+  // For now, return mock data since we're using file-based storage
+  const id = `edge-${Date.now()}`;
+  return {
+    id,
+    source: data.source,
+    target: data.target,
+    type: data.type,
+  };
+}
+
+/**
+ * Delete a graph edge
+ */
+export async function deleteEdge(
+  id: string,
+  db: BetterSQLite3Database
+): Promise<boolean> {
+  // For now, return success since we're using file-based storage
+  return true;
 }
