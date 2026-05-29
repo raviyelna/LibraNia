@@ -92,57 +92,108 @@ program
       console.log('');
 
       // Start the server
-      const instance = await startServer(port, distPath);
+      try {
+        const instance = await startServer(port, distPath);
 
-      const serverUrl = `http://localhost:${instance.port}`;
-      console.log(`\nLibraNia server running at ${serverUrl}`);
+        const serverUrl = `http://localhost:${instance.port}`;
+        console.log(`\nLibraNia server running at ${serverUrl}`);
 
-      if (instance.port !== port) {
-        console.log(`  (Port ${port} was in use, using ${instance.port} instead)`);
-      }
-
-      console.log('Press Ctrl+C to stop\n');
-
-      // Open browser automatically unless --no-browser flag is used
-      if (options.browser) {
-        try {
-          await open(serverUrl);
-        } catch (error) {
-          console.warn(`Warning: Could not open browser automatically: ${error.message}`);
-          console.warn(`Please open ${serverUrl} manually in your browser.\n`);
+        if (instance.port !== port) {
+          console.log(`  (Port ${port} was in use, using ${instance.port} instead)`);
         }
-      } else {
-        console.log('Server running in headless mode (--no-browser flag used)\n');
-      }
 
-      // Handle graceful shutdown
-      const shutdown = async () => {
-        console.log('\nShutting down gracefully...');
+        console.log('Press Ctrl+C to stop\n');
 
-        // Set 5-second timeout to prevent hanging
-        const timeoutId = setTimeout(() => {
-          console.warn('Warning: Shutdown timeout exceeded (5s), forcing exit');
-          process.exit(1);
-        }, 5000);
+        // Open browser automatically unless --no-browser flag is used
+        if (options.browser) {
+          try {
+            await open(serverUrl);
+          } catch (error) {
+            console.warn(`Warning: Could not open browser automatically: ${error.message}`);
+            console.warn(`Please open ${serverUrl} manually in your browser.\n`);
+          }
+        } else {
+          console.log('Server running in headless mode (--no-browser flag used)\n');
+        }
 
-        try {
-          const { stopServer } = await import('../electron/server.js');
-          await stopServer(instance);
-          clearTimeout(timeoutId);
-          console.log('Server stopped gracefully');
-          process.exit(0);
-        } catch (error) {
-          clearTimeout(timeoutId);
-          console.error('Error during shutdown:', error.message);
+        // Handle graceful shutdown
+        const shutdown = async () => {
+          console.log('\nShutting down gracefully...');
+
+          // Set 5-second timeout to prevent hanging
+          const timeoutId = setTimeout(() => {
+            console.warn('Warning: Shutdown timeout exceeded (5s), forcing exit');
+            process.exit(1);
+          }, 5000);
+
+          try {
+            const { stopServer } = await import('../electron/server.js');
+            await stopServer(instance);
+            clearTimeout(timeoutId);
+            console.log('Server stopped gracefully');
+            process.exit(0);
+          } catch (error) {
+            clearTimeout(timeoutId);
+            console.error('Error during shutdown:', error.message);
+            process.exit(1);
+          }
+        };
+
+        process.on('SIGINT', shutdown);
+        process.on('SIGTERM', shutdown);
+
+      } catch (error) {
+        // Check if error is from native module
+        const errorMsg = error.message || String(error);
+        const isBetterSqlite3Error = errorMsg.includes('better-sqlite3') || errorMsg.includes('better_sqlite3');
+        const isSharpError = errorMsg.includes('sharp');
+
+        if (isBetterSqlite3Error || isSharpError) {
+          const moduleName = isBetterSqlite3Error ? 'better-sqlite3' : 'sharp';
+          const platform = process.platform;
+          const nodeVersion = process.version;
+
+          let buildInstructions = '';
+          if (platform === 'win32') {
+            buildInstructions = 'Install Visual Studio Build Tools:\n  https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022\n  Or run: npm install --global windows-build-tools';
+          } else if (platform === 'linux') {
+            buildInstructions = 'Install build tools:\n  Ubuntu/Debian: sudo apt install build-essential python3\n  Fedora/RHEL: sudo dnf install gcc-c++ make python3\n  Arch: sudo pacman -S base-devel python';
+          } else if (platform === 'darwin') {
+            buildInstructions = 'Install Xcode Command Line Tools:\n  xcode-select --install';
+          }
+
+          console.error(`
+Error: ${moduleName} failed to build on ${platform}
+
+Platform: ${platform}
+Node.js: ${nodeVersion}
+Module: ${moduleName}
+
+${buildInstructions}
+
+After installing build tools, reinstall LibraNia:
+  npm uninstall -g librania
+  npm install -g librania
+
+Original error: ${errorMsg}
+          `.trim());
           process.exit(1);
         }
-      };
 
-      process.on('SIGINT', shutdown);
-      process.on('SIGTERM', shutdown);
+        // Re-throw if not a native module error
+        throw error;
+      }
 
     } catch (error) {
-      console.error('Failed to start server:', error.message);
+      console.error(`
+Failed to start server
+
+Platform: ${process.platform}
+Node.js: ${process.version}
+Error: ${error.message}
+
+If you continue to experience issues, please report this error with the platform information above.
+      `.trim());
       process.exit(1);
     }
   });
