@@ -7,6 +7,7 @@ import { loadProviderFromEnv, loadAllProvidersFromEnv, saveProviderToEnv, delete
 import { createConversation, getAllConversations, getConversation, deleteConversation } from '../services/conversation.service';
 import { createMessage, getMessagesByConversation } from '../services/message.service';
 import { getORM } from '../database/connection';
+import graphRoutes from './graph.routes';
 
 const router = Router();
 
@@ -15,6 +16,9 @@ router.use((req, res, next) => {
   console.log(`[API] ${req.method} ${req.path}`);
   next();
 });
+
+// Register graph routes
+router.use(graphRoutes);
 
 // ============================================================================
 // Provider Config API
