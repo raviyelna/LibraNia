@@ -30,8 +30,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
+    "build:frontend": "vite build",
+    "build:backend": "tsc -p tsconfig.backend.json",
+    "build:package": "npm run build:frontend && npm run build:backend",
     "preview": "vite preview",
     "rebuild": "electron-rebuild",
+    "prepublishOnly": "npm run build:package",
+    "postinstall": "npm rebuild better-sqlite3 sharp",
     "test": "vitest",
     "test:api": "tsx test-api.ts",
     "start:cli": "tsx bin/librania.js start"
