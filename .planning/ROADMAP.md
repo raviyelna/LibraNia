@@ -12,7 +12,7 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 ## Phases
 
 - [ ] **Phase 1: Backend Extraction** - Extract Electron main process to standalone Node.js server
-- [ ] **Phase 2: Frontend Adaptation** - Replace Electron IPC with HTTP/WebSocket clients
+- [x] **Phase 2: Frontend Adaptation** - Replace Electron IPC with HTTP/WebSocket clients ✓ 2026-05-29
 - [ ] **Phase 3: CLI & Server Launcher** - Create CLI entry point with auto-browser launch
 - [ ] **Phase 4: Packaging & Distribution** - Bundle as npm package with binary
 - [ ] **Phase 5: Cross-Platform Validation** - Test on Linux and Windows, verify native dependencies
@@ -71,12 +71,12 @@ Plans:
 **Wave 1** *(parallel execution)*
 
 - [x] 02-01-PLAN.md — API Client Infrastructure (HTTP client + domain modules) ✓ 2026-05-29
-- [ ] 02-02-PLAN.md — Socket.IO Context Provider (WebSocket connection management)
+- [x] 02-02-PLAN.md — Socket.IO Context Provider (WebSocket connection management) ✓ 2026-05-29
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-03-PLAN.md — Migrate Hooks to HTTP/WebSocket (replace all window.api.* calls)
-- [ ] 02-04-PLAN.md — Build Configuration & Static Assets (Vite config, serve from backend)
+- [x] 02-03-PLAN.md — Migrate Hooks to HTTP/WebSocket (replace all window.api.* calls) ✓ 2026-05-29
+- [x] 02-04-PLAN.md — Build Configuration & Static Assets (Vite config, serve from backend) ✓ 2026-05-29
 
 **UI hint**: yes
 

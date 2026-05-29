@@ -24,11 +24,11 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 - [x] **BACK-06**: API key encryption works without Electron safeStorage ✓ 2026-05-29
 
 ### Frontend Migration
-- [ ] **FRONT-01**: Remove Electron renderer IPC calls
+- [x] **FRONT-01**: Remove Electron renderer IPC calls ✓ 2026-05-29
 - [x] **FRONT-02**: Replace `window.api.*` with HTTP/WebSocket clients ✓ 2026-05-29
-- [ ] **FRONT-03**: File uploads use HTML file input instead of Electron dialog
-- [ ] **FRONT-04**: Frontend builds as static assets served by backend
-- [ ] **FRONT-05**: All existing features work in browser (notes, chat, graph, library)
+- [x] **FRONT-03**: File uploads use HTML file input instead of Electron dialog ✓ 2026-05-29
+- [x] **FRONT-04**: Frontend builds as static assets served by backend ✓ 2026-05-29
+- [x] **FRONT-05**: All existing features work in browser (notes, chat, graph, library) ✓ 2026-05-29
 
 ### Cross-Platform
 - [ ] **PLAT-01**: CLI executable works on Linux (bash/zsh)
@@ -54,11 +54,11 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 | BACK-04 | Phase 1 | ✓ Complete (01-01) |
 | BACK-05 | Phase 1 | ✓ Complete (01-02) |
 | BACK-06 | Phase 1 | ✓ Complete (01-01) |
-| FRONT-01 | Phase 2 | Pending |
+| FRONT-01 | Phase 2 | ✓ Complete (02-03) |
 | FRONT-02 | Phase 2 | ✓ Complete (02-01) |
-| FRONT-03 | Phase 2 | Pending |
-| FRONT-04 | Phase 2 | Pending |
-| FRONT-05 | Phase 2 | Pending |
+| FRONT-03 | Phase 2 | ✓ Complete (02-03) |
+| FRONT-04 | Phase 2 | ✓ Complete (02-04) |
+| FRONT-05 | Phase 2 | ✓ Complete (02-04) |
 | CLI-01 | Phase 3 | Pending |
 | CLI-02 | Phase 3 | Pending |
 | CLI-03 | Phase 3 | Pending |
