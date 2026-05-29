@@ -66,7 +66,17 @@ Plans:
 6. User can view 3D graph visualization in browser
 7. User can browse library and view documents in browser
 
-**Plans**: TBD
+**Plans**: 4 plans in 2 waves
+Plans:
+**Wave 1** *(parallel execution)*
+
+- [ ] 02-01-PLAN.md — API Client Infrastructure (HTTP client + domain modules)
+- [ ] 02-02-PLAN.md — Socket.IO Context Provider (WebSocket connection management)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-03-PLAN.md — Migrate Hooks to HTTP/WebSocket (replace all window.api.* calls)
+- [ ] 02-04-PLAN.md — Build Configuration & Static Assets (Vite config, serve from backend)
 
 **UI hint**: yes
 
