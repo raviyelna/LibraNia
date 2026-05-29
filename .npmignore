@@ -3,6 +3,9 @@ electron/**/*.ts
 src/**/*.ts
 src/**/*.tsx
 
+# Force-include compiled JS files (override .gitignore)
+!electron/**/*.js
+
 # Exclude test files
 **/*.test.ts
 **/*.test.tsx
@@ -24,5 +27,4 @@ electron/electron/
 electron/src/
 
 # Exclude other build artifacts
-dist-electron/
 node_modules/
