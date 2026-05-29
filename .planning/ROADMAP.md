@@ -14,7 +14,7 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 - [ ] **Phase 1: Backend Extraction** - Extract Electron main process to standalone Node.js server
 - [x] **Phase 2: Frontend Adaptation** - Replace Electron IPC with HTTP/WebSocket clients ✓ 2026-05-29
 - [x] **Phase 3: CLI & Server Launcher** - Create CLI entry point with auto-browser launch ✓ 2026-05-29
-- [ ] **Phase 4: Packaging & Distribution** - Bundle as npm package with binary
+- [ ] **Phase 4: Packaging & Distribution** - Bundle as npm package with binary (1/3 plans complete)
 - [ ] **Phase 5: Cross-Platform Validation** - Test on Linux and Windows, verify native dependencies
 
 ## Phase Details
@@ -121,16 +121,17 @@ Plans:
 4. User runs `librania --help` and sees usage instructions
 5. Package size < 50MB (vs 120MB+ Electron bundle)
 
-**Plans**: 2 plans in 2 waves
+**Plans**: 3 plans in 2 waves
 
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Package configuration & TypeScript compilation (files whitelist, optionalDependencies, tsconfig.backend.json)
+- [x] 04-01-PLAN.md — Package configuration & TypeScript compilation (files whitelist, optionalDependencies, tsconfig.backend.json) ✓ 2026-05-29
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
 - [ ] 04-02-PLAN.md — Build scripts & publish preparation (build:package, prepublishOnly, postinstall, README.md)
+- [ ] 04-03-PLAN.md — Local package testing (npm pack, npm install -g, verification)
 
 ### Phase 5: Cross-Platform Validation
 
@@ -158,7 +159,7 @@ Plans:
 | 1. Backend Extraction | 2/4 | In progress | - |
 | 2. Frontend Adaptation | 4/4 | Complete | 2026-05-29 |
 | 3. CLI & Server Launcher | 2/2 | Complete | 2026-05-29 |
-| 4. Packaging & Distribution | 0/0 | Not started | - |
+| 4. Packaging & Distribution | 1/3 | In progress | - |
 | 5. Cross-Platform Validation | 0/0 | Not started | - |
 
 ## Coverage
@@ -184,11 +185,11 @@ All 31 v2 requirements mapped:
 | CLI-04 | Phase 3 | Complete |
 | CLI-05 | Phase 3 | Complete |
 | CLI-06 | Phase 3 | Complete |
-| PKG-01 | Phase 4 | Pending |
-| PKG-02 | Phase 4 | Pending |
+| PKG-01 | Phase 4 | Complete |
+| PKG-02 | Phase 4 | Complete |
 | PKG-03 | Phase 4 | Pending |
-| PKG-04 | Phase 4 | Pending |
-| PKG-05 | Phase 4 | Pending |
+| PKG-04 | Phase 4 | Complete |
+| PKG-05 | Phase 4 | Complete |
 | PLAT-01 | Phase 5 | Pending |
 | PLAT-02 | Phase 5 | Pending |
 | PLAT-03 | Phase 5 | Pending |

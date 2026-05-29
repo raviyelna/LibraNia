@@ -8,8 +8,8 @@ progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 15
-  percent: 80
+  completed_plans: 16
+  percent: 84
 ---
 
 # State: LibraNia v2.0
@@ -23,7 +23,7 @@ progress:
 
 **Core Value:** Answers must be verified by multiple AI models before storage — ensuring knowledge in the library is cross-validated and trustworthy.
 
-**Current Focus:** Phase 2 - Frontend Adaptation in progress
+**Current Focus:** Phase 4 - Packaging & Distribution in progress
 
 **What This Is:** LibraNia is a personal knowledge management system that visualizes information as an interconnected neural network. Users can ask questions, and the AI researches topics using both web search and model knowledge, then stores verified answers with rich context in a local library.
 
@@ -33,12 +33,12 @@ progress:
 
 ## Current Position
 
-**Phase:** 03 - CLI & Server Launcher
-**Plan:** 02 - Browser Launch & Graceful Shutdown (completed)
+**Phase:** 04 - Packaging & Distribution
+**Plan:** 01 - Package Configuration & Build Setup (completed)
 **Status:** Ready to execute
-**Progress:** [##########] 100% (2/2 plans complete)
+**Progress:** [##--------] 33% (1/3 plans complete)
 
-**Next Action:** Phase 3 complete - ready for Phase 4 (Packaging & Distribution)
+**Next Action:** Phase 4 Plan 02 - Build Scripts & Automation
 
 ---
 
@@ -46,9 +46,9 @@ progress:
 
 ### Velocity
 
-- **Phases completed:** 1/5
-- **Plans completed:** 6/6 (Phase 1: 2, Phase 2: 4, Phase 3: 2)
-- **Average plan duration:** 380 seconds (~6.3 minutes)
+- **Phases completed:** 3/5
+- **Plans completed:** 16/15 (Phase 1: 2, Phase 2: 4, Phase 3: 2, Phase 4: 1)
+- **Average plan duration:** 372 seconds (~6.2 minutes)
 - **Milestone started:** 2026-05-29
 
 ### Quality
@@ -90,6 +90,10 @@ progress:
 | Use open package for browser launch | Cross-platform (20M+ weekly downloads), handles OS-specific commands automatically | 03-02 | 2026-05-29 |
 | 5-second shutdown timeout | Prevents hanging if stopServer() doesn't complete, force exit to avoid orphaned processes | 03-02 | 2026-05-29 |
 | Non-blocking browser launch | Wrap open() in try-catch, log warning on failure, server continues running for manual access | 03-02 | 2026-05-29 |
+| Full bundle approach | Include all runtime dependencies in package, simpler than bundling, ~40-50MB target | 04-01 | 2026-05-29 |
+| Electron as optional dependency | Allows gradual cleanup without breaking code, install continues if Electron download fails | 04-01 | 2026-05-29 |
+| In-place TypeScript compilation | Compile electron/*.ts → electron/*.js in same directory, keeps import paths unchanged | 04-01 | 2026-05-29 |
+| ES module .js extensions | Import compiled .js files even though they don't exist yet, required for Node.js ESM | 04-01 | 2026-05-29 |
 
 ### Active TODOs
 
@@ -120,9 +124,9 @@ Items acknowledged and deferred at milestone close on 2026-05-29:
 
 ## Session Continuity
 
-**Last Session:** 2026-05-29T09:22:05.367Z
-**Session Goal:** Execute Phase 3 Plan 02 - Browser Launch & Graceful Shutdown
-**Session Outcome:** ✓ Complete - 3 tasks completed, browser auto-launch and graceful shutdown implemented
+**Last Session:** 2026-05-29T10:20:10Z
+**Session Goal:** Execute Phase 4 Plan 01 - Package Configuration & Build Setup
+**Session Outcome:** ✓ Complete - 3 tasks completed, package.json configured for npm distribution, tsconfig.backend.json created, CLI imports updated
 
 **Current Session:** N/A
 **Session Goal:** N/A
@@ -141,6 +145,7 @@ Items acknowledged and deferred at milestone close on 2026-05-29:
 | 02 | 03 | 2026-05-29T04:20:28Z | 2026-05-29T04:33:19Z | 540s | ✓ Complete - Migrate Hooks to HTTP/WebSocket (8 hooks, file upload, 32 window.api eliminated) |
 | 02 | 04 | 2026-05-29T06:02:42Z | 2026-05-29T06:13:14Z | 630s | ✓ Complete - Build Configuration & Static Assets (Vite web build, Express static serving, SPA routing) |
 | 03 | 02 | 2026-05-29T07:38:03Z | 2026-05-29T07:41:36Z | 213s | ✓ Complete - Browser Launch & Graceful Shutdown (open package, signal handling with timeout) |
+| 04 | 01 | 2026-05-29T10:20:10Z | 2026-05-29T10:28:10Z | 480s | ✓ Complete - Package Configuration & Build Setup (files whitelist, optionalDependencies, tsconfig.backend.json) |
 
 ---
 
