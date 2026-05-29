@@ -1,6 +1,6 @@
 import { eq, asc, and, isNull, desc } from 'drizzle-orm';
-import { getDatabase, getORM } from '../database/connection';
-import { tags, noteTags, notes } from '../database/schema';
+import { getDatabase, getORM } from '../database/connection.js';
+import { tags, noteTags, notes } from '../database/schema.js';
 import { randomUUID } from 'crypto';
 
 /**

@@ -3,7 +3,7 @@
  * Fallback when Tavily not configured
  */
 
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 
 interface SearchResult {
   title: string;

@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 export function registerExportHandlers() {
     ipcMain.handle('export:notes', async () => {
         logger.info('IPC: export:notes (stubbed)');

@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express';
-import { loadAllProvidersFromEnv, loadProviderFromEnv } from '../store/env.store';
+import { loadAllProvidersFromEnv, loadProviderFromEnv } from '../store/env.store.js';
 
 const router = Router();
 

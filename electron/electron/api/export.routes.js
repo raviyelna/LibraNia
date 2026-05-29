@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getORM } from '../database/connection';
-import { getAllNotes } from '../services/notes.service';
+import { getORM } from '../database/connection.js';
+import { getAllNotes } from '../services/notes.service.js';
 const router = Router();
 router.use((req, res, next) => {
     console.log(`[Export API] ${req.method} ${req.path}`);

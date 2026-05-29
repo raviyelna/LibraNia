@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron';
-import { logger } from '../logger';
-import { getORM } from '../database/connection';
+import { logger } from '../logger.js';
+import { getORM } from '../database/connection.js';
 import {
   createConversation,
   addMessage,
@@ -8,17 +8,17 @@ import {
   getConversation,
   getAllConversations,
   deleteConversation,
-} from '../services/conversation.service';
-import { getAIService } from '../services/ai/ai.service';
-import { WebSearchService } from '../services/ai/websearch.service';
-import { getNoteById } from '../services/notes.service';
+} from '../services/conversation.service.js';
+import { getAIService } from '../services/ai/ai.service.js';
+import { WebSearchService } from '../services/ai/websearch.service.js';
+import { getNoteById } from '../services/notes.service.js';
 import {
   setProviderConfig,
   getProviderConfig,
   getAllProviderConfigs,
   deleteProviderConfig,
   type ProviderConfig,
-} from '../store/secure.store';
+} from '../store/secure.store.js';
 
 /**
  * Register IPC handlers for AI and chat operations

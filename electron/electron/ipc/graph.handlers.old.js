@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { getORM } from '../database/connection';
-import { getGraphData } from '../services/graph.service';
+import { logger } from '../logger.js';
+import { getORM } from '../database/connection.js';
+import { getGraphData } from '../services/graph.service.js';
 export function registerGraphHandlers() {
     ipcMain.handle('graph:getData', async () => {
         try {

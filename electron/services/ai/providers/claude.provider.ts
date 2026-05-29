@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { AIProvider, Message, GenerateOptions } from './base.provider';
+import type { AIProvider, Message, GenerateOptions } from './base.provider.js';
 
 /**
  * Claude AI provider implementation using official Anthropic SDK.

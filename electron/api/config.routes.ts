@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig';
+import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig.js';
 
 const router = Router();
 

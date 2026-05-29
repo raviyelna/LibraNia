@@ -1,7 +1,7 @@
 import { eq, desc } from 'drizzle-orm';
-import { conversations, messages, citations } from '../database/schema';
+import { conversations, messages, citations } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../database/schema';
+import * as schema from '../database/schema.js';
 
 export interface CreateConversationInput {
   title: string; // Auto-generated from first 50 chars per D-11

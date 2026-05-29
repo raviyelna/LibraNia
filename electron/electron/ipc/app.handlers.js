@@ -1,5 +1,5 @@
 import { ipcMain, app } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 export function registerAppHandlers() {
     ipcMain.handle('app:restart', async () => {
         try {

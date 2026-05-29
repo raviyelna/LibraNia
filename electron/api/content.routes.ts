@@ -4,14 +4,14 @@
  */
 
 import { Router } from 'express';
-import { getORM } from '../database/connection';
-import { upload } from '../middleware/upload.middleware';
+import { getORM } from '../database/connection.js';
+import { upload } from '../middleware/upload.middleware.js';
 import {
   createContent,
   getContentById,
   getAllContent,
   deleteContent,
-} from '../services/content.service';
+} from '../services/content.service.js';
 
 const router = Router();
 

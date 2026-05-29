@@ -1,6 +1,6 @@
-import { getAllNotes, getNoteById, createNote } from '../services/file-storage.service';
-import { getNoteTags, setNoteTags } from '../services/tags.service';
-import { logger } from '../logger';
+import { getAllNotes, getNoteById, createNote } from '../services/file-storage.service.js';
+import { getNoteTags, setNoteTags } from '../services/tags.service.js';
+import { logger } from '../logger.js';
 export const RESEARCH_TOOLS = [
     {
         name: 'search_notes',

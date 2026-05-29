@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { loadAllProvidersFromEnv } from '../store/env.store';
+import { loadAllProvidersFromEnv } from '../store/env.store.js';
 const router = Router();
 router.use((req, res, next) => {
     console.log(`[AI API] ${req.method} ${req.path}`);

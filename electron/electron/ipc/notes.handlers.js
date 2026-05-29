@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { createNote, updateNote, deleteNote, restoreNote, getNoteById, getAllNotes, syncFilesystemToDb, } from '../services/file-storage.service';
+import { logger } from '../logger.js';
+import { createNote, updateNote, deleteNote, restoreNote, getNoteById, getAllNotes, syncFilesystemToDb, } from '../services/file-storage.service.js';
 export function registerNotesHandlers(mainWindow) {
     ipcMain.handle('notes:create', async (event, data) => {
         try {

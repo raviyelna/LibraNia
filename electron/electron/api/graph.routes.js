@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { getORM } from '../database/connection';
-import { logger } from '../logger';
-import { getGraphData } from '../services/graph.service';
+import { getORM } from '../database/connection.js';
+import { logger } from '../logger.js';
+import { getGraphData } from '../services/graph.service.js';
 const router = Router();
 router.use((req, res, next) => {
     logger.info(`[Graph API] ${req.method} ${req.path}`);

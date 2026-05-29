@@ -1,6 +1,6 @@
-import { logger } from '../logger';
-import { callClaude, callDeepSeek, callOpenAI } from '../ipc/ai.handlers';
-import { loadProviderFromEnv } from '../store/env.store';
+import { logger } from '../logger.js';
+import { callClaude, callDeepSeek, callOpenAI } from '../ipc/ai.handlers.js';
+import { loadProviderFromEnv } from '../store/env.store.js';
 export function setupSocketHandlers(io) {
     io.on('connection', (socket) => {
         logger.info('WebSocket client connected', { socketId: socket.id });

@@ -1,5 +1,5 @@
 import { eq, desc } from 'drizzle-orm';
-import { conversations, messages, citations } from '../database/schema';
+import { conversations, messages, citations } from '../database/schema.js';
 export async function createConversation(data, db) {
     const now = new Date();
     const id = crypto.randomUUID();

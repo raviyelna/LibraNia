@@ -1,19 +1,19 @@
 import { ipcMain, shell, app } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 import path from 'path';
-import { getORM } from '../database/connection';
+import { getORM } from '../database/connection.js';
 import {
   createConversation,
   getConversation,
   getAllConversations,
   deleteConversation,
-} from '../services/conversation.service';
+} from '../services/conversation.service.js';
 import {
   saveProviderToEnv,
   loadProviderFromEnv,
   loadAllProvidersFromEnv,
   deleteProviderFromEnv,
-} from '../store/env.store';
+} from '../store/env.store.js';
 
 export function registerMiscHandlers() {
   // Logs

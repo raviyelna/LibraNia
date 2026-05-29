@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import { eq, desc } from 'drizzle-orm';
-import { content } from '../database/schema';
+import { content } from '../database/schema.js';
 const ALLOWED_MIME_TYPES = [
     'application/pdf',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

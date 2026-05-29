@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAllTags, createTag, deleteTag, getNoteTags, addTagsToNote, removeTagFromNote, } from '../services/tags.service';
+import { getAllTags, createTag, deleteTag, getNoteTags, addTagsToNote, removeTagFromNote, } from '../services/tags.service.js';
 const router = Router();
 router.use((req, res, next) => {
     console.log(`[Tags API] ${req.method} ${req.path}`);

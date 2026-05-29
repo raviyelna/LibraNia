@@ -1,8 +1,8 @@
-import { ClaudeProvider } from './providers/claude.provider';
-import { OpenAIProvider } from './providers/openai.provider';
-import { DeepSeekProvider } from './providers/deepseek.provider';
-import type { AIProvider, Message, GenerateOptions } from './providers/base.provider';
-import { getProviderConfig } from '../../store/secure.store';
+import { ClaudeProvider } from './providers/claude.provider.js';
+import { OpenAIProvider } from './providers/openai.provider.js';
+import { DeepSeekProvider } from './providers/deepseek.provider.js';
+import type { AIProvider, Message, GenerateOptions } from './providers/base.provider.js';
+import { getProviderConfig } from '../../store/secure.store.js';
 
 /**
  * Retry a function with exponential backoff.

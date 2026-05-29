@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { getORM } from '../database/connection';
+import { getORM } from '../database/connection.js';
 import {
   createNote,
   updateNote,
@@ -13,7 +13,7 @@ import {
   getNoteById,
   getAllNotes,
   getDeletedNotes,
-} from '../services/notes.service';
+} from '../services/notes.service.js';
 
 const router = Router();
 

@@ -5,9 +5,9 @@ import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 // import sharp from 'sharp'; // Disabled for phase 6 testing - native module issues
 import { eq, desc } from 'drizzle-orm';
-import { content, contentTags } from '../database/schema';
+import { content, contentTags } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../database/schema';
+import * as schema from '../database/schema.js';
 
 /**
  * Input interface for creating content

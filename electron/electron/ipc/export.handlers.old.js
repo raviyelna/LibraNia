@@ -1,7 +1,7 @@
 import { ipcMain, dialog } from 'electron';
-import { logger } from '../logger';
-import { getORM } from '../database/connection';
-import { exportNotesToMarkdown, exportNotesToJSON } from '../services/export.service';
+import { logger } from '../logger.js';
+import { getORM } from '../database/connection.js';
+import { exportNotesToMarkdown, exportNotesToJSON } from '../services/export.service.js';
 export function registerExportHandlers() {
     const orm = getORM();
     ipcMain.handle('export:selectDirectory', async () => {

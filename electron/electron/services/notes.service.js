@@ -1,7 +1,7 @@
 import { eq, isNull, isNotNull, desc, and } from 'drizzle-orm';
-import { notes } from '../database/schema';
-import { updateNoteLinks } from './links.service';
-import { getDatabase } from '../database/connection';
+import { notes } from '../database/schema.js';
+import { updateNoteLinks } from './links.service.js';
+import { getDatabase } from '../database/connection.js';
 export async function createNote(data, db) {
     const now = new Date();
     const id = crypto.randomUUID();

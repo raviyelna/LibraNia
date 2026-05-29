@@ -2,10 +2,10 @@
  * Tool definitions for AI research workflow
  */
 
-import { getAllNotes, getNoteById, createNote } from '../services/file-storage.service';
-import { getBacklinks } from '../services/links.service';
-import { getNoteTags, setNoteTags } from '../services/tags.service';
-import { logger } from '../logger';
+import { getAllNotes, getNoteById, createNote } from '../services/file-storage.service.js';
+import { getBacklinks } from '../services/links.service.js';
+import { getNoteTags, setNoteTags } from '../services/tags.service.js';
+import { logger } from '../logger.js';
 import type Database from 'better-sqlite3';
 
 export interface Tool {

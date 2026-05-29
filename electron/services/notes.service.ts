@@ -1,11 +1,11 @@
 import { eq, isNull, isNotNull, desc, and } from 'drizzle-orm';
-import { notes } from '../database/schema';
+import { notes } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../database/schema';
-import { updateNoteLinks, createSemanticLinks, deleteSemanticLinks } from './links.service';
-import { generateEmbedding, storeEmbedding, updateEmbedding, getEmbedding } from './embeddings.service';
-import { findSimilarNotes } from '../database/vec';
-import { getDatabase } from '../database/connection';
+import * as schema from '../database/schema.js';
+import { updateNoteLinks, createSemanticLinks, deleteSemanticLinks } from './links.service.js';
+import { generateEmbedding, storeEmbedding, updateEmbedding, getEmbedding } from './embeddings.service.js';
+import { findSimilarNotes } from '../database/vec.js';
+import { getDatabase } from '../database/connection.js';
 
 export interface CreateNoteInput {
   title: string;

@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3';
-import { generateEmbedding } from './embeddings.service';
-import { findSimilarNotes } from '../database/vec';
+import { generateEmbedding } from './embeddings.service.js';
+import { findSimilarNotes } from '../database/vec.js';
 
 /**
  * Quick navigation search - title-only search with prefix matching

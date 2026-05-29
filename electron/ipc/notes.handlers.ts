@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 import {
   createNote,
   updateNote,
@@ -8,8 +8,8 @@ import {
   getNoteById,
   getAllNotes,
   syncFilesystemToDb,
-} from '../services/file-storage.service';
-import { getBacklinks, getSemanticLinks } from '../services/links.service';
+} from '../services/file-storage.service.js';
+import { getBacklinks, getSemanticLinks } from '../services/links.service.js';
 
 /**
  * Register IPC handlers for note operations

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
-import { getORM } from '../database/connection';
-import { messages } from '../database/schema';
+import { getORM } from '../database/connection.js';
+import { messages } from '../database/schema.js';
 import { randomUUID } from 'crypto';
 export async function createMessage(data) {
     const db = await getORM();

@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { getORM } from '../database/connection';
+import { getORM } from '../database/connection.js';
 import {
   getAllTags,
   createTag,
@@ -12,7 +12,7 @@ import {
   getNoteTags,
   addTagsToNote,
   removeTagFromNote,
-} from '../services/tags.service';
+} from '../services/tags.service.js';
 
 const router = Router();
 

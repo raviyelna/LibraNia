@@ -1,7 +1,7 @@
-import { ClaudeProvider } from './providers/claude.provider';
-import { OpenAIProvider } from './providers/openai.provider';
-import { DeepSeekProvider } from './providers/deepseek.provider';
-import { getProviderConfig } from '../../store/secure.store';
+import { ClaudeProvider } from './providers/claude.provider.js';
+import { OpenAIProvider } from './providers/openai.provider.js';
+import { DeepSeekProvider } from './providers/deepseek.provider.js';
+import { getProviderConfig } from '../../store/secure.store.js';
 async function retryWithBackoff(fn, maxRetries = 3, baseDelay = 1000) {
     let lastError;
     for (let attempt = 0; attempt < maxRetries; attempt++) {
