@@ -7,7 +7,7 @@
  */
 
 import { Command } from 'commander';
-import { startServer } from '../electron/server.ts';
+import { startServer } from '../electron/server.js';
 import open from 'open';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -126,7 +126,7 @@ program
         }, 5000);
 
         try {
-          const { stopServer } = await import('../electron/server.ts');
+          const { stopServer } = await import('../electron/server.js');
           await stopServer(instance);
           clearTimeout(timeoutId);
           console.log('Server stopped gracefully');
