@@ -24,11 +24,11 @@ export interface GraphData {
 
 export const graphAPI = {
   async getData(): Promise<GraphData> {
-    const response = await apiRequest<{ success: boolean; data: { nodes: GraphNode[]; edges: GraphLink[] } }>('/api/graph');
-    // Backend returns 'edges', frontend expects 'links'
+    const response = await apiRequest<{ success: boolean; data: { nodes: GraphNode[]; links: GraphLink[] } }>('/api/graph');
+    // Backend returns 'links', frontend expects 'links'
     return {
-      nodes: response.data.nodes,
-      links: response.data.edges,
+      nodes: response.data.nodes || [],
+      links: response.data.links || [],
     };
   },
 
