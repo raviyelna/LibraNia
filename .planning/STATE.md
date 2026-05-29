@@ -34,11 +34,11 @@ progress:
 ## Current Position
 
 **Phase:** 02 - Frontend Adaptation
-**Plan:** 01 - API Client Infrastructure (completed)
+**Plan:** 04 - Build Configuration & Static Assets (completed)
 **Status:** Executing Phase 2
-**Progress:** [#####     ] 50% (2/4 plans complete)
+**Progress:** [##########] 100% (4/4 plans complete)
 
-**Next Action:** Execute Plan 02-02 (Socket.IO Context Provider)
+**Next Action:** Phase 2 complete - ready for Phase 3 (CLI & Server Launcher)
 
 ---
 
@@ -47,8 +47,8 @@ progress:
 ### Velocity
 
 - **Phases completed:** 0/5
-- **Plans completed:** 2/4 (Phase 1: 1, Phase 2: 1)
-- **Average plan duration:** 742 seconds (~12 minutes)
+- **Plans completed:** 4/4 (Phase 1: 0, Phase 2: 4)
+- **Average plan duration:** 509 seconds (~8.5 minutes)
 - **Milestone started:** 2026-05-29
 
 ### Quality
@@ -86,6 +86,7 @@ progress:
 | Native fetch over axios | Zero dependencies, modern browsers have excellent fetch support, custom wrapper sufficient for error handling | 02-01 | 2026-05-29 |
 | Domain-specific API modules | Mirrors backend route structure, easier to maintain, clear separation of concerns | 02-01 | 2026-05-29 |
 | Unwrap response data in API methods | Hooks receive clean data objects, not { success, data } wrappers, simplifies hook code | 02-01 | 2026-05-29 |
+| Middleware-based catch-all route | Express 5.2.1 path-to-regexp no longer supports '*' wildcards, middleware approach avoids parsing issues | 02-04 | 2026-05-29 |
 
 ### Active TODOs
 
@@ -133,6 +134,9 @@ Items acknowledged and deferred at milestone close on 2026-05-29:
 | 01 | 01 | 2026-05-29T02:03:55Z | 2026-05-29T02:22:10Z | 1035s | ✓ Complete - Core Infrastructure (Socket.IO, Multer, Encryption) |
 | 01 | 02 | 2026-05-29T02:03:55Z | 2026-05-29T02:19:33Z | 938s | ✓ Complete - Database & Config Migration |
 | 02 | 01 | 2026-05-29T04:13:00Z | 2026-05-29T04:20:00Z | 420s | ✓ Complete - API Client Infrastructure (HTTP client, domain modules, toast notifications) |
+| 02 | 02 | 2026-05-29T04:20:00Z | 2026-05-29T04:20:28Z | 448s | ✓ Complete - Socket.IO Context Provider (global connection, reconnection, toast notifications) |
+| 02 | 03 | 2026-05-29T04:20:28Z | 2026-05-29T04:33:19Z | 540s | ✓ Complete - Migrate Hooks to HTTP/WebSocket (8 hooks, file upload, 32 window.api eliminated) |
+| 02 | 04 | 2026-05-29T06:02:42Z | 2026-05-29T06:13:14Z | 630s | ✓ Complete - Build Configuration & Static Assets (Vite web build, Express static serving, SPA routing) |
 
 ---
 
