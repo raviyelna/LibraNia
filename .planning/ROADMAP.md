@@ -41,7 +41,7 @@ Plans:
 **Wave 1**
 
 - [ ] 01-01-PLAN.md — Core infrastructure (Socket.IO, Multer, encryption service)
-- [ ] 01-02-PLAN.md — Database & config migration (path resolution, env vars)
+- [x] 01-02-PLAN.md — Database & config migration (path resolution, env vars) ✓ 2026-05-29
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
