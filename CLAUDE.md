@@ -19,12 +19,14 @@ LibraNia is a personal knowledge management system that visualizes information a
 ## Technology Stack
 
 ## Recommended Stack
-### Desktop Framework
+### Backend Runtime
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| **Electron** | 42.x | Desktop application framework | **User decision (Phase 1):** Mature ecosystem, larger community, more plugins. Trade-off: larger bundles (120MB+ vs 3-10MB for Tauri) and higher memory (200MB+ vs 50MB) accepted for ecosystem maturity. |
+| **Node.js** | 18+ | Pure Node.js server (no Electron) | **Migration complete:** Moved from Electron desktop app to CLI server. Smaller bundles (10MB vs 120MB+), lower memory (50MB vs 200MB+), easier deployment (Docker, cloud, VPS). Trade-off: no native desktop features (system tray, native menus). |
 | TypeScript | 5.7+ | Type-safe development | Industry standard for large applications, catches errors at compile time, excellent IDE support, required for type-safe AI SDK integration |
-| Vite | 6.0+ | Build tool and dev server | Fast HMR, native ESM, excellent Electron integration via vite-plugin-electron, optimized production builds, 10x faster than webpack-based tools |
+| Express | 5.x | HTTP API framework | Mature, minimal, excellent middleware ecosystem, perfect for REST APIs |
+| Socket.IO | 4.x | WebSocket server | Real-time bidirectional communication for AI streaming responses, automatic reconnection, room support |
+| Vite | 6.0+ | Build tool and dev server | Fast HMR, native ESM, optimized production builds, 10x faster than webpack-based tools |
 ### Frontend Framework
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
@@ -40,7 +42,7 @@ LibraNia is a personal knowledge management system that visualizes information a
 ### Database & Storage
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| better-sqlite3 | 12.6+ | SQLite driver | Fastest Node.js SQLite driver, synchronous API (simpler than async), full transaction support, works in Electron/Tauri, native performance |
+| better-sqlite3 | 12.6+ | SQLite driver | Fastest Node.js SQLite driver, synchronous API (simpler than async), full transaction support, native performance |
 | sqlite-vec | Latest | Vector search extension | Native SQLite extension for semantic search, supports float32/int8/bit vectors, SIMD optimizations, no separate vector DB needed, keeps everything in SQLite |
 | Drizzle ORM | 0.36+ | Type-safe database queries | Lightweight TypeScript ORM, excellent SQLite support, type-safe schema and queries, better DX than raw SQL, smaller than Prisma |
 ### AI Integration
@@ -60,27 +62,26 @@ LibraNia is a personal knowledge management system that visualizes information a
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
 | Vitest | 2.1+ | Unit testing | Vite-native, fastest test runner, compatible with Jest API, excellent TypeScript support |
-| Playwright | Latest | E2E testing | Supports Electron testing, reliable for desktop app automation, cross-browser testing capabilities |
+| Playwright | Latest | E2E testing | Reliable for web app automation, cross-browser testing capabilities |
 | ESLint | 9.x | Linting | Flat config system (simpler), TypeScript support via typescript-eslint, catches bugs early |
 | Prettier | 3.4+ | Code formatting | Opinionated formatter, integrates with ESLint, maintains consistent code style |
 ### Build & Packaging
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| vite-plugin-electron | Latest | Electron + Vite integration | Unified build pipeline, hot reload for main process, automatic preload bundling |
-| electron-builder | Latest | App packaging and distribution | Cross-platform builds, code signing, auto-updates, installer generation |
+| npm | 7+ | Package manager and distribution | Standard Node.js package manager, npm registry for global CLI installation |
 ## Alternatives Considered
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Desktop Framework | Electron 42 | Tauri 2.0 | **User chose Electron** for mature ecosystem and larger community. Tauri offers smaller bundles (3-10MB vs 120MB+) and lower memory (50MB vs 200MB+), but Electron's maturity was prioritized. |
+| Backend Runtime | Node.js CLI | Electron Desktop | **Migration complete:** Electron removed. Node.js CLI offers smaller bundles (10MB vs 120MB+), lower memory (50MB vs 200MB+), easier deployment. Trade-off: no native desktop features (system tray, native menus, file dialogs). |
 | Database | SQLite + better-sqlite3 | PostgreSQL | Overkill for local-first, requires separate server process, more complex setup |
-| Vector Search | sqlite-vec | ChromaDB | ChromaDB requires separate server, sync complexity, heavier weight for desktop app |
+| Vector Search | sqlite-vec | ChromaDB | ChromaDB requires separate server, sync complexity, heavier weight for CLI app |
 | Vector Search | sqlite-vec | Vectra | Less mature, fewer optimizations, smaller community |
 | ORM | Drizzle | Prisma | Prisma heavier, slower, migration system adds complexity for local app |
 | State Management | Zustand | Redux Toolkit | Redux more boilerplate, Zustand simpler for this use case, both are production-ready |
 | 3D Visualization | react-force-graph-3d | react-three-fiber + custom | R3F requires building force simulation from scratch, react-force-graph-3d provides this out-of-box |
 | UI Components | Radix + shadcn/ui | Material-UI | MUI opinionated, heavier bundles, less customization freedom |
 | UI Components | Radix + shadcn/ui | Ant Design | Ant Design heavier, less modern styling approach |
-| Build Tool | Vite 6 | Webpack | Vite 10x faster, better DX, native ESM, excellent Electron integration via vite-plugin-electron |
+| Build Tool | Vite 6 | Webpack | Vite 10x faster, better DX, native ESM |
 ## Installation
 ### Core Dependencies
 # Desktop framework
@@ -95,12 +96,12 @@ LibraNia is a personal knowledge management system that visualizes information a
 # Download from: https://github.com/asg017/sqlite-vec/releases
 # Load as SQLite extension in better-sqlite3
 ## Architecture Notes
-### Electron Architecture
-- **Main Process:** Node.js (handles file system, SQLite, window management, system integration)
-- **Renderer Process:** React + Vite (runs in Chromium, isolated via contextBridge)
-- **IPC:** contextBridge + ipcMain/ipcRenderer for secure communication
-- **IPC:** Type-safe commands via @tauri-apps/api
-- **Security:** CSP enabled, no Node.js in renderer, Rust backend sandboxed
+### Node.js CLI Architecture
+- **Backend:** Express HTTP server + Socket.IO WebSocket server
+- **Frontend:** React SPA served as static files from dist/
+- **Communication:** HTTP REST API + WebSocket for real-time streaming
+- **Database:** SQLite with better-sqlite3 (synchronous API)
+- **Deployment:** CLI command starts server, web UI accessed via browser at http://localhost:3000
 ### Data Flow
 ### Performance Considerations
 - **Graph rendering:** react-force-graph-3d handles 1000+ nodes efficiently with WebGL
@@ -108,7 +109,7 @@ LibraNia is a personal knowledge management system that visualizes information a
 - **AI streaming:** TanStack Query manages streaming responses with proper cancellation
 - **State management:** Zustand minimal re-renders, works outside React for background tasks
 ## Version Pinning Strategy
-- Tauri: `^2.0.0` (major version, stable API)
+- Node.js: `>=18.0.0` (LTS, required for native modules)
 - React: `^19.0.0` (stable, concurrent features needed)
 - Three.js: `^0.172.0` (follows r-prefix versioning)
 - All other dependencies: `^x.y.0` (caret range)
@@ -118,13 +119,13 @@ LibraNia is a personal knowledge management system that visualizes information a
 ### Phase 3: Graph Visualization
 ### Phase 4: Vector Search
 ## Known Issues & Workarounds
-### better-sqlite3 with Tauri
-- **Issue:** Native module compilation for Tauri target
-- **Solution:** Use `@tauri-apps/plugin-sql` OR compile better-sqlite3 for correct target architecture
-- **Alternative:** Move SQLite operations to Rust backend (recommended for Tauri)
+### better-sqlite3 Native Compilation
+- **Issue:** Native module requires build tools during npm install
+- **Solution:** Install platform-specific build tools (Visual Studio Build Tools on Windows, build-essential on Linux, Xcode CLI on macOS)
+- **Workaround:** `npm rebuild better-sqlite3` after installation if compilation fails
 ### sqlite-vec Loading
 - **Issue:** Extension must be loaded at runtime
-- **Solution:** Use `db.loadExtension()` in better-sqlite3 OR compile into Rust backend
+- **Solution:** Use `db.loadExtension()` in better-sqlite3 with platform-specific extension path
 ### @xenova/transformers Bundle Size
 - **Issue:** ONNX runtime adds ~10MB to bundle
 - **Solution:** Lazy-load transformers.js, download models on first use, cache in user data directory
@@ -132,8 +133,9 @@ LibraNia is a personal knowledge management system that visualizes information a
 - **Issue:** Three.js doesn't tree-shake well
 - **Solution:** Import specific modules: `import { WebGLRenderer } from 'three/src/renderers/WebGLRenderer'`
 ## Sources
-- Tauri 2.0 documentation: Context7 `/websites/v2_tauri_app`
-- Electron documentation: Context7 `/websites/electronjs`
+- Node.js documentation: Official Node.js docs
+- Express documentation: Official Express docs
+- Socket.IO documentation: Official Socket.IO docs
 - Three.js documentation: Context7 `/mrdoob/three.js`
 - better-sqlite3: Context7 `/wiselibs/better-sqlite3`
 - Vite 6 release information: Web search (verified January 2025)
