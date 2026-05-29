@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { conversationsAPI } from '../api';
+import { handleAPIError } from '../utils/toast';
 
 interface Message {
   id: string;
@@ -36,7 +38,7 @@ export function useConversations() {
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.conversation.getAll();
+      const data = await conversationsAPI.getAll();
       // Sort by updated_at DESC (most recent first) per D-10
       const sorted = [...data].sort((a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
@@ -44,6 +46,7 @@ export function useConversations() {
       setConversations(sorted);
       setError(null);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -65,10 +68,11 @@ export function useConversation(id: string) {
   const fetchConversation = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.conversation.get(id);
+      const data = await conversationsAPI.getById(id);
       setConversation(data);
       setError(null);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -88,7 +92,10 @@ export function useDeleteConversation() {
   const deleteConversation = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      await window.api.conversation.delete(id);
+      await conversationsAPI.delete(id);
+    } catch (err) {
+      handleAPIError(err);
+      throw err;
     } finally {
       setLoading(false);
     }
