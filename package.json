@@ -45,6 +45,7 @@
     "react-dom": "^19.2.6",
     "react-force-graph-2d": "^1.29.1",
     "react-force-graph-3d": "^1.29.1",
+    "react-hot-toast": "^2.4.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.15.1",
     "react-select": "^5.10.2",
