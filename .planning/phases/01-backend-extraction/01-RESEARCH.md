@@ -734,23 +734,21 @@ TAVILY_API_KEY=<optional>
 
 **If this table is empty:** All claims in this research were verified or cited — no user confirmation needed.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Database path resolution strategy**
-   - What we know: Multiple options available (env var, CLI flag, config file, relative path)
-   - What's unclear: User preference for default behavior
-   - Recommendation: Use environment variable with fallback to `./data/librania.db` (simple, configurable)
+All questions resolved during planning. Decisions implemented in CONTEXT.md (Claude's Discretion) and plans.
 
-2. **API key encryption approach**
-   - What we know: Node.js crypto with AES-256-GCM is secure and cross-platform
-   - What's unclear: Whether to support alternative approaches (keytar, OS keychain, plaintext with warning)
-   - Recommendation: Start with Node.js crypto only. Add alternatives if users request them.
+1. **Database path resolution strategy** — RESOLVED
+   - Decision: Environment variable with fallback to relative path
+   - Implementation: Plan 02 Task 1 implements `getDatabasePath()` with priority: `LIBRANIA_DB_PATH` env var > `LIBRANIA_DATA_DIR/librania.db` > `./data/librania.db`
 
-3. **File upload handling**
-   - What we know: Multer is standard for Express multipart uploads
-   - What's unclear: Whether to support base64 in JSON as alternative (simpler for small files)
-   - Recommendation: Use Multer for all uploads. Base64 in JSON is inefficient and complicates API.
+2. **API key encryption approach** — RESOLVED
+   - Decision: Node.js crypto with AES-256-GCM (no alternatives for v2)
+   - Implementation: Plan 01 Task 4 implements `encryptApiKey/decryptApiKey` using crypto module with scrypt key derivation
 
+3. **File upload handling** — RESOLVED
+   - Decision: Multer for all uploads (no base64 alternative)
+   - Implementation: Plan 01 Task 3 creates Multer middleware with multipart/form-data handling, Plan 03 Task 2 uses it for content uploads
 ## Environment Availability
 
 > Phase 1 has no external dependencies beyond Node.js and npm packages. All required tools are JavaScript/TypeScript libraries installed via npm.
