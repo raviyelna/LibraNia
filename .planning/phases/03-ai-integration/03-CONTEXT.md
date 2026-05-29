@@ -1,56 +1,41 @@
-# Phase 3: AI Integration - Context
+# Phase 3: CLI & Server Launcher - Context
 
-**Gathered:** 2026-05-25
+**Gathered:** 2026-05-29
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Multi-provider AI integration with chat interface and research capabilities. Users can configure AI providers (Claude CLI, OpenAI, DeepSeek), interact through a chat interface, and receive AI-generated answers with citations from both web search and model knowledge.
+Single command launches server and opens browser. User runs `librania start`, server starts on configurable port (default 3000), browser opens automatically to web UI. CLI works on Linux and Windows with graceful shutdown on Ctrl+C.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Provider Abstraction
-- **D-01:** Unified interface pattern — single AIProvider interface, each provider implements it (matches existing service pattern from Phase 2)
-- **D-02:** Streaming responses — tokens arrive as generated, better UX
-- **D-03:** Retry with exponential backoff — handles transient failures (1s, 2s, 4s)
-- **D-04:** Provider config in main config.json — consistent with Phase 1 config pattern
-- **D-05:** Validate API keys on save — immediate feedback, catches errors early
-- **D-06:** Show provider name in chat UI — full transparency (e.g., "Claude Sonnet 4" badge)
-- **D-07:** Allow switching providers mid-conversation — flexible, user can compare providers
+### CLI Command Structure
+- **D-01:** Single command pattern — `librania start` (matches ROADMAP expectation, can add subcommands later)
+- **D-02:** Standard flags — `--port`, `--no-browser`, `--data-dir` (covers common use cases without bloat)
+- **D-03:** commander.js for arg parsing — mature, 50M+ weekly downloads, handles help/version automatically
+- **D-04:** npm bin with shebang — `#!/usr/bin/env node` (standard cross-platform pattern, npm handles execution)
 
-### Chat UI Pattern
-- **D-08:** Chat in main content area — replaces note editor when active, matches existing layout pattern
-- **D-09:** Persistent conversations — saved to database, can resume later (matches note persistence)
-- **D-10:** Conversation list in sidebar — easy to browse history, matches note list pattern
-- **D-11:** Auto-generate conversation titles — from first message (first 50 chars), no user input needed
+### Browser Launch Behavior
+- **D-05:** Auto-open by default — browser opens automatically unless `--no-browser` flag used (standard for local dev servers)
+- **D-06:** Use `open` package — cross-platform npm package handles OS-specific browser commands (20M+ weekly downloads)
+- **D-07:** Wait for server ready — open browser after server.listen() callback fires (prevents connection refused errors)
+- **D-08:** Log warning on failure — if browser fails to open, log warning and continue running (non-blocking, user can manually open)
 
-### Research Flow
-- **D-12:** Parallel execution — web search + model knowledge run simultaneously, merge results (faster UX)
-- **D-13:** Built-in web search — Brave Search API or similar, integrated (not provider-native)
-- **D-14:** Fetch top 5 web results — balances coverage with noise
-- **D-15:** Show progress indicator — "Searching web...", "Generating answer..." (better UX)
+### Server Lifecycle Management
+- **D-09:** Foreground process only — Ctrl+C stops server, no daemon mode (simpler for v1, standard for dev servers)
+- **D-10:** Graceful shutdown on SIGINT — close HTTP server, close Socket.IO connections, flush logs (standard graceful shutdown)
+- **D-11:** Startup message — log clean startup message with URL (informative without ASCII art bloat)
+- **D-12:** Auto-increment port on conflict — try up to 5 ports if default is busy (server already tries port+1, extend to 5 attempts)
 
-### Citation Format
-- **D-16:** Inline footnotes [1], [2] with sources list at bottom — standard academic format
-- **D-17:** Clickable citation links — open in external browser
-- **D-18:** Show title + domain for each citation — e.g., "React Docs - react.dev"
-- **D-19:** Store citations with answer — preserved in database for long-term reference
-
-### Model Selection UX
-- **D-20:** Per-provider model selection — Claude: sonnet/opus, GPT: 4/4o, DeepSeek: chat/coder
-- **D-21:** Configure in Settings panel — centralized config, matches Mode Settings pattern
-- **D-22:** Hardcoded model list — simple, works for known models (update code for new models)
-- **D-23:** Show model name in chat UI — full transparency (e.g., "Claude Sonnet 4" badge)
-
-### API Key Storage
-- **D-24:** Encrypted storage — electron-store with encryption, protects keys at rest
-- **D-25:** Masked input in settings UI — show dots, reveal button (prevents shoulder-surfing)
-- **D-26:** Separate encryption key — generated on first launch, stored in OS keychain
-- **D-27:** Show security warning — "API keys are encrypted but stored locally. Keep your machine secure."
+### Configuration & Data Paths
+- **D-13:** Current directory default — `./data` for database/uploads (simple, portable, user chose over XDG/AppData)
+- **D-14:** Precedence: flag > env var > default — `--data-dir` overrides `LIBRANIA_DATA_DIR` overrides `./data` (standard CLI precedence)
+- **D-15:** Separate data/ and config/ — data directory contains `data/` (database, uploads) and `config/` (settings.json) subdirectories (clean separation, easier backups)
+- **D-16:** Auto-create directories — create data/config directories on startup if missing (user-friendly, no manual setup)
 
 ### Claude's Discretion
 None — all areas had explicit decisions.
@@ -63,12 +48,16 @@ None — all areas had explicit decisions.
 **Downstream agents MUST read these before planning or implementing.**
 
 ### Requirements
-- `.planning/REQUIREMENTS.md` — AI-01 through AI-10 requirements for this phase
-- `.planning/PROJECT.md` — Core value (multi-model verification), constraints (local-first)
+- `.planning/REQUIREMENTS.md` — CLI-01 through CLI-06 requirements for this phase
+- `.planning/PROJECT.md` — v2.0 goal (cross-platform CLI + web server), constraints (works on Linux and Windows)
 
 ### Prior Phase Context
-- `.planning/phases/01-foundation-application-shell/01-CONTEXT.md` — IPC pattern, config management, Settings UI pattern
-- `.planning/phases/02-core-knowledge-management/02-CONTEXT.md` — Database schema, service layer pattern, React hooks pattern
+- `.planning/phases/01-foundation-application-shell/01-CONTEXT.md` — Backend extraction patterns, Express server setup
+- `.planning/phases/02-core-knowledge-management/02-CONTEXT.md` — Frontend HTTP/WebSocket migration, static asset serving
+
+### Existing Implementation
+- `start-server.js` — Standalone server starter (already launches server, serves static files from dist/)
+- `electron/server.ts` — Server implementation with Express + Socket.IO, port conflict handling (tries port+1)
 
 No external specs — requirements fully captured in decisions above
 
@@ -78,29 +67,28 @@ No external specs — requirements fully captured in decisions above
 ## Existing Code Insights
 
 ### Reusable Assets
-- **Dialog/Button components** (`src/components/ui/`) — reuse for AI provider settings UI
-- **IPC handler pattern** (`electron/ipc/*.handlers.ts`) — create `ai.handlers.ts` for chat/research
-- **React hooks pattern** (`src/hooks/useNotes.ts`) — create `useChat.ts`, `useAI.ts` following same pattern
-- **Settings UI pattern** (`src/components/Settings/ModeSettings.tsx`) — create `AIProviderSettings.tsx` following same structure
+- **`electron/server.ts`** — `startServer()` function already handles Express setup, Socket.IO, static file serving, port conflict resolution (tries port+1)
+- **`start-server.js`** — Standalone server starter with graceful shutdown (SIGINT handler), can be adapted for CLI entry point
+- **Environment variables** — `LIBRANIA_PORT`, `LIBRANIA_DATA_DIR`, `LIBRANIA_DB_PATH` already supported via dotenv (Phase 1)
 
 ### Established Patterns
-- **Config management** — `window.api.getConfig()` / `setConfig()` pattern from Phase 1
-- **Service layer** — `electron/services/notes.service.ts` → create `ai.service.ts` for provider abstraction
-- **Database schema** — Drizzle ORM with better-sqlite3, add `conversations` and `messages` tables
-- **IPC communication** — renderer calls `window.api.*`, main process handles via `ipcMain.handle()`
+- **Port conflict handling** — Server already tries port+1 if default is busy (extend to try 5 ports)
+- **Graceful shutdown** — `stopServer()` function closes HTTP server and returns Promise (reuse for SIGINT handler)
+- **Static asset serving** — `app.use(express.static(path.join(__dirname, '../dist')))` pattern established
+- **SPA routing** — Catch-all middleware returns index.html for non-API routes (already working)
 
 ### Integration Points
-- **Settings panel** — add AI provider configuration alongside Mode Settings
-- **Sidebar navigation** — add "Chat" route alongside "Notes"
-- **Main content area** — chat UI replaces note editor when active (route-based switching)
-- **Database** — extend schema with `conversations`, `messages`, `citations` tables
+- **CLI entry point** — Create `bin/librania.js` with shebang, wire to `package.json` bin field
+- **Server startup** — Import and call `startServer()` from `electron/server.ts`
+- **Browser launch** — Call after `startServer()` Promise resolves (server ready)
+- **Data directory** — Pass to server via env vars or config, server already reads `LIBRANIA_DATA_DIR`
 
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-No specific requirements — open to standard approaches for AI integration patterns.
+No specific requirements — open to standard CLI patterns for Node.js applications.
 
 </specifics>
 
@@ -113,5 +101,5 @@ None — discussion stayed within phase scope
 
 ---
 
-*Phase: 3-AI Integration*
-*Context gathered: 2026-05-25*
+*Phase: 3-CLI & Server Launcher*
+*Context gathered: 2026-05-29*
