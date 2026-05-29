@@ -7,7 +7,8 @@
  */
 
 import { Command } from 'commander';
-import { startServer } from '../electron/server.js';
+import { startServer } from '../electron/server.ts';
+import open from 'open';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -93,19 +94,32 @@ program
       // Start the server
       const instance = await startServer(port, distPath);
 
-      console.log(`\n✓ Server running at http://localhost:${instance.port}`);
+      const serverUrl = `http://localhost:${instance.port}`;
+      console.log(`\nLibraNia server running at ${serverUrl}`);
 
       if (instance.port !== port) {
         console.log(`  (Port ${port} was in use, using ${instance.port} instead)`);
       }
 
-      console.log('\nPress Ctrl+C to stop\n');
+      console.log('Press Ctrl+C to stop\n');
+
+      // Open browser automatically unless --no-browser flag is used
+      if (options.browser) {
+        try {
+          await open(serverUrl);
+        } catch (error) {
+          console.warn(`Warning: Could not open browser automatically: ${error.message}`);
+          console.warn(`Please open ${serverUrl} manually in your browser.\n`);
+        }
+      } else {
+        console.log('Server running in headless mode (--no-browser flag used)\n');
+      }
 
       // Handle graceful shutdown
       const shutdown = async () => {
         console.log('\nShutting down server...');
         try {
-          const { stopServer } = await import('../electron/server.js');
+          const { stopServer } = await import('../electron/server.ts');
           await stopServer(instance);
           console.log('Server stopped gracefully');
           process.exit(0);
