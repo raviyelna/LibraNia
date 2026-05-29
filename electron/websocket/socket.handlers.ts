@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
-import { logger } from '../logger';
-import { callClaude, callDeepSeek, callOpenAI } from '../ipc/ai.handlers';
-import { loadProviderFromEnv } from '../store/env.store';
+import { logger } from '../logger.js';
+import { callClaude, callDeepSeek, callOpenAI } from '../ipc/ai.handlers.js';
+import { loadProviderFromEnv } from '../store/env.store.js';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';

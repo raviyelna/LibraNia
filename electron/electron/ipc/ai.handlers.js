@@ -1,11 +1,11 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { loadProviderFromEnv, readEnv } from '../store/env.store';
-import { createMessage, getMessagesByConversation } from '../services/message.service';
-import { RESEARCH_SYSTEM_PROMPT } from '../prompts/research.system';
-import { RESEARCH_TOOLS, executeToolCall } from '../tools/research.tools';
-import { searchWeb } from '../services/web-search.service';
-import { searchWithClaude, searchWithDeepSeek, searchWithOpenAI } from '../services/provider-search.service';
+import { logger } from '../logger.js';
+import { loadProviderFromEnv, readEnv } from '../store/env.store.js';
+import { createMessage, getMessagesByConversation } from '../services/message.service.js';
+import { RESEARCH_SYSTEM_PROMPT } from '../prompts/research.system.js';
+import { RESEARCH_TOOLS, executeToolCall } from '../tools/research.tools.js';
+import { searchWeb } from '../services/web-search.service.js';
+import { searchWithClaude, searchWithDeepSeek, searchWithOpenAI } from '../services/provider-search.service.js';
 export async function callDeepSeek(messages, apiKey, model, tools, onProgress) {
     const env = readEnv();
     const tavilyApiKey = env.TAVILY_API_KEY;

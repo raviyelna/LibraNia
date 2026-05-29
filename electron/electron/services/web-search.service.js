@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 export async function searchWeb(query, apiKey, maxResults = 5) {
     if (!apiKey) {
         throw new Error('Tavily API key not configured');

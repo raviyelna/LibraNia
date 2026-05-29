@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig';
-import { readEnv } from '../store/env.store';
+import { logger } from '../logger.js';
+import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig.js';
+import { readEnv } from '../store/env.store.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';

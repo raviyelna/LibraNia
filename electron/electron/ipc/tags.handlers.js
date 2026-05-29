@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { getAllTags, getNoteTags, addTagsToNote, removeTagFromNote, } from '../services/tags.service';
+import { logger } from '../logger.js';
+import { getAllTags, getNoteTags, addTagsToNote, removeTagFromNote, } from '../services/tags.service.js';
 export function registerTagsHandlers() {
     ipcMain.handle('tags:getAll', async () => {
         try {

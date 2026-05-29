@@ -1,4 +1,4 @@
-import { getAllNotes } from './file-storage.service';
+import { getAllNotes } from './file-storage.service.js';
 function extractWikiLinks(body) {
     const regex = /\[\[([^\]]+)\]\]/g;
     const links = [];

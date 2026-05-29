@@ -2,12 +2,12 @@ import matter from 'gray-matter';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { sql } from 'drizzle-orm';
-import { notes, links } from '../database/schema';
+import { notes, links } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../database/schema';
-import { getNoteById } from './notes.service';
-import { getNoteTags } from './tags.service';
-import { parseWikiLinks, type WikiLink } from './links.service';
+import * as schema from '../database/schema.js';
+import { getNoteById } from './notes.service.js';
+import { getNoteTags } from './tags.service.js';
+import { parseWikiLinks, type WikiLink } from './links.service.js';
 
 /**
  * Export notes to markdown files with YAML frontmatter

@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 import {
   createTag,
   getAllTags,
@@ -11,7 +11,7 @@ import {
   getNoteTags,
   getNotesByTag,
   setNoteTags,
-} from '../services/tags.service';
+} from '../services/tags.service.js';
 
 /**
  * Register all IPC handlers for tag operations

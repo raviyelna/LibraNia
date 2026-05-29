@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { getAllNotes } from '../services/file-storage.service';
-import { getAllTags, getTagsForNote } from '../services/tags.service';
+import { logger } from '../logger.js';
+import { getAllNotes } from '../services/file-storage.service.js';
+import { getAllTags, getTagsForNote } from '../services/tags.service.js';
 
 export function registerSearchHandlers() {
   // Full-text search in notes

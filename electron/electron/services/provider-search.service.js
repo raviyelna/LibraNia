@@ -1,4 +1,4 @@
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 export async function searchWithClaude(query, apiKey, baseURL) {
     logger.info('Web search via Claude:', { query });
     return [{

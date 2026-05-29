@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { getAllNotes } from '../services/file-storage.service';
+import { logger } from '../logger.js';
+import { getAllNotes } from '../services/file-storage.service.js';
 export function registerSearchHandlers() {
     ipcMain.handle('search:fullText', async (event, data) => {
         try {

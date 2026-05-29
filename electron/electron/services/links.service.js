@@ -1,5 +1,5 @@
 import { eq, isNull, desc, asc, sql, and } from 'drizzle-orm';
-import { notes, links } from '../database/schema';
+import { notes, links } from '../database/schema.js';
 export function parseWikiLinks(text) {
     const regex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
     const wikiLinks = [];

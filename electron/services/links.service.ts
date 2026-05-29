@@ -1,7 +1,7 @@
 import { eq, isNull, desc, asc, sql, and } from 'drizzle-orm';
-import { notes, links } from '../database/schema';
+import { notes, links } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../database/schema';
+import * as schema from '../database/schema.js';
 
 export interface WikiLink {
   raw: string;        // "[[Note Title|Alias]]"

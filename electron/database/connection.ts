@@ -1,9 +1,9 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import { setupFTS5, setupContentFTS5 } from './fts';
-import { setupVectorExtension } from './vec';
-import * as schema from './schema';
+import { setupFTS5, setupContentFTS5 } from './fts.js';
+import { setupVectorExtension } from './vec.js';
+import * as schema from './schema.js';
 import fs from 'fs/promises';
 import path from 'path';
 

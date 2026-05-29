@@ -1,11 +1,11 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { getORM } from '../database/connection';
-import { createConversation, addMessage, addCitations, getConversation, getAllConversations, deleteConversation, } from '../services/conversation.service';
-import { getAIService } from '../services/ai/ai.service';
-import { WebSearchService } from '../services/ai/websearch.service';
-import { getNoteById } from '../services/notes.service';
-import { setProviderConfig, getProviderConfig, getAllProviderConfigs, deleteProviderConfig, } from '../store/secure.store';
+import { logger } from '../logger.js';
+import { getORM } from '../database/connection.js';
+import { createConversation, addMessage, addCitations, getConversation, getAllConversations, deleteConversation, } from '../services/conversation.service.js';
+import { getAIService } from '../services/ai/ai.service.js';
+import { WebSearchService } from '../services/ai/websearch.service.js';
+import { getNoteById } from '../services/notes.service.js';
+import { setProviderConfig, getProviderConfig, getAllProviderConfigs, deleteProviderConfig, } from '../store/secure.store.js';
 export function registerAIHandlers(mainWindow, webSearchService) {
     const orm = getORM();
     const aiService = getAIService();

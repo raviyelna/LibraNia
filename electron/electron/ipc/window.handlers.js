@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 export function registerWindowHandlers() {
     ipcMain.handle('window:minimize', async (event) => {
         try {

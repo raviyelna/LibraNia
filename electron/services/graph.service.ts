@@ -1,5 +1,5 @@
-import { getAllNotes } from './file-storage.service';
-import type { GraphData, GraphNode, GraphLink } from '../../src/types/graph';
+import { getAllNotes } from './file-storage.service.js';
+import type { GraphData, GraphNode, GraphLink } from '../../src/types/graph.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
 /**

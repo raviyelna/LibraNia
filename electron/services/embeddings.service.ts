@@ -2,9 +2,9 @@ import { app } from 'electron';
 import path from 'path';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
-import { embeddings } from '../database/schema';
+import { embeddings } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import * as schema from '../database/schema';
+import * as schema from '../database/schema.js';
 
 /**
  * Module-level state for lazy-loaded pipeline instance

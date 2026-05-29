@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { AIProvider, Message, GenerateOptions } from './base.provider';
+import type { AIProvider, Message, GenerateOptions } from './base.provider.js';
 
 /**
  * OpenAI provider implementation using official OpenAI SDK.

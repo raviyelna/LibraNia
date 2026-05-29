@@ -3,21 +3,21 @@
  */
 
 import { Router } from 'express';
-import { loadProviderFromEnv, loadAllProvidersFromEnv, saveProviderToEnv, deleteProviderFromEnv } from '../store/env.store';
-import { createConversation, getAllConversations, getConversation, deleteConversation } from '../services/conversation.service';
-import { createMessage, getMessagesByConversation } from '../services/message.service';
-import { getORM } from '../database/connection';
-import graphRoutes from './graph.routes';
+import { loadProviderFromEnv, loadAllProvidersFromEnv, saveProviderToEnv, deleteProviderFromEnv } from '../store/env.store.js';
+import { createConversation, getAllConversations, getConversation, deleteConversation } from '../services/conversation.service.js';
+import { createMessage, getMessagesByConversation } from '../services/message.service.js';
+import { getORM } from '../database/connection.js';
+import graphRoutes from './graph.routes.js';
 
 // IPC-to-HTTP converted routes (Plan 03) - non-streaming operations
-import notesRoutes from './notes.routes';
-import contentRoutes from './content.routes';
-import searchRoutes from './search.routes';
-import tagsRoutes from './tags.routes';
-import exportRoutes from './export.routes';
-import configRoutes from './config.routes';
-import appRoutes from './app.routes';
-import aiRoutes from './ai.routes';
+import notesRoutes from './notes.routes.js';
+import contentRoutes from './content.routes.js';
+import searchRoutes from './search.routes.js';
+import tagsRoutes from './tags.routes.js';
+import exportRoutes from './export.routes.js';
+import configRoutes from './config.routes.js';
+import appRoutes from './app.routes.js';
+import aiRoutes from './ai.routes.js';
 
 const router = Router();
 

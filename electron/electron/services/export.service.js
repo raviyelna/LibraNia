@@ -2,10 +2,10 @@ import matter from 'gray-matter';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { sql } from 'drizzle-orm';
-import { notes, links } from '../database/schema';
-import { getNoteById } from './notes.service';
-import { getNoteTags } from './tags.service';
-import { parseWikiLinks } from './links.service';
+import { notes, links } from '../database/schema.js';
+import { getNoteById } from './notes.service.js';
+import { getNoteTags } from './tags.service.js';
+import { parseWikiLinks } from './links.service.js';
 export async function exportNotesToMarkdown(noteIds, outputDir, db) {
     let exportedCount = 0;
     for (const noteId of noteIds) {

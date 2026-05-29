@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { LogEntry } from '../src/types/logger';
+import type { LogEntry } from '../src/types/logger.js';
 
 // Expose safe IPC APIs to renderer
 contextBridge.exposeInMainWorld('electronAPI', {

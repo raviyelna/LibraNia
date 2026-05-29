@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig';
+import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig.js';
 const router = Router();
 router.use((req, res, next) => {
     console.log(`[Config API] ${req.method} ${req.path}`);

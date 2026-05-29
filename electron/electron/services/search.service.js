@@ -1,5 +1,5 @@
-import { generateEmbedding } from './embeddings.service';
-import { findSimilarNotes } from '../database/vec';
+import { generateEmbedding } from './embeddings.service.js';
+import { findSimilarNotes } from '../database/vec.js';
 export function quickNavSearch(db, query, limit = 50) {
     const escapedQuery = query.replace(/['"*]/g, '');
     if (!escapedQuery.trim()) {

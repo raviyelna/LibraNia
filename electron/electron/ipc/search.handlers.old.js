@@ -1,7 +1,7 @@
 import { ipcMain } from 'electron';
-import { logger } from '../logger';
-import { getDatabase } from '../database/connection';
-import { quickNavSearch, fullTextSearch, fuzzySearch, semanticSearch } from '../services/search.service';
+import { logger } from '../logger.js';
+import { getDatabase } from '../database/connection.js';
+import { quickNavSearch, fullTextSearch, fuzzySearch, semanticSearch } from '../services/search.service.js';
 export function registerSearchHandlers() {
     ipcMain.handle('search:quickNav', async (event, { query }) => {
         try {

@@ -2,7 +2,7 @@ import { app } from 'electron';
 import path from 'path';
 import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
-import { embeddings } from '../database/schema';
+import { embeddings } from '../database/schema.js';
 let embeddingPipeline = null;
 export async function generateEmbedding(text) {
     if (!text || text.trim().length === 0) {

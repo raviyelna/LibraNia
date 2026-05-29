@@ -3,7 +3,7 @@
  * Free tier: 1000 searches/month
  */
 
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 
 interface SearchResult {
   title: string;
