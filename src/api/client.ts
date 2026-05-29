@@ -19,6 +19,36 @@ export async function apiRequest<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  // Placeholder - will fail tests
-  throw new Error('Not implemented');
+  const url = `${BASE_URL}${endpoint}`;
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options?.headers,
+      },
+    });
+
+    // fetch only rejects on network errors, not HTTP errors
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new APIError(
+        errorData.error || `HTTP ${response.status}`,
+        response.status,
+        errorData
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    if (error instanceof APIError) throw error;
+
+    // Network error (no response received)
+    throw new APIError(
+      'Network error - check connection',
+      0,
+      { originalError: error }
+    );
+  }
 }
