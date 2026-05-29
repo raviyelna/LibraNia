@@ -25,14 +25,14 @@ vi.mock('react-hot-toast', () => ({
 }));
 
 describe('SocketContext', () => {
-  let mockIo: ReturnType<typeof vi.fn>;
+  let mockIo: any;
   let mockSocket: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     // Get the mocked io function
     const socketIoClient = await import('socket.io-client');
-    mockIo = socketIoClient.io as ReturnType<typeof vi.fn>;
+    mockIo = socketIoClient.io;
     // Get the mock socket instance
     mockSocket = mockIo();
   });
