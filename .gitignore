@@ -10,3 +10,4 @@ out
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+content/
