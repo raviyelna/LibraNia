@@ -18,9 +18,9 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 ### Backend Migration
 - [ ] **BACK-01**: Extract Electron main process logic to standalone Node.js server
 - [ ] **BACK-02**: IPC handlers converted to HTTP/WebSocket endpoints
-- [ ] **BACK-03**: Database operations work without Electron APIs
+- [x] **BACK-03**: Database operations work without Electron APIs ✓ 2026-05-29
 - [ ] **BACK-04**: File operations use Node.js fs instead of Electron dialog
-- [ ] **BACK-05**: Config storage migrated from electron-store to file-based config
+- [x] **BACK-05**: Config storage migrated from electron-store to file-based config ✓ 2026-05-29
 - [ ] **BACK-06**: API key encryption works without Electron safeStorage
 
 ### Frontend Migration
@@ -50,9 +50,9 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 |-------------|-------|--------|
 | BACK-01 | Phase 1 | Pending |
 | BACK-02 | Phase 1 | Pending |
-| BACK-03 | Phase 1 | Pending |
+| BACK-03 | Phase 1 | ✓ Complete (01-02) |
 | BACK-04 | Phase 1 | Pending |
-| BACK-05 | Phase 1 | Pending |
+| BACK-05 | Phase 1 | ✓ Complete (01-02) |
 | BACK-06 | Phase 1 | Pending |
 | FRONT-01 | Phase 2 | Pending |
 | FRONT-02 | Phase 2 | Pending |
