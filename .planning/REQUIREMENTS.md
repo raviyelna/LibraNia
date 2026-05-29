@@ -16,12 +16,12 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 - [ ] **CLI-06**: Graceful shutdown on Ctrl+C
 
 ### Backend Migration
-- [ ] **BACK-01**: Extract Electron main process logic to standalone Node.js server
-- [ ] **BACK-02**: IPC handlers converted to HTTP/WebSocket endpoints
+- [x] **BACK-01**: Extract Electron main process logic to standalone Node.js server ✓ 2026-05-29
+- [x] **BACK-02**: IPC handlers converted to HTTP/WebSocket endpoints ✓ 2026-05-29
 - [x] **BACK-03**: Database operations work without Electron APIs ✓ 2026-05-29
-- [ ] **BACK-04**: File operations use Node.js fs instead of Electron dialog
+- [x] **BACK-04**: File operations use Node.js fs instead of Electron dialog ✓ 2026-05-29
 - [x] **BACK-05**: Config storage migrated from electron-store to file-based config ✓ 2026-05-29
-- [ ] **BACK-06**: API key encryption works without Electron safeStorage
+- [x] **BACK-06**: API key encryption works without Electron safeStorage ✓ 2026-05-29
 
 ### Frontend Migration
 - [ ] **FRONT-01**: Remove Electron renderer IPC calls
@@ -48,12 +48,12 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BACK-01 | Phase 1 | Pending |
-| BACK-02 | Phase 1 | Pending |
+| BACK-01 | Phase 1 | ✓ Complete (01-01) |
+| BACK-02 | Phase 1 | ✓ Complete (01-01) |
 | BACK-03 | Phase 1 | ✓ Complete (01-02) |
-| BACK-04 | Phase 1 | Pending |
+| BACK-04 | Phase 1 | ✓ Complete (01-01) |
 | BACK-05 | Phase 1 | ✓ Complete (01-02) |
-| BACK-06 | Phase 1 | Pending |
+| BACK-06 | Phase 1 | ✓ Complete (01-01) |
 | FRONT-01 | Phase 2 | Pending |
 | FRONT-02 | Phase 2 | Pending |
 | FRONT-03 | Phase 2 | Pending |
