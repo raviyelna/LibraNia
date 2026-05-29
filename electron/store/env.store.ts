@@ -5,7 +5,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { app } from 'electron';
 
 interface ProviderConfig {
   id: 'claude' | 'openai' | 'deepseek';
@@ -16,7 +15,16 @@ interface ProviderConfig {
 
 // Get .env file path in user data directory
 function getEnvPath(): string {
-  const userDataPath = app?.getPath('userData') || process.cwd();
+  // Try to import electron app, but fall back to process.cwd() if not available (CLI mode)
+  let userDataPath: string;
+  try {
+    // Dynamic import for electron - will fail gracefully in CLI mode
+    const electron = require('electron');
+    userDataPath = electron.app?.getPath('userData') || process.cwd();
+  } catch {
+    // Running in CLI mode without electron
+    userDataPath = process.env.LIBRANIA_DATA_DIR || process.cwd();
+  }
   return path.join(userDataPath, '.env');
 }
 
