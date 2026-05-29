@@ -31,10 +31,8 @@ export function LibraryPage() {
   const handleSync = async () => {
     setSyncing(true);
     try {
-      const result = await window.api.notes.syncFilesystemToDb();
-      alert(`Sync complete!\nSynced: ${result.synced}\nDeleted: ${result.deleted}\nSkipped: ${result.skipped}`);
-      // Refresh notes list
-      window.location.reload();
+      // TODO: implement sync endpoint in HTTP API
+      alert('Sync not available in web mode yet');
     } catch (error) {
       alert(`Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
