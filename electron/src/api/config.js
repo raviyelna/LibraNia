@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest } from './client.js';
 export const configAPI = {
     async get() {
         const response = await apiRequest('/api/config');

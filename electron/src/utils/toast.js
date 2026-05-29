@@ -1,5 +1,5 @@
 import toast from 'react-hot-toast';
-import { APIError } from '../api/client';
+import { APIError } from '../api/client.js';
 export function handleAPIError(error) {
     if (error instanceof APIError) {
         if (error.status === 0) {

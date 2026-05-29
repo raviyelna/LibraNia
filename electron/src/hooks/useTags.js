@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { tagsAPI } from '../api';
-import { handleAPIError } from '../utils/toast';
+import { tagsAPI } from '../api.js';
+import { handleAPIError } from '../utils/toast.js';
 export function useTags() {
     const [tags, setTags] = useState([]);
     const [loading, setLoading] = useState(true);

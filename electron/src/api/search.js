@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest } from './client.js';
 export const searchAPI = {
     async search(query, type = 'fullText') {
         const response = await apiRequest('/api/search', {

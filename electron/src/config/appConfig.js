@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { DEFAULT_CONFIG } from '../types/config';
+import { DEFAULT_CONFIG } from '../types/config.js';
 export function getConfigPath() {
     return path.join(process.cwd(), 'config.json');
 }

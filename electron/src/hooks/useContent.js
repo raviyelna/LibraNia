@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { contentAPI, uploadContent } from '../api/content';
-import { handleAPIError } from '../utils/toast';
+import { contentAPI, uploadContent } from '../api/content.js';
+import { handleAPIError } from '../utils/toast.js';
 export function useContent() {
     const [content, setContent] = useState([]);
     const [loading, setLoading] = useState(true);

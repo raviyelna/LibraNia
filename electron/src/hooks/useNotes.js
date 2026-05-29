@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { notesAPI } from '../api';
-import { handleAPIError } from '../utils/toast';
-import { useSocket } from '../contexts/SocketContext';
+import { notesAPI } from '../api.js';
+import { handleAPIError } from '../utils/toast.js';
+import { useSocket } from '../contexts/SocketContext.js';
 export function useNotes() {
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);

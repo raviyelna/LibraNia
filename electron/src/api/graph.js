@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest } from './client.js';
 export const graphAPI = {
     async getData() {
         const response = await apiRequest('/api/graph');

@@ -1,4 +1,4 @@
-import { apiRequest } from './client';
+import { apiRequest } from './client.js';
 export const tagsAPI = {
     async getAll() {
         const response = await apiRequest('/api/tags');

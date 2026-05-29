@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { conversationsAPI } from '../api';
-import { handleAPIError } from '../utils/toast';
+import { conversationsAPI } from '../api.js';
+import { handleAPIError } from '../utils/toast.js';
 export function useConversations() {
     const [conversations, setConversations] = useState([]);
     const [loading, setLoading] = useState(true);
