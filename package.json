@@ -16,7 +16,11 @@
   },
   "files": [
     "bin/",
-    "electron/",
+    "electron/**/*.js",
+    "!electron/**/*.test.js",
+    "!electron/electron/",
+    "!electron/src/",
+    "electron/extensions/",
     "dist/",
     "README.md",
     "LICENSE"
