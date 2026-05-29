@@ -17,7 +17,7 @@ router.use((req, res, next) => {
  */
 router.get('/api/graph', async (req: Request, res: Response) => {
   try {
-    const graphData = getGraphData();
+    const graphData = await getGraphData();
     res.json({ success: true, data: graphData });
   } catch (error: any) {
     logger.error('GET /api/graph failed', error);
