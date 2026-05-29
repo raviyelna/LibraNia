@@ -64,26 +64,40 @@ export async function startServer(
   // Setup WebSocket handlers
   setupSocketHandlers(io);
 
-  // Start server
+  // Start server with port retry logic (up to 5 attempts)
   return new Promise((resolve, reject) => {
-    server.listen(port, () => {
-      console.log(`Web server started on http://localhost:${port}`);
-      resolve({ server, io, port });
-    });
+    const maxRetries = 5;
+    let attempt = 0;
 
-    server.on('error', (error: NodeJS.ErrnoException) => {
-      if (error.code === 'EADDRINUSE') {
-        console.error(`Port ${port} is already in use, trying ${port + 1}`);
-        // Try next port
-        const nextPort = port + 1;
-        server.listen(nextPort, () => {
-          console.log(`Web server started on http://localhost:${nextPort}`);
-          resolve({ server, io, port: nextPort });
-        });
-      } else {
-        reject(error);
-      }
-    });
+    const tryPort = (portToTry: number) => {
+      server.listen(portToTry, () => {
+        if (portToTry !== port) {
+          console.log(`Port ${port} was in use, started on http://localhost:${portToTry}`);
+        } else {
+          console.log(`Web server started on http://localhost:${portToTry}`);
+        }
+        resolve({ server, io, port: portToTry });
+      });
+
+      server.once('error', (error: NodeJS.ErrnoException) => {
+        if (error.code === 'EADDRINUSE') {
+          attempt++;
+          if (attempt < maxRetries) {
+            const nextPort = port + attempt;
+            console.log(`Port ${portToTry} in use, trying ${nextPort}...`);
+            // Remove the error listener before trying next port
+            server.removeAllListeners('error');
+            tryPort(nextPort);
+          } else {
+            reject(new Error(`Could not find available port after ${maxRetries} attempts. Last tried: ${portToTry}`));
+          }
+        } else {
+          reject(error);
+        }
+      });
+    };
+
+    tryPort(port);
   });
 }
 
