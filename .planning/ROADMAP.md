@@ -70,7 +70,7 @@ Plans:
 Plans:
 **Wave 1** *(parallel execution)*
 
-- [ ] 02-01-PLAN.md — API Client Infrastructure (HTTP client + domain modules)
+- [x] 02-01-PLAN.md — API Client Infrastructure (HTTP client + domain modules) ✓ 2026-05-29
 - [ ] 02-02-PLAN.md — Socket.IO Context Provider (WebSocket connection management)
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -140,8 +140,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Backend Extraction | 0/4 | Planning complete | - |
-| 2. Frontend Adaptation | 0/4 | Planning complete | - |
+| 1. Backend Extraction | 2/4 | In progress | - |
+| 2. Frontend Adaptation | 1/4 | In progress | - |
 | 3. CLI & Server Launcher | 0/0 | Not started | - |
 | 4. Packaging & Distribution | 0/0 | Not started | - |
 | 5. Cross-Platform Validation | 0/0 | Not started | - |

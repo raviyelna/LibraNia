@@ -25,7 +25,7 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 
 ### Frontend Migration
 - [ ] **FRONT-01**: Remove Electron renderer IPC calls
-- [ ] **FRONT-02**: Replace `window.api.*` with HTTP/WebSocket clients
+- [x] **FRONT-02**: Replace `window.api.*` with HTTP/WebSocket clients ✓ 2026-05-29
 - [ ] **FRONT-03**: File uploads use HTML file input instead of Electron dialog
 - [ ] **FRONT-04**: Frontend builds as static assets served by backend
 - [ ] **FRONT-05**: All existing features work in browser (notes, chat, graph, library)
@@ -55,7 +55,7 @@ Requirements for v2.0 - Cross-Platform Web Architecture migration.
 | BACK-05 | Phase 1 | ✓ Complete (01-02) |
 | BACK-06 | Phase 1 | ✓ Complete (01-01) |
 | FRONT-01 | Phase 2 | Pending |
-| FRONT-02 | Phase 2 | Pending |
+| FRONT-02 | Phase 2 | ✓ Complete (02-01) |
 | FRONT-03 | Phase 2 | Pending |
 | FRONT-04 | Phase 2 | Pending |
 | FRONT-05 | Phase 2 | Pending |
