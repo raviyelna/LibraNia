@@ -20,6 +20,7 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 ## Phase Details
 
 ### Phase 1: Backend Extraction
+
 **Goal**: Electron main process logic runs as standalone Node.js server with REST/WebSocket APIs
 
 **Depends on**: Nothing (first phase)
@@ -27,6 +28,7 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 **Requirements**: BACK-01, BACK-02, BACK-03, BACK-04, BACK-05, BACK-06
 
 **Success Criteria** (what must be TRUE):
+
 1. Server starts without Electron and listens on configurable port
 2. Database operations work using Node.js fs paths (no Electron app.getPath)
 3. File operations use Node.js fs module (no Electron dialog API)
@@ -35,14 +37,19 @@ Transform LibraNia from Electron desktop app to cross-platform CLI + web server 
 6. All IPC handlers converted to HTTP POST/GET or WebSocket endpoints
 
 **Plans**: 4 plans in 2 waves
-
 Plans:
+**Wave 1**
+
 - [ ] 01-01-PLAN.md — Core infrastructure (Socket.IO, Multer, encryption service)
 - [ ] 01-02-PLAN.md — Database & config migration (path resolution, env vars)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 01-03-PLAN.md — Convert IPC handlers to HTTP routes (notes, content, search, tags, export, config)
 - [ ] 01-04-PLAN.md — WebSocket handlers for AI streaming and graph updates
 
 ### Phase 2: Frontend Adaptation
+
 **Goal**: Frontend communicates with backend via HTTP/WebSocket instead of Electron IPC
 
 **Depends on**: Phase 1 (needs backend APIs to exist)
@@ -50,6 +57,7 @@ Plans:
 **Requirements**: FRONT-01, FRONT-02, FRONT-03, FRONT-04, FRONT-05
 
 **Success Criteria** (what must be TRUE):
+
 1. All `window.api.*` calls replaced with fetch or WebSocket clients
 2. File uploads use HTML `<input type="file">` instead of Electron dialog
 3. Frontend builds as static assets (HTML/CSS/JS) served by backend
@@ -63,6 +71,7 @@ Plans:
 **UI hint**: yes
 
 ### Phase 3: CLI & Server Launcher
+
 **Goal**: User runs single command to start server and open browser
 
 **Depends on**: Phase 1 (needs server), Phase 2 (needs working frontend)
@@ -70,6 +79,7 @@ Plans:
 **Requirements**: CLI-01, CLI-02, CLI-03, CLI-04, CLI-05, CLI-06
 
 **Success Criteria** (what must be TRUE):
+
 1. User runs `librania start` and server launches on port 3000
 2. Default browser opens automatically to `http://localhost:3000`
 3. User can specify custom port with `--port` flag
@@ -80,6 +90,7 @@ Plans:
 **Plans**: TBD
 
 ### Phase 4: Packaging & Distribution
+
 **Goal**: LibraNia distributed as npm package with global CLI binary
 
 **Depends on**: Phase 3 (needs working CLI)
@@ -87,6 +98,7 @@ Plans:
 **Requirements**: PKG-01, PKG-02, PKG-03, PKG-04, PKG-05
 
 **Success Criteria** (what must be TRUE):
+
 1. User runs `npm install -g librania` and CLI installs globally
 2. Frontend assets bundled in npm package (no separate build step)
 3. User runs `librania --version` and sees current version
@@ -96,6 +108,7 @@ Plans:
 **Plans**: TBD
 
 ### Phase 5: Cross-Platform Validation
+
 **Goal**: LibraNia works identically on Linux and Windows
 
 **Depends on**: Phase 4 (needs packaged app to test)
@@ -103,6 +116,7 @@ Plans:
 **Requirements**: PLAT-01, PLAT-02, PLAT-03, PLAT-04, PLAT-05
 
 **Success Criteria** (what must be TRUE):
+
 1. CLI executable runs on Linux (Ubuntu/Arch tested)
 2. CLI executable runs on Windows 10/11 (cmd and PowerShell tested)
 3. Database paths resolve correctly on both platforms (no hardcoded separators)
