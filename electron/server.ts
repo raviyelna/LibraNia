@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import http from 'http';
@@ -11,7 +12,7 @@ export interface ServerInstance {
 }
 
 export async function startServer(
-  port: number = 3000,
+  port: number = process.env.LIBRANIA_PORT ? parseInt(process.env.LIBRANIA_PORT) : 3000,
   distPath: string
 ): Promise<ServerInstance> {
   const app = express();
