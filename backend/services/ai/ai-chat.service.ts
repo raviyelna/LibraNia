@@ -7,6 +7,7 @@ import { RESEARCH_SYSTEM_PROMPT } from '../../prompts/research.system.js';
 import { RESEARCH_TOOLS, executeToolCall } from '../../tools/research.tools.js';
 import { searchWeb } from '../web-search.service.js';
 import { searchWithClaude, searchWithDeepSeek, searchWithOpenAI } from '../provider-search.service.js';
+import { randomUUID } from 'crypto';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -26,6 +27,9 @@ const MAX_WEB_SEARCH_CALLS = 3;
 const FINAL_SYNTHESIS_PROMPT =
   'Tool use is complete. Answer the user now using the information already gathered. ' +
   'Do not request more tools. Be concise, factual, and include useful source links when available.';
+const WEB_SEARCH_COMPLETE_PROMPT =
+  'Web search is complete. Do not request more web searches. Use the gathered results, ' +
+  'write back useful knowledge with note and tag tools when appropriate, then answer the user.';
 
 interface ToolBudget {
   webSearchCalls: number;
@@ -42,8 +46,18 @@ function consumeToolBudget(toolName: string, budget: ToolBudget): string | null 
   return null;
 }
 
-function shouldForceFinalAnswer(iteration: number, budget: ToolBudget): boolean {
-  return iteration >= MAX_TOOL_ITERATIONS || budget.webSearchCalls >= MAX_WEB_SEARCH_CALLS;
+function shouldForceFinalAnswer(iteration: number): boolean {
+  return iteration >= MAX_TOOL_ITERATIONS;
+}
+
+function getAvailableOpenAITools(tools: any[] | undefined, budget: ToolBudget): any[] | undefined {
+  if (budget.webSearchCalls < MAX_WEB_SEARCH_CALLS) return tools;
+  return tools?.filter((tool: any) => tool.function?.name !== 'web_search');
+}
+
+function getAvailableClaudeTools(tools: any[] | undefined, budget: ToolBudget): any[] | undefined {
+  if (budget.webSearchCalls < MAX_WEB_SEARCH_CALLS) return tools;
+  return tools?.filter((tool: any) => tool.name !== 'web_search');
 }
 
 function getChatCompletionsUrl(baseURL?: string): string {
@@ -53,11 +67,66 @@ function getChatCompletionsUrl(baseURL?: string): string {
     : `${normalizedBaseURL}/v1/chat/completions`;
 }
 
+function parseDSMLToolCalls(content: unknown): any[] {
+  if (typeof content !== 'string' || !content.includes('｜｜DSML｜｜tool_calls')) {
+    return [];
+  }
+
+  const toolCalls = [];
+  const invokePattern = /<｜｜DSML｜｜invoke\s+name="([^"]+)"\s*>([\s\S]*?)<\/｜｜DSML｜｜invoke>/g;
+  let invokeMatch;
+
+  while ((invokeMatch = invokePattern.exec(content)) !== null) {
+    const args: Record<string, any> = {};
+    const parameterPattern = /<｜｜DSML｜｜parameter\s+name="([^"]+)"(?:\s+string="([^"]+)")?\s*>([\s\S]*?)<\/｜｜DSML｜｜parameter>/g;
+    let parameterMatch;
+
+    while ((parameterMatch = parameterPattern.exec(invokeMatch[2])) !== null) {
+      const [, name, stringFlag, rawValue] = parameterMatch;
+      const value = rawValue.trim();
+
+      if (stringFlag === 'true') {
+        args[name] = value;
+        continue;
+      }
+
+      try {
+        args[name] = JSON.parse(value);
+      } catch {
+        args[name] = value;
+      }
+    }
+
+    toolCalls.push({
+      id: `dsml-call-${randomUUID()}`,
+      type: 'function',
+      function: {
+        name: invokeMatch[1],
+        arguments: JSON.stringify(args),
+      },
+    });
+  }
+
+  return toolCalls;
+}
+
 function getOpenAICompatibleMessage(data: any, providerName: string): any {
   const message = data?.choices?.[0]?.message;
 
   if (!message) {
     throw new Error(`${providerName} API returned no completion message.`);
+  }
+
+  if (!message.tool_calls) {
+    const dsmlToolCalls = parseDSMLToolCalls(message.content);
+
+    if (dsmlToolCalls.length > 0) {
+      return {
+        ...message,
+        content: null,
+        tool_calls: dsmlToolCalls,
+      };
+    }
   }
 
   return message;
@@ -188,10 +257,14 @@ export async function callDeepSeek(
       }
     }
 
-    const forceFinalAnswer = shouldForceFinalAnswer(iteration, toolBudget);
-    const continuationMessages = forceFinalAnswer
-      ? [...conversationMessages, { role: 'system', content: FINAL_SYNTHESIS_PROMPT }]
-      : conversationMessages;
+    const forceFinalAnswer = shouldForceFinalAnswer(iteration);
+    const continuationMessages = [...conversationMessages];
+
+    if (forceFinalAnswer) {
+      continuationMessages.push({ role: 'system', content: FINAL_SYNTHESIS_PROMPT });
+    } else if (toolBudget.webSearchCalls >= MAX_WEB_SEARCH_CALLS) {
+      continuationMessages.push({ role: 'system', content: WEB_SEARCH_COMPLETE_PROMPT });
+    }
 
     // Continue conversation
     response = await fetch(url, {
@@ -203,7 +276,7 @@ export async function callDeepSeek(
       body: JSON.stringify({
         model,
         messages: continuationMessages,
-        tools: forceFinalAnswer ? undefined : requestBody.tools,
+        tools: forceFinalAnswer ? undefined : getAvailableOpenAITools(requestBody.tools, toolBudget),
         stream: false,
       }),
     });
@@ -336,10 +409,15 @@ export async function callClaude(
       role: 'assistant',
       content: data.content,
     });
-    const forceFinalAnswer = shouldForceFinalAnswer(iteration, toolBudget);
+    const forceFinalAnswer = shouldForceFinalAnswer(iteration);
     conversationMessages.push({
       role: 'user',
-      content: JSON.stringify(toolResults) + (forceFinalAnswer ? `\n\n${FINAL_SYNTHESIS_PROMPT}` : ''),
+      content: JSON.stringify(toolResults) +
+        (forceFinalAnswer
+          ? `\n\n${FINAL_SYNTHESIS_PROMPT}`
+          : toolBudget.webSearchCalls >= MAX_WEB_SEARCH_CALLS
+            ? `\n\n${WEB_SEARCH_COMPLETE_PROMPT}`
+            : ''),
     });
 
     response = await fetch(url, {
@@ -354,7 +432,7 @@ export async function callClaude(
         max_tokens: 4096,
         system: systemMessage?.content,
         messages: conversationMessages,
-        tools: forceFinalAnswer ? undefined : tools,
+        tools: forceFinalAnswer ? undefined : getAvailableClaudeTools(tools, toolBudget),
       }),
     });
 
@@ -477,10 +555,14 @@ export async function callOpenAI(
       }
     }
 
-    const forceFinalAnswer = shouldForceFinalAnswer(iteration, toolBudget);
-    const continuationMessages = forceFinalAnswer
-      ? [...conversationMessages, { role: 'system', content: FINAL_SYNTHESIS_PROMPT }]
-      : conversationMessages;
+    const forceFinalAnswer = shouldForceFinalAnswer(iteration);
+    const continuationMessages = [...conversationMessages];
+
+    if (forceFinalAnswer) {
+      continuationMessages.push({ role: 'system', content: FINAL_SYNTHESIS_PROMPT });
+    } else if (toolBudget.webSearchCalls >= MAX_WEB_SEARCH_CALLS) {
+      continuationMessages.push({ role: 'system', content: WEB_SEARCH_COMPLETE_PROMPT });
+    }
 
     // Continue conversation
     response = await fetch(url, {
@@ -492,7 +574,7 @@ export async function callOpenAI(
       body: JSON.stringify({
         model,
         messages: continuationMessages,
-        tools: forceFinalAnswer ? undefined : requestBody.tools,
+        tools: forceFinalAnswer ? undefined : getAvailableOpenAITools(requestBody.tools, toolBudget),
         stream: false,
       }),
     });
