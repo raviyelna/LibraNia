@@ -2,6 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { NoteEditor } from '../../src/components/Notes/NoteEditor';
 
+const { mockUseNote, mockUpdateNote, mockDeleteNote } = vi.hoisted(() => ({
+  mockUseNote: vi.fn(),
+  mockUpdateNote: vi.fn(),
+  mockDeleteNote: vi.fn(),
+}));
+
+vi.mock('../../src/hooks/useNotes', () => ({
+  useNote: mockUseNote,
+  useUpdateNote: () => ({ updateNote: mockUpdateNote, loading: false }),
+  useDeleteNote: () => ({ deleteNote: mockDeleteNote, loading: false }),
+}));
+
 const mockNote = {
   id: '1',
   title: 'Test Note',
@@ -12,26 +24,18 @@ const mockNote = {
   metadata: null,
 };
 
-const mockApi = {
-  notes: {
-    getById: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-};
-
 beforeEach(() => {
   vi.clearAllMocks();
+  mockUseNote.mockReturnValue({ note: mockNote, loading: false });
+  mockUpdateNote.mockImplementation(async (data) => ({ ...mockNote, ...data }));
+  mockDeleteNote.mockResolvedValue(undefined);
   if (typeof window !== 'undefined') {
-    (window as any).api = mockApi;
     (window as any).confirm = vi.fn();
   }
 });
 
 describe('NoteEditor', () => {
   it('should render editor with note data', async () => {
-    mockApi.notes.getById.mockResolvedValue(mockNote);
-
     render(<NoteEditor noteId="1" />);
 
     await waitFor(() => {
@@ -40,7 +44,7 @@ describe('NoteEditor', () => {
   });
 
   it('should show loading state', () => {
-    mockApi.notes.getById.mockImplementation(() => new Promise(() => {}));
+    mockUseNote.mockReturnValue({ note: null, loading: true });
 
     render(<NoteEditor noteId="1" />);
 
@@ -48,9 +52,6 @@ describe('NoteEditor', () => {
   });
 
   it('should update title when input changes', async () => {
-    mockApi.notes.getById.mockResolvedValue(mockNote);
-    mockApi.notes.update.mockResolvedValue({ ...mockNote, title: 'Updated Title' });
-
     render(<NoteEditor noteId="1" />);
 
     await waitFor(() => {
@@ -63,13 +64,31 @@ describe('NoteEditor', () => {
     expect(titleInput).toHaveValue('Updated Title');
   });
 
+  it('should save pending changes when Save is clicked', async () => {
+    render(<NoteEditor noteId="1" />);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Test Note')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByDisplayValue('Test Note'), { target: { value: 'Saved Title' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(mockUpdateNote).toHaveBeenCalledWith({
+        id: '1',
+        title: 'Saved Title',
+        body: 'Test body content',
+      });
+    });
+  });
+
   it('should auto-save after 2 seconds of inactivity', async () => {
     // Skip this test - auto-save timing is complex to test with CodeMirror
     expect(true).toBe(true);
   });
 
   it('should show delete confirmation dialog', async () => {
-    mockApi.notes.getById.mockResolvedValue(mockNote);
     (window.confirm as any).mockReturnValue(false);
 
     render(<NoteEditor noteId="1" />);
@@ -82,12 +101,10 @@ describe('NoteEditor', () => {
     fireEvent.click(deleteButton);
 
     expect(window.confirm).toHaveBeenCalled();
-    expect(mockApi.notes.delete).not.toHaveBeenCalled();
+    expect(mockDeleteNote).not.toHaveBeenCalled();
   }, 10000);
 
   it('should delete note when confirmed', async () => {
-    mockApi.notes.getById.mockResolvedValue(mockNote);
-    mockApi.notes.delete.mockResolvedValue({ success: true });
     (window.confirm as any).mockReturnValue(true);
 
     render(<NoteEditor noteId="1" />);
@@ -100,13 +117,11 @@ describe('NoteEditor', () => {
     fireEvent.click(deleteButton);
 
     await waitFor(() => {
-      expect(mockApi.notes.delete).toHaveBeenCalledWith('1', false);
+      expect(mockDeleteNote).toHaveBeenCalledWith('1');
     }, { timeout: 3000 });
   }, 10000);
 
   it('should render CodeMirror editor container', async () => {
-    mockApi.notes.getById.mockResolvedValue(mockNote);
-
     const { container } = render(<NoteEditor noteId="1" />);
 
     await waitFor(() => {

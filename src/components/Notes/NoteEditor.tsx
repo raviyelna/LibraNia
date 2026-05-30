@@ -10,7 +10,7 @@ import { keymap } from '@codemirror/view';
 import { useNote, useUpdateNote, useDeleteNote } from '../../hooks/useNotes';
 import { BacklinksPanel } from './BacklinksPanel';
 import { RelatedPanel } from './RelatedPanel';
-import { Eye, Edit, Columns } from 'lucide-react';
+import { Eye, Edit, Columns, Save } from 'lucide-react';
 import { contentAPI } from '../../api/content';
 
 interface NoteEditorProps {
@@ -21,10 +21,11 @@ type ViewMode = 'edit' | 'preview' | 'split';
 
 export function NoteEditor({ noteId }: NoteEditorProps) {
   const { note, loading } = useNote(noteId);
-  const { updateNote } = useUpdateNote();
+  const { updateNote, loading: saving } = useUpdateNote();
   const { deleteNote } = useDeleteNote();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [savedContent, setSavedContent] = useState({ title: '', body: '' });
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const editorRef = useRef<HTMLDivElement>(null);
   const editorViewRef = useRef<EditorView | null>(null);
@@ -34,6 +35,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     if (note) {
       setTitle(note.title);
       setBody(note.body);
+      setSavedContent({ title: note.title, body: note.body });
     }
   }, [note]);
 
@@ -161,18 +163,29 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     }
   }, [note]);
 
+  const hasPendingChanges = title !== savedContent.title || body !== savedContent.body;
+
+  const handleSave = async () => {
+    if (!hasPendingChanges || saving) return;
+
+    try {
+      const updatedNote = await updateNote({ id: noteId, title, body });
+      setSavedContent({ title: updatedNote.title, body: updatedNote.body });
+    } catch {
+      // useUpdateNote already reports API errors to the user.
+    }
+  };
+
   // Auto-save after 2 seconds of inactivity
   useEffect(() => {
-    if (!note) return;
+    if (!note || !hasPendingChanges || saving) return;
 
     const timer = setTimeout(() => {
-      if (title !== note.title || body !== note.body) {
-        updateNote({ id: noteId, title, body });
-      }
+      void handleSave();
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [title, body, note, noteId, updateNote]);
+  }, [title, body, note, hasPendingChanges, saving]);
 
   const handleDelete = async () => {
     if (confirm(`Delete note "${title}"?`)) {
@@ -246,6 +259,15 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
                 Preview
               </button>
             </div>
+            <button
+              onClick={() => void handleSave()}
+              disabled={!hasPendingChanges || saving}
+              className="px-3 py-1.5 text-sm flex items-center gap-1 border border-border rounded-md hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Save note"
+            >
+              <Save size={14} />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
             <button
               onClick={handleDelete}
               className="ml-auto px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
