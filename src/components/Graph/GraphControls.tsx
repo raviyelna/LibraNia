@@ -22,7 +22,7 @@ export function GraphControls({ onSearchResults }: GraphControlsProps) {
 
   // Notify parent when results change
   useEffect(() => {
-    const nodeIds = results.map((r: any) => r.id);
+    const nodeIds = Array.isArray(results) ? results.map((r: any) => r.id) : [];
     onSearchResults(nodeIds);
   }, [results, onSearchResults]);
 

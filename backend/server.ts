@@ -68,6 +68,9 @@ export async function startServer(
     // Setup WebSocket handlers
     setupSocketHandlers(io);
 
+    // Serve uploaded content files
+    app.use('/content', express.static(path.join(process.cwd(), 'content')));
+
     // Serve static files from dist directory
     app.use(express.static(distPath));
 

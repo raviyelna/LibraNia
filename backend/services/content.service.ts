@@ -155,8 +155,9 @@ export async function extractText(filePath: string, mimeType: string): Promise<s
   if (mimeType === 'application/pdf') {
     // Extract text from PDF using pdf-parse
     const dataBuffer = await fs.readFile(filePath);
-    const data = await PDFParse(dataBuffer);
-    text = data.text;
+    const parser = new PDFParse({ data: dataBuffer });
+    const result = await parser.getText();
+    text = result.text;
   } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     // Extract text from DOCX using mammoth
     const result = await mammoth.extractRawText({ path: filePath });

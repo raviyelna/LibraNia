@@ -27,8 +27,8 @@ export const graphAPI = {
     const response = await apiRequest<{ success: boolean; data: { nodes: GraphNode[]; links: GraphLink[] } }>('/api/graph');
     // Backend returns 'links', frontend expects 'links'
     return {
-      nodes: response.data.nodes || [],
-      links: response.data.links || [],
+      nodes: response.data?.nodes || [],
+      links: response.data?.links || [],
     };
   },
 
@@ -37,6 +37,7 @@ export const graphAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    if (!response.data) throw new Error('Failed to create node');
     return response.data;
   },
 
@@ -45,6 +46,7 @@ export const graphAPI = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    if (!response.data) throw new Error('Failed to update node');
     return response.data;
   },
 
@@ -59,6 +61,7 @@ export const graphAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    if (!response.data) throw new Error('Failed to create edge');
     return response.data;
   },
 

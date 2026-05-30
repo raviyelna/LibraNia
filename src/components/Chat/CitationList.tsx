@@ -20,9 +20,7 @@ export function CitationList({ citations }: CitationListProps) {
   };
 
   const handleCitationClick = (url: string) => {
-    if (window.api?.openExternal) {
-      window.api.openExternal(url);
-    }
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   if (citations.length === 0) {

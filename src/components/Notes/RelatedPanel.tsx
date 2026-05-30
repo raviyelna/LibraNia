@@ -17,10 +17,19 @@ export function RelatedPanel({ noteId, onNavigate }: RelatedPanelProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="related-panel p-4">
+        <h3 className="text-lg font-semibold mb-3">Related Concepts</h3>
+        <div className="text-destructive text-sm">Failed to load related notes</div>
+      </div>
+    );
+  }
+
   return (
     <div className="related-panel p-4">
       <h3 className="text-lg font-semibold mb-3">Related Concepts</h3>
-      {links.length === 0 ? (
+      {!links || links.length === 0 ? (
         <div className="text-secondary text-sm">No related notes yet</div>
       ) : (
         <ul className="space-y-2">

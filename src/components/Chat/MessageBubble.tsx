@@ -18,7 +18,7 @@ interface MessageBubbleProps {
   provider_id?: string;
   model?: string;
   citations?: Citation[];
-  created_at: Date;
+  created_at: Date | string;
 }
 
 export function MessageBubble({
@@ -31,6 +31,9 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const isUser = role === 'user';
   const isAssistant = role === 'assistant';
+
+  // Convert string to Date if needed
+  const timestamp = typeof created_at === 'string' ? new Date(created_at) : created_at;
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`} data-testid="message-bubble-container">
@@ -75,7 +78,7 @@ export function MessageBubble({
 
         <div className="message-footer mt-2 flex items-center justify-between gap-2">
           <span className="text-xs text-secondary">
-            {created_at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
           {isAssistant && provider_id && model && (
             <ProviderBadge provider_id={provider_id} model={model} />

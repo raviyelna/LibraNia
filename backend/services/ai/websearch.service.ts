@@ -1,4 +1,4 @@
-import { search } from 'duck-duck-scrape';
+import { search, SafeSearchType } from 'duck-duck-scrape';
 
 export interface SearchResult {
   title: string;
@@ -23,7 +23,7 @@ export class WebSearchService {
   async search(query: string, maxResults = 5): Promise<SearchResult[]> {
     try {
       const results = await search(query, {
-        safeSearch: 'moderate',
+        safeSearch: SafeSearchType.MODERATE,
       });
 
       return results.results

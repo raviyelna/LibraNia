@@ -165,8 +165,7 @@ router.delete('/api/conversations/:id', async (req, res) => {
 
 router.get('/api/conversations/:id/messages', async (req, res) => {
   try {
-    const db = getORM();
-    const messages = await getMessagesByConversation(req.params.id, db);
+    const messages = await getMessagesByConversation(req.params.id);
     res.json({ success: true, messages });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
@@ -179,7 +178,7 @@ router.get('/api/conversations/:id/messages', async (req, res) => {
 
 router.post('/api/chat', async (req, res) => {
   try {
-    const { conversationId, messages, providerId, model } = req.body;
+    const { conversationId, messages, providerId, model, researchMode } = req.body;
 
     if (!conversationId || !messages || !Array.isArray(messages)) {
       return res.status(400).json({
@@ -188,62 +187,22 @@ router.post('/api/chat', async (req, res) => {
       });
     }
 
-    // Import AI handlers from service
-    const { callDeepSeek, callClaude, callOpenAI } = await import('../services/ai/ai-chat.service.js');
+    // Use handleAIChat service which has tool calling support
+    const { handleAIChat } = await import('../services/ai/ai-chat.service.js');
 
-    // Get provider config
-    const provider = providerId || 'deepseek';
-    const config = loadProviderFromEnv(provider);
+    const result = await handleAIChat({
+      conversationId,
+      messages,
+      providerId,
+      model,
+      researchMode,
+    });
 
-    if (!config) {
-      return res.status(400).json({
-        success: false,
-        error: `Provider ${provider} not configured`
-      });
+    if (result.success) {
+      res.json({ success: true, content: result.content });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
     }
-
-    const modelToUse = model || config.model;
-    const db = getORM();
-
-    // Save user message
-    const userMessage = messages[messages.length - 1];
-    if (userMessage.role === 'user') {
-      await createMessage({
-        conversation_id: conversationId,
-        role: userMessage.role,
-        content: userMessage.content,
-      }, db);
-    }
-
-    // Call AI
-    let response: string;
-    switch (config.id) {
-      case 'deepseek':
-        response = await callDeepSeek(messages, config.apiKey, modelToUse);
-        break;
-      case 'claude':
-        response = await callClaude(messages, config.apiKey, modelToUse, config.baseURL);
-        break;
-      case 'openai':
-        response = await callOpenAI(messages, config.apiKey, modelToUse, config.baseURL);
-        break;
-      default:
-        return res.status(400).json({
-          success: false,
-          error: `Unsupported provider: ${config.id}`
-        });
-    }
-
-    // Save assistant message
-    await createMessage({
-      conversation_id: conversationId,
-      role: 'assistant',
-      content: response,
-      provider_id: config.id,
-      model: modelToUse,
-    }, db);
-
-    res.json({ success: true, content: response });
 
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

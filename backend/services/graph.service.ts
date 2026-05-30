@@ -2,6 +2,9 @@ import { getAllNotes } from './notes.service.js';
 import { getORM } from '../database/connection.js';
 import type { GraphData, GraphNode, GraphLink } from '../../src/types/graph.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import * as schema from '../database/schema.js';
+
+type Database = BetterSQLite3Database<typeof schema>;
 
 /**
  * Extract wiki-links from note body
@@ -71,7 +74,7 @@ export async function getGraphData(): Promise<GraphData> {
  */
 export async function createNode(
   data: { title: string; tags: string[] },
-  db: BetterSQLite3Database
+  db: Database
 ): Promise<GraphNode> {
   // For now, return mock data since we're using file-based storage
   // In future, this will integrate with database
@@ -89,7 +92,7 @@ export async function createNode(
 export async function updateNode(
   id: string,
   data: { title: string; tags: string[] },
-  db: BetterSQLite3Database
+  db: Database
 ): Promise<GraphNode> {
   // For now, return mock data since we're using file-based storage
   return {
@@ -104,7 +107,7 @@ export async function updateNode(
  */
 export async function deleteNode(
   id: string,
-  db: BetterSQLite3Database
+  db: Database
 ): Promise<boolean> {
   // For now, return success since we're using file-based storage
   return true;
@@ -115,7 +118,7 @@ export async function deleteNode(
  */
 export async function createEdge(
   data: { source: string; target: string; type: string },
-  db: BetterSQLite3Database
+  db: Database
 ): Promise<GraphLink & { id: string }> {
   // For now, return mock data since we're using file-based storage
   const id = `edge-${Date.now()}`;
@@ -123,7 +126,7 @@ export async function createEdge(
     id,
     source: data.source,
     target: data.target,
-    type: data.type,
+    type: data.type as 'manual' | 'semantic' | 'citation',
   };
 }
 
@@ -132,7 +135,7 @@ export async function createEdge(
  */
 export async function deleteEdge(
   id: string,
-  db: BetterSQLite3Database
+  db: Database
 ): Promise<boolean> {
   // For now, return success since we're using file-based storage
   return true;

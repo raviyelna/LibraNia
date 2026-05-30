@@ -183,7 +183,7 @@ export function GraphView() {
   }
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-screen overflow-hidden">
       <GraphControls onSearchResults={handleSearchResults} />
       <ForceGraph3D
         ref={fgRef}

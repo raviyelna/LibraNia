@@ -15,16 +15,8 @@ interface ProviderConfig {
 
 // Get .env file path in user data directory
 function getEnvPath(): string {
-  // Try to import electron app, but fall back to process.cwd() if not available (CLI mode)
-  let userDataPath: string;
-  try {
-    // Dynamic import for electron - will fail gracefully in CLI mode
-    const electron = require('electron');
-    userDataPath = electron.app?.getPath('userData') || process.cwd();
-  } catch {
-    // Running in CLI mode without electron
-    userDataPath = process.env.LIBRANIA_DATA_DIR || process.cwd();
-  }
+  // Use LIBRANIA_DATA_DIR env var or fall back to process.cwd()
+  const userDataPath = process.env.LIBRANIA_DATA_DIR || process.cwd();
   return path.join(userDataPath, '.env');
 }
 

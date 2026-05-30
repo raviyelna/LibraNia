@@ -44,7 +44,7 @@ export function BacklinksPanel({ noteId, onNavigate }: BacklinksPanelProps) {
   return (
     <div className="backlinks-panel p-4">
       <h3 className="text-lg font-semibold mb-3">Backlinks</h3>
-      {backlinks.length === 0 ? (
+      {!backlinks || backlinks.length === 0 ? (
         <div className="text-secondary text-sm">No backlinks yet</div>
       ) : (
         <ul className="space-y-2">

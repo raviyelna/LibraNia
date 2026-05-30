@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Library, MessageSquare, Settings, ChevronLeft, ChevronRight, Sun, Moon, Network } from 'lucide-react';
+import { Home, Library, MessageSquare, Settings, ChevronLeft, ChevronRight, Sun, Moon, Network, Menu, X } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -14,6 +14,7 @@ const navigationItems = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   // Load collapsed state from localStorage on mount
@@ -34,9 +35,27 @@ export function Sidebar() {
   const sidebarWidth = collapsed ? 'w-16' : 'w-60';
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen bg-background border-r border-border transition-all duration-200 ${sidebarWidth} flex flex-col`}
-    >
+    <>
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-background border border-border rounded-md shadow-lg"
+      >
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 h-screen bg-background border-r border-border transition-all duration-200 ${sidebarWidth} flex flex-col z-40
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      >
       {/* Header with logo and toggle */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         {!collapsed && <h1 className="text-xl font-bold text-foreground">LibraNia</h1>}
@@ -59,6 +78,7 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
                   isActive
@@ -92,5 +112,6 @@ export function Sidebar() {
         </Button>
       </div>
     </aside>
+    </>
   );
 }

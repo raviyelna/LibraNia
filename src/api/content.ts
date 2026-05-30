@@ -24,11 +24,12 @@ export interface Content {
 export const contentAPI = {
   async getAll(): Promise<Content[]> {
     const response = await apiRequest<{ success: boolean; data: Content[] }>('/api/content');
-    return response.data;
+    return response.data || [];
   },
 
   async getById(id: string): Promise<Content> {
     const response = await apiRequest<{ success: boolean; content: Content }>(`/api/content/${id}`);
+    if (!response.content) throw new Error('Content not found');
     return response.content;
   },
 
@@ -36,6 +37,33 @@ export const contentAPI = {
     await apiRequest<{ success: boolean }>(`/api/content/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  async saveImage(params: {
+    buffer: ArrayBuffer;
+    filename: string;
+    noteId: string;
+  }): Promise<{ filePath: string }> {
+    const blob = new Blob([params.buffer]);
+    const file = new File([blob], params.filename, { type: 'image/png' });
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('source', 'manual');
+    formData.append('note_id', params.noteId);
+
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/content/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return { filePath: result.data.file_path };
   },
 };
 
@@ -53,7 +81,7 @@ export function uploadContent(
     formData.append('file', file);
     formData.append('source', source);
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const apiUrl = import.meta.env.VITE_API_URL || '';
     const xhr = new XMLHttpRequest();
 
     // Track upload progress

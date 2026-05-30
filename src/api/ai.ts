@@ -42,24 +42,24 @@ export const aiAPI = {
   },
 
   async validateKey(providerId: string, apiKey: string, baseURL?: string): Promise<ValidationResult> {
-    const response = await apiRequest<{ success: boolean; valid: boolean; error?: string }>('/api/ai/validate-key', {
+    const response = await apiRequest<{ success: boolean; data: { valid: boolean; error?: string } }>('/api/ai/validate-key', {
       method: 'POST',
-      body: JSON.stringify({ providerId, apiKey, baseURL }),
+      body: JSON.stringify({ provider: providerId, apiKey, baseURL }),
     });
-    return { valid: response.valid, error: response.error };
+    return { valid: response.data?.valid || false, error: response.data?.error };
   },
 
-  // TODO: These methods need backend implementation
-  // Provider config is currently managed via /api/config, not /api/ai
+  // Provider config management
   async setConfig(config: ProviderConfig): Promise<void> {
-    // Stub - backend endpoint doesn't exist yet
-    console.warn('[aiAPI.setConfig] Not implemented - provider config managed via /api/config');
-    throw new Error('setConfig not implemented - use /api/config endpoint');
+    await apiRequest<{ success: boolean }>('/api/providers', {
+      method: 'POST',
+      body: JSON.stringify(config),
+    });
   },
 
   async deleteConfig(providerId: string): Promise<void> {
-    // Stub - backend endpoint doesn't exist yet
-    console.warn('[aiAPI.deleteConfig] Not implemented - provider config managed via /api/config');
-    throw new Error('deleteConfig not implemented - use /api/config endpoint');
+    await apiRequest<{ success: boolean }>(`/api/providers/${providerId}`, {
+      method: 'DELETE',
+    });
   },
 };

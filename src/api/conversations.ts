@@ -24,21 +24,23 @@ export interface Message {
 
 export const conversationsAPI = {
   async getAll(): Promise<Conversation[]> {
-    const response = await apiRequest<{ success: boolean; data: Conversation[] }>('/api/conversations');
-    return response.data || [];
+    const response = await apiRequest<{ success: boolean; conversations: Conversation[] }>('/api/conversations');
+    return response.conversations || [];
   },
 
   async getById(id: string): Promise<Conversation> {
-    const response = await apiRequest<{ success: boolean; data: Conversation }>(`/api/conversations/${id}`);
-    return response.data;
+    const response = await apiRequest<{ success: boolean; conversation: Conversation }>(`/api/conversations/${id}`);
+    if (!response.conversation) throw new Error('Conversation not found');
+    return response.conversation;
   },
 
   async create(data: { title: string }): Promise<Conversation> {
-    const response = await apiRequest<{ success: boolean; data: Conversation }>('/api/conversations', {
+    const response = await apiRequest<{ success: boolean; conversation: Conversation }>('/api/conversations', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return response.data;
+    if (!response.conversation) throw new Error('Failed to create conversation');
+    return response.conversation;
   },
 
   async update(id: string, data: { title: string }): Promise<void> {
@@ -55,7 +57,7 @@ export const conversationsAPI = {
   },
 
   async getMessages(id: string): Promise<Message[]> {
-    const response = await apiRequest<{ success: boolean; data: Message[] }>(`/api/conversations/${id}/messages`);
-    return response.data || [];
+    const response = await apiRequest<{ success: boolean; messages: Message[] }>(`/api/conversations/${id}/messages`);
+    return response.messages || [];
   },
 };

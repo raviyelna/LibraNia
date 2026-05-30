@@ -14,7 +14,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
     const newSocket = io(socketUrl, {
       reconnection: true,
       reconnectionDelay: 1000,
