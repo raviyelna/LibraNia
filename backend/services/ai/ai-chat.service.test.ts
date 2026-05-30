@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { callDeepSeek } from './ai-chat.service';
+import { closeDatabase, getDatabase, initDatabase } from '../../database/connection';
 
 function jsonResponse(body: unknown): Response {
   return {
@@ -60,7 +61,7 @@ describe('callDeepSeek', () => {
     );
   });
 
-  it('forces a final answer after three web searches', async () => {
+  it('removes web search after three calls while keeping write-back tools', async () => {
     process.env.LIBRANIA_DATA_DIR = 'Z:\\missing-librania-test-data';
     const toolCall = (id: string, query: string) => ({
       choices: [{
@@ -94,6 +95,10 @@ describe('callDeepSeek', () => {
         name: 'web_search',
         description: 'Search the web',
         input_schema: { type: 'object', properties: {}, required: [] },
+      }, {
+        name: 'create_note',
+        description: 'Create a note',
+        input_schema: { type: 'object', properties: {}, required: [] },
       }]
     );
 
@@ -101,7 +106,78 @@ describe('callDeepSeek', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4);
 
     const finalRequest = JSON.parse(fetchMock.mock.calls[3][1].body);
-    expect(finalRequest.tools).toBeUndefined();
-    expect(finalRequest.messages.at(-1).content).toContain('Tool use is complete');
+    expect(finalRequest.tools).toHaveLength(1);
+    expect(finalRequest.tools[0].function.name).toBe('create_note');
+    expect(finalRequest.messages.at(-1).content).toContain('Web search is complete');
+  });
+
+  it('executes DSML note, link, and tag tool calls', async () => {
+    process.env.LIBRANIA_DATA_DIR = 'Z:\\missing-librania-test-data';
+    await initDatabase(':memory:');
+    const db = getDatabase();
+    const now = Date.now();
+    db.prepare(`
+      INSERT INTO notes (id, title, body, metadata, created_at, updated_at)
+      VALUES (?, ?, ?, NULL, ?, ?)
+    `).run('related-note', 'Related Note', 'Existing knowledge', now, now);
+    db.prepare(`
+      INSERT INTO notes (id, title, body, metadata, created_at, updated_at)
+      VALUES (?, ?, ?, NULL, ?, ?)
+    `).run('tag-target', 'Tag Target', 'Existing note for tags', now, now);
+
+    const dsml = `<｜｜DSML｜｜tool_calls>
+<｜｜DSML｜｜invoke name="create_note">
+<｜｜DSML｜｜parameter name="title" string="true">AgentCore Guide</｜｜DSML｜｜parameter>
+<｜｜DSML｜｜parameter name="body" string="true">Setup details. See [[Related Note]].</｜｜DSML｜｜parameter>
+</｜｜DSML｜｜invoke>
+<｜｜DSML｜｜invoke name="add_tags">
+<｜｜DSML｜｜parameter name="noteId" string="true">tag-target</｜｜DSML｜｜parameter>
+<｜｜DSML｜｜parameter name="tags">["aws","agentcore"]</｜｜DSML｜｜parameter>
+</｜｜DSML｜｜invoke>
+</｜｜DSML｜｜tool_calls>`;
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse({
+        choices: [{ message: { content: dsml } }],
+      }))
+      .mockResolvedValueOnce(jsonResponse({
+        choices: [{ message: { content: 'Normal final answer' } }],
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const response = await callDeepSeek(
+        [{ role: 'user', content: 'Create a guide' }],
+        'test-key',
+        'custom-model',
+        undefined,
+        [
+          {
+            name: 'create_note',
+            description: 'Create a note',
+            input_schema: { type: 'object', properties: {}, required: [] },
+          },
+          {
+            name: 'add_tags',
+            description: 'Add tags',
+            input_schema: { type: 'object', properties: {}, required: [] },
+          },
+        ]
+      );
+
+      expect(response).toBe('Normal final answer');
+      expect(db.prepare('SELECT title FROM notes WHERE title = ?').get('AgentCore Guide')).toEqual({
+        title: 'AgentCore Guide',
+      });
+      expect(db.prepare('SELECT COUNT(*) AS count FROM links').get()).toEqual({ count: 1 });
+      expect(db.prepare(`
+        SELECT tags.name
+        FROM tags
+        JOIN note_tags ON note_tags.tag_id = tags.id
+        WHERE note_tags.note_id = ?
+        ORDER BY tags.name
+      `).all('tag-target')).toEqual([{ name: 'agentcore' }, { name: 'aws' }]);
+    } finally {
+      closeDatabase();
+    }
   });
 });
