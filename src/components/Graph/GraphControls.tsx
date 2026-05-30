@@ -17,12 +17,20 @@ export function GraphControls({ onSearchResults }: GraphControlsProps) {
 
   // Execute search when query changes
   useEffect(() => {
-    search(query, 'quickNav');
-  }, [query, search]);
+    if (query.trim()) {
+      console.log('[GraphControls] Searching for:', query);
+      search(query, 'quickNav');
+    } else {
+      // Clear results when query is empty
+      onSearchResults([]);
+    }
+  }, [query, search, onSearchResults]);
 
   // Notify parent when results change
   useEffect(() => {
-    const nodeIds = Array.isArray(results) ? results.map((r: any) => r.id) : [];
+    // Ensure results is always an array
+    const nodeIds = Array.isArray(results) && results ? results.map((r: any) => r.id) : [];
+    console.log('[GraphControls] Search results:', results?.length ?? 0, 'nodes:', nodeIds);
     onSearchResults(nodeIds);
   }, [results, onSearchResults]);
 

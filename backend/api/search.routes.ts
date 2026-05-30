@@ -82,7 +82,7 @@ router.post('/api/search', async (req, res) => {
         }));
     }
 
-    res.json({ success: true, data: results });
+    res.json({ success: true, results });
   } catch (error: any) {
     console.error('[Search API] Search failed:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -106,7 +106,7 @@ router.post('/api/search/semantic', async (req, res) => {
     }
 
     // TODO: Implement with embeddings service
-    res.json({ success: true, data: [] });
+    res.json({ success: true, results: [] });
   } catch (error: any) {
     console.error('[Search API] Semantic search failed:', error);
     res.status(500).json({ success: false, error: error.message });

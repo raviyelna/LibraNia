@@ -241,7 +241,8 @@ export function GraphView() {
           onClose={handlePanelClose}
         />
       )}
-      <GraphMinimap graphData={graphData} onLocationClick={handleMinimapClick} />
+      {/* Minimap temporarily disabled due to ForceGraph2D ref issue */}
+      {/* <GraphMinimap graphData={graphData} onLocationClick={handleMinimapClick} /> */}
     </div>
   );
 }
