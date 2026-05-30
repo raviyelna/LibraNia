@@ -87,7 +87,16 @@ None yet — all features scoped for v3.0.
 
 ## Traceability
 
-Requirements will be mapped to phases after roadmap creation.
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| UI-FOUND-01 to UI-FOUND-06 | Phase 1: Design System Foundation | Planned |
+| UI-COMP-01 to UI-COMP-07 | Phase 2: Core Component Library | Planned |
+| UI-LAYOUT-01 to UI-LAYOUT-05 | Phase 3: Navigation & Layout | Planned |
+| UI-HOME-01 to UI-HOME-05 | Phase 4: Landing/Home Page | Planned |
+| UI-CHAT-01 to UI-CHAT-07 | Phase 5: Chat Interface Redesign | Planned |
+| UI-GRAPH-01 to UI-GRAPH-07 | Phase 6: Graph Visualization Redesign | Planned |
+| UI-LIB-01 to UI-LIB-07 | Phase 7: Library/Notes Redesign | Planned |
+| UI-SET-01 to UI-SET-05 | Phase 8: Settings Page & Polish | Planned |
 
 ---
 
