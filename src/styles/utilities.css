@@ -1,0 +1,61 @@
+@layer utilities {
+  /* Glow effect utilities */
+  .glow-sm {
+    box-shadow:
+      0 0 8px rgb(var(--color-neon-blue) / 0.3),
+      0 0 12px rgb(var(--color-neon-blue) / 0.2);
+  }
+
+  .glow-md {
+    box-shadow:
+      0 0 10px rgb(var(--color-neon-cyan) / 0.4),
+      0 0 16px rgb(var(--color-neon-cyan) / 0.3),
+      0 0 24px rgb(var(--color-neon-cyan) / 0.1);
+  }
+
+  .glow-purple {
+    box-shadow:
+      0 0 8px rgb(var(--color-neon-purple) / 0.3),
+      0 0 12px rgb(var(--color-neon-purple) / 0.2);
+  }
+
+  .glow-pulse {
+    animation: pulse-glow 2s var(--ease-smooth) infinite;
+  }
+
+  /* Transition utilities */
+  .transition-fast {
+    transition-duration: var(--transition-fast);
+    transition-timing-function: var(--ease-smooth);
+  }
+
+  .transition-base {
+    transition-duration: var(--transition-base);
+    transition-timing-function: var(--ease-smooth);
+  }
+}
+
+/* Pulse glow animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 8px rgb(var(--color-neon-blue) / 0.3),
+      0 0 12px rgb(var(--color-neon-blue) / 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 12px rgb(var(--color-neon-blue) / 0.5),
+      0 0 20px rgb(var(--color-neon-blue) / 0.3);
+  }
+}
+
+/* Reduced motion support - disable all glow effects and animations */
+@media (prefers-reduced-motion: reduce) {
+  .glow-sm,
+  .glow-md,
+  .glow-purple,
+  .glow-pulse {
+    box-shadow: none;
+    animation: none;
+  }
+}
