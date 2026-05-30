@@ -13,11 +13,11 @@ interface ProviderConfig {
   model: string;
 }
 
-// Get .env file path in user data directory
+// Get .env file path in data directory
 function getEnvPath(): string {
-  // Use LIBRANIA_DATA_DIR env var or fall back to process.cwd()
-  const userDataPath = process.env.LIBRANIA_DATA_DIR || process.cwd();
-  return path.join(userDataPath, '.env');
+  // Always use data/.env
+  const dataDir = process.env.LIBRANIA_DATA_DIR || path.join(process.cwd(), 'data');
+  return path.join(dataDir, '.env');
 }
 
 // Parse .env file
@@ -65,9 +65,8 @@ export function readEnv(): Record<string, string> {
   }
 
   const content = fs.readFileSync(envPath, 'utf-8');
-  console.log('[ENV] File content:', content);
   const parsed = parseEnv(content);
-  console.log('[ENV] Parsed env:', parsed);
+  console.log('[ENV] Loaded keys:', Object.keys(parsed));
   return parsed;
 }
 
@@ -75,8 +74,25 @@ export function readEnv(): Record<string, string> {
 function writeEnv(env: Record<string, string>): void {
   const envPath = getEnvPath();
   const content = serializeEnv(env);
+  fs.mkdirSync(path.dirname(envPath), { recursive: true });
   fs.writeFileSync(envPath, content, 'utf-8');
   console.log('[ENV] Config saved to:', envPath);
+}
+
+export function saveTavilyApiKey(apiKey: string): void {
+  const env = readEnv();
+
+  if (apiKey) {
+    env.TAVILY_API_KEY = apiKey;
+  } else {
+    delete env.TAVILY_API_KEY;
+  }
+
+  writeEnv(env);
+}
+
+export function hasTavilyApiKey(): boolean {
+  return !!readEnv().TAVILY_API_KEY;
 }
 
 // Save provider config to .env

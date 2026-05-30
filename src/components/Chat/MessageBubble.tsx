@@ -38,10 +38,10 @@ export function MessageBubble({
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`} data-testid="message-bubble-container">
       <div
-        className={`max-w-[80%] rounded-lg p-4 ${
+        className={`max-w-[80%] rounded-lg p-4 shadow-sm ${
           isUser
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-foreground'
+            ? 'bg-primary text-white'
+            : 'bg-muted text-foreground border border-border'
         }`}
       >
         {isAssistant ? (

@@ -114,9 +114,9 @@ describe('AIProviderSettings', () => {
     render(<AIProviderSettings />);
 
     // Fill in Claude provider
-    const apiKeyInput = screen.getAllByLabelText(/API Key/i)[0];
+    const apiKeyInput = screen.getAllByLabelText(/^API Key$/i)[0];
     const modelSelect = screen.getByLabelText(/Model.*Claude/i);
-    const saveButton = screen.getAllByRole('button', { name: /Save/i })[0];
+    const saveButton = screen.getAllByRole('button', { name: /^Save$/i })[0];
 
     fireEvent.change(apiKeyInput, { target: { value: 'test-api-key' } });
     fireEvent.change(modelSelect, { target: { value: 'claude-3-5-sonnet-20241022' } });
@@ -156,8 +156,8 @@ describe('AIProviderSettings', () => {
 
     const { rerender } = render(<AIProviderSettings />);
 
-    const apiKeyInputs = screen.getAllByLabelText(/API Key/i);
-    const saveButtons = screen.getAllByRole('button', { name: /Save/i });
+    const apiKeyInputs = screen.getAllByLabelText(/^API Key$/i);
+    const saveButtons = screen.getAllByRole('button', { name: /^Save$/i });
 
     fireEvent.change(apiKeyInputs[0], { target: { value: 'valid-key' } });
     fireEvent.click(saveButtons[0]);

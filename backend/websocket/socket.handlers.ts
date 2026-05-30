@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { logger } from '../logger.js';
 import { callClaude, callDeepSeek, callOpenAI } from '../services/ai/ai-chat.service.js';
 import { loadProviderFromEnv } from '../store/env.store.js';
+import { generateContextSummary, getContextSummary } from '../services/conversation-context.service.js';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -88,13 +89,24 @@ export function setupSocketHandlers(io: Server): void {
           const { RESEARCH_SYSTEM_PROMPT } = await import('../prompts/research.system.js');
           tools = RESEARCH_TOOLS;
 
-          // Add research system prompt
+          // Get context summary for conversation continuity
+          const contextSummary = await getContextSummary(data.conversationId);
+          let systemPrompt = RESEARCH_SYSTEM_PROMPT;
+
+          if (contextSummary) {
+            systemPrompt += `\n\n## Previous Conversation Context\n\n${contextSummary}\n\nUse this context to understand what has been discussed before and maintain continuity.`;
+          }
+
+          // Add research system prompt with context
           messagesToSend = [
-            { role: 'system', content: RESEARCH_SYSTEM_PROMPT },
+            { role: 'system', content: systemPrompt },
             ...data.messages.filter(m => m.role !== 'system')
           ];
 
           logger.info('Research mode enabled with tools:', tools.map(t => t.name));
+          if (contextSummary) {
+            logger.info('Loaded context summary:', contextSummary.substring(0, 100));
+          }
         }
 
         // Call AI provider with streaming callback
@@ -108,7 +120,7 @@ export function setupSocketHandlers(io: Server): void {
 
         switch (config.id) {
           case 'deepseek':
-            response = await callDeepSeek(messagesToSend, config.apiKey, model, tools, onProgress);
+            response = await callDeepSeek(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
             break;
           case 'claude':
             response = await callClaude(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
@@ -132,6 +144,50 @@ export function setupSocketHandlers(io: Server): void {
           provider_id: config.id,
           model: model,
         });
+
+        // Auto-generate title if conversation still has default title
+        try {
+          const { getORM } = await import('../database/connection.js');
+          const { conversations } = await import('../database/schema.js');
+          const { eq } = await import('drizzle-orm');
+          const { autoGenerateTitle } = await import('../services/conversation-title.service.js');
+          const { getMessagesByConversation } = await import('../services/message.service.js');
+
+          const db = getORM();
+          console.log('[WebSocket] Checking conversation title for:', data.conversationId);
+          const conv = await db.query.conversations.findFirst({
+            where: eq(conversations.id, data.conversationId),
+          });
+
+          console.log('[WebSocket] Conversation found:', conv ? `title="${conv.title}"` : 'NOT FOUND');
+
+          if (conv && conv.title === 'New Conversation') {
+            const existingMessages = await getMessagesByConversation(data.conversationId);
+            const firstUserMsg = existingMessages.find(m => m.role === 'user');
+            if (firstUserMsg) {
+              console.log('[WebSocket] Triggering auto-title generation');
+              autoGenerateTitle(data.conversationId, firstUserMsg.content, config.id).catch(err => {
+                logger.error('Auto-title generation failed', err);
+              });
+            } else {
+              console.log('[WebSocket] No user message found');
+            }
+          } else {
+            console.log('[WebSocket] Skipping auto-title (already renamed or not found)');
+          }
+        } catch (err) {
+          console.error('[WebSocket] Auto-title check failed:', err);
+        }
+
+        // Generate context summary for next conversation turn (hidden from user)
+        try {
+          console.log('[WebSocket] Generating context summary for conversation continuity');
+          generateContextSummary(data.conversationId, config.id).catch(err => {
+            logger.error('Context summary generation failed', err);
+          });
+        } catch (err) {
+          console.error('[WebSocket] Context summary generation failed:', err);
+        }
 
         // Emit completion event
         socket.emit('ai:complete', {

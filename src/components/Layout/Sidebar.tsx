@@ -58,7 +58,7 @@ export function Sidebar() {
       >
       {/* Header with logo and toggle */}
       <div className="flex items-center justify-between p-4 border-b border-border">
-        {!collapsed && <h1 className="text-xl font-bold text-foreground">LibraNia</h1>}
+        {!collapsed && <h1 className="text-xl font-bold text-primary">LibraNia</h1>}
         <Button
           variant="ghost"
           size="icon"
@@ -80,15 +80,15 @@ export function Sidebar() {
               to={item.path}
               onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-200 ${
                   isActive
-                    ? 'bg-primary text-white'
-                    : 'text-foreground hover:bg-muted'
+                    ? 'bg-primary text-white font-medium'
+                    : 'text-foreground hover:bg-muted hover:text-primary'
                 } ${collapsed ? 'justify-center' : ''}`
               }
             >
               <Icon className="h-5 w-5 flex-shrink-0" role="img" aria-hidden="true" />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span className="text-sm">{item.label}</span>}
             </NavLink>
           );
         })}
@@ -108,7 +108,7 @@ export function Sidebar() {
           ) : (
             <Moon className="h-5 w-5 flex-shrink-0" role="img" aria-hidden="true" />
           )}
-          {!collapsed && <span>Toggle Theme</span>}
+          {!collapsed && <span className="text-sm">Toggle Theme</span>}
         </Button>
       </div>
     </aside>

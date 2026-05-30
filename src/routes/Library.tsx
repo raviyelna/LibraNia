@@ -8,7 +8,7 @@ import { ExportDialog } from '../components/Export/ExportDialog';
 import { ContentUpload } from '../components/ContentUpload';
 import { ContentList } from '../components/ContentList';
 import { useContent, useDeleteContent } from '../hooks/useContent';
-import { Download, RefreshCw, Menu, X } from 'lucide-react';
+import { Download, RefreshCw, Menu, X, Brain } from 'lucide-react';
 
 export function LibraryPage() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
@@ -53,21 +53,21 @@ export function LibraryPage() {
       </button>
 
       {/* Left sidebar - notes list */}
-      <aside className={`notes-sidebar w-64 border-r border-border overflow-y-auto bg-background
+      <aside className={`notes-sidebar w-64 border-r border-border overflow-y-auto scrollable bg-background
         fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-4 border-b border-border space-y-2">
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-primary/10 hover:bg-primary/20 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
             {syncing ? 'Syncing...' : 'Sync Notes'}
           </button>
           <button
             onClick={() => setExportDialogOpen(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/10 hover:bg-accent/20 rounded-md transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors duration-200"
           >
             <Download size={16} />
             Export Notes
@@ -123,22 +123,29 @@ export function LibraryPage() {
             {selectedNoteId ? (
               <>
                 <TagsInput noteId={selectedNoteId} />
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto scrollable">
                   <NoteEditor noteId={selectedNoteId} />
                 </div>
               </>
             ) : (
               <div className="empty-state flex items-center justify-center h-full">
-                <div className="text-center">
-                  <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Your Library</h2>
-                  <p className="text-secondary">Select a note or create a new one to get started</p>
-                  <p className="text-secondary text-sm mt-4">Press <kbd className="px-2 py-1 bg-accent rounded">Cmd+K</kbd> for quick navigation</p>
+                <div className="text-center space-y-4 max-w-md">
+                  <div className="flex justify-center">
+                    <div className="p-4 bg-primary/10 rounded-2xl">
+                      <Brain className="w-12 h-12 text-primary" />
+                    </div>
+                  </div>
+                  <h2 className="text-2xl font-bold text-foreground">Welcome to Your Library</h2>
+                  <p className="text-secondary">Select a note from the sidebar or create a new one to get started</p>
+                  <p className="text-secondary text-sm mt-4">
+                    Press <kbd className="px-2 py-1 bg-muted rounded border border-border font-mono">Cmd+K</kbd> for quick navigation
+                  </p>
                 </div>
               </div>
             )}
           </>
         ) : (
-          <div className="content-tab flex-1 overflow-y-auto">
+          <div className="content-tab flex-1 overflow-y-auto scrollable">
             <ContentUpload onUploadComplete={handleUploadComplete} />
             {contentLoading ? (
               <div className="p-8 text-center text-secondary">Loading content...</div>
@@ -150,7 +157,7 @@ export function LibraryPage() {
       </main>
 
       {/* Right sidebar - backlinks (hidden on mobile/tablet, shown on desktop) */}
-      <aside className={`backlinks-sidebar w-64 border-l border-border overflow-y-auto bg-background
+      <aside className={`backlinks-sidebar w-64 border-l border-border overflow-y-auto scrollable bg-background
         fixed xl:static inset-y-0 right-0 z-40 transform transition-transform duration-200
         ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'}
         hidden xl:block`}>

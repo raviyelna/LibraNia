@@ -7,19 +7,19 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className = '', variant = 'primary', size = 'default', ...props }, ref) => {
-    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-all duration-fast motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neon-blue focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50';
+    const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors duration-fast motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 cursor-pointer';
 
     const variantStyles = {
-      primary: 'bg-neon-blue text-white hover:bg-neon-blue-light hover:glow-sm hover:scale-105 motion-reduce:hover:scale-100 motion-reduce:hover:shadow-none',
-      secondary: 'bg-neon-cyan text-white hover:bg-neon-cyan/90 hover:glow-sm hover:scale-105 motion-reduce:hover:scale-100 motion-reduce:hover:shadow-none',
+      primary: 'bg-primary text-white hover:bg-primary/90',
+      secondary: 'bg-secondary text-white hover:bg-secondary/90',
       ghost: 'hover:bg-muted hover:text-foreground',
-      outline: 'border border-neon-blue bg-transparent text-neon-blue-light hover:bg-neon-blue/10 hover:border-neon-blue-light hover:scale-105 motion-reduce:hover:scale-100',
+      outline: 'border-2 border-primary bg-transparent text-primary hover:bg-primary/10',
     };
 
     const sizeStyles = {
       default: 'h-10 px-4 py-2',
-      sm: 'h-9 px-3',
-      lg: 'h-11 px-8',
+      sm: 'h-9 px-3 text-sm',
+      lg: 'h-11 px-8 text-lg',
       icon: 'h-10 w-10',
     };
 
