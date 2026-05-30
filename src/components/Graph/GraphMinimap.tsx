@@ -21,7 +21,10 @@ export function GraphMinimap({ graphData, onLocationClick }: GraphMinimapProps) 
     if (fgRef.current && graphData.nodes.length > 0) {
       // Small delay to ensure layout has started
       setTimeout(() => {
-        fgRef.current?.zoomToFit(400, 20);
+        // Check if zoomToFit exists before calling
+        if (typeof fgRef.current.zoomToFit === 'function') {
+          fgRef.current.zoomToFit(400, 20);
+        }
       }, 100);
     }
   }, [graphData]);
