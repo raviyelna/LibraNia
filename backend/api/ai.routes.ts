@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express';
-import { loadAllProvidersFromEnv, loadProviderFromEnv } from '../store/env.store.js';
+import { getProviderConfigStatus, loadAllProvidersFromEnv } from '../store/env.store.js';
 
 const router = Router();
 
@@ -63,13 +63,7 @@ router.get('/api/ai/providers', async (req, res) => {
   try {
     const providers = loadAllProvidersFromEnv();
 
-    const providerStatus = providers.map((config) => ({
-      id: config.id,
-      configured: !!config.apiKey,
-      model: config.model,
-      baseURL: config.baseURL,
-      apiKey: config.apiKey, // Include for form population
-    }));
+    const providerStatus = providers.map(getProviderConfigStatus);
 
     res.json({ success: true, data: providerStatus });
   } catch (error: any) {

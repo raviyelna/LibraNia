@@ -13,6 +13,14 @@ interface ProviderConfig {
   model: string;
 }
 
+export interface ProviderConfigStatus {
+  id: ProviderConfig['id'];
+  configured: boolean;
+  apiKeyPreview: string;
+  baseURL?: string;
+  model: string;
+}
+
 // Get .env file path in data directory
 function getEnvPath(): string {
   // Always use data/.env
@@ -93,6 +101,25 @@ export function saveTavilyApiKey(apiKey: string): void {
 
 export function hasTavilyApiKey(): boolean {
   return !!readEnv().TAVILY_API_KEY;
+}
+
+export function getTavilyApiKeyPreview(): string {
+  return getApiKeyPreview(readEnv().TAVILY_API_KEY);
+}
+
+export function getApiKeyPreview(apiKey?: string): string {
+  if (!apiKey) return '';
+  return `${apiKey.slice(0, 5)}...${apiKey.slice(-5)}`;
+}
+
+export function getProviderConfigStatus(config: ProviderConfig): ProviderConfigStatus {
+  return {
+    id: config.id,
+    configured: !!config.apiKey,
+    apiKeyPreview: getApiKeyPreview(config.apiKey),
+    model: config.model,
+    baseURL: config.baseURL,
+  };
 }
 
 // Save provider config to .env

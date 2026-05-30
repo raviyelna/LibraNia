@@ -3,7 +3,7 @@
  */
 
 import { Router } from 'express';
-import { loadProviderFromEnv, loadAllProvidersFromEnv, saveProviderToEnv, deleteProviderFromEnv } from '../store/env.store.js';
+import { deleteProviderFromEnv, getProviderConfigStatus, loadProviderFromEnv, loadAllProvidersFromEnv, saveProviderToEnv } from '../store/env.store.js';
 import { createConversation, getAllConversations, getConversation, deleteConversation } from '../services/conversation.service.js';
 import { createMessage, getMessagesByConversation } from '../services/message.service.js';
 import { getORM } from '../database/connection.js';
@@ -47,7 +47,7 @@ router.use(aiRoutes);
 router.get('/api/providers', async (req, res) => {
   try {
     const providers = loadAllProvidersFromEnv();
-    res.json({ success: true, providers });
+    res.json({ success: true, providers: providers.map(getProviderConfigStatus) });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -59,7 +59,7 @@ router.get('/api/providers/:id', async (req, res) => {
     if (!config) {
       return res.status(404).json({ success: false, error: 'Provider not found' });
     }
-    res.json({ success: true, config });
+    res.json({ success: true, config: getProviderConfigStatus(config) });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
