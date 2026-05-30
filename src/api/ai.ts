@@ -13,7 +13,8 @@ export interface AIModel {
 export interface AIProvider {
   id: string;
   name: string;
-  apiKey?: string;
+  configured?: boolean;
+  apiKeyPreview?: string;
   model?: string;
   baseURL?: string;
 }

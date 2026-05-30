@@ -5,7 +5,7 @@
 
 import { Router } from 'express';
 import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig.js';
-import { hasTavilyApiKey, saveTavilyApiKey } from '../store/env.store.js';
+import { getTavilyApiKeyPreview, hasTavilyApiKey, saveTavilyApiKey } from '../store/env.store.js';
 
 const router = Router();
 
@@ -27,6 +27,7 @@ router.get('/api/config', async (req, res) => {
       data: {
         ...config,
         tavilyApiKeyConfigured: hasTavilyApiKey(),
+        tavilyApiKeyPreview: getTavilyApiKeyPreview(),
       },
     });
   } catch (error: any) {

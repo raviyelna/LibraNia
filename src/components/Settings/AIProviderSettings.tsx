@@ -8,6 +8,7 @@ type ProviderId = 'claude' | 'openai' | 'deepseek';
 
 interface ProviderFormState {
   apiKey: string;
+  apiKeyPreview: string;
   baseURL: string;
   model: string;
   customModel: string;
@@ -51,12 +52,14 @@ export function AIProviderSettings() {
   const { validate } = useProviderValidation();
   const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
   const [tavilyConfigured, setTavilyConfigured] = useState<boolean>(false);
+  const [tavilyApiKeyPreview, setTavilyApiKeyPreview] = useState<string>('');
   const [showTavilyKey, setShowTavilyKey] = useState<boolean>(false);
 
   // Initialize form state for each provider
   const [formState, setFormState] = useState<Record<ProviderId, ProviderFormState>>({
     claude: {
       apiKey: '',
+      apiKeyPreview: '',
       baseURL: '',
       model: PROVIDER_MODELS.claude[0].value,
       customModel: '',
@@ -66,6 +69,7 @@ export function AIProviderSettings() {
     },
     openai: {
       apiKey: '',
+      apiKeyPreview: '',
       baseURL: '',
       model: PROVIDER_MODELS.openai[0].value,
       customModel: '',
@@ -75,6 +79,7 @@ export function AIProviderSettings() {
     },
     deepseek: {
       apiKey: '',
+      apiKeyPreview: '',
       baseURL: '',
       model: PROVIDER_MODELS.deepseek[0].value,
       customModel: '',
@@ -95,7 +100,7 @@ export function AIProviderSettings() {
     }
 
     providers.forEach((config) => {
-      console.log('[AIProviderSettings] Loading config:', config.id, 'apiKey length:', config.apiKey?.length);
+      console.log('[AIProviderSettings] Loading config:', config.id, 'configured:', config.configured);
 
       // Load custom model from localStorage
       const savedCustomModel = localStorage.getItem(`customModel_${config.id}`) || '';
@@ -105,7 +110,8 @@ export function AIProviderSettings() {
         ...prev,
         [config.id]: {
           ...prev[config.id],
-          apiKey: config.apiKey,
+          apiKey: '',
+          apiKeyPreview: config.apiKeyPreview || '',
           baseURL: config.baseURL || '',
           model: config.model,
           customModel: savedCustomModel,
@@ -117,7 +123,10 @@ export function AIProviderSettings() {
 
   useEffect(() => {
     configAPI.get()
-      .then((config) => setTavilyConfigured(!!config.tavilyApiKeyConfigured))
+      .then((config) => {
+        setTavilyConfigured(!!config.tavilyApiKeyConfigured);
+        setTavilyApiKeyPreview(config.tavilyApiKeyPreview || '');
+      })
       .catch((error) => console.error('Failed to load Tavily status:', error));
   }, []);
 
@@ -126,7 +135,11 @@ export function AIProviderSettings() {
     field: keyof ProviderFormState,
     value: string | boolean
   ) => {
-    console.log('[AIProviderSettings] Field change:', { providerId, field, value });
+    console.log('[AIProviderSettings] Field change:', {
+      providerId,
+      field,
+      value: field === 'apiKey' ? '[REDACTED]' : value,
+    });
     setFormState((prev) => ({
       ...prev,
       [providerId]: {
@@ -207,6 +220,9 @@ export function AIProviderSettings() {
       // Save to data/.env via backend API
       await configAPI.update({ tavilyApiKey });
       setTavilyConfigured(!!tavilyApiKey);
+      setTavilyApiKeyPreview(
+        tavilyApiKey ? `${tavilyApiKey.slice(0, 5)}...${tavilyApiKey.slice(-5)}` : ''
+      );
       setTavilyApiKey('');
       alert('Tavily API key saved successfully!');
     } catch (error) {
@@ -249,6 +265,9 @@ export function AIProviderSettings() {
                 {state.showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
             </div>
+            {state.apiKeyPreview && (
+              <p className="text-xs text-secondary mt-1">Configured key: {state.apiKeyPreview}</p>
+            )}
           </div>
 
           {/* Base URL Input */}
@@ -357,7 +376,9 @@ export function AIProviderSettings() {
           Get free API key at <a href="https://tavily.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">tavily.com</a>
         </p>
         {tavilyConfigured && (
-          <p className="text-sm text-green-600 mb-4">Tavily API key is configured.</p>
+          <p className="text-sm text-green-600 mb-4">
+            Tavily API key is configured: {tavilyApiKeyPreview}
+          </p>
         )}
 
         <div className="space-y-4">

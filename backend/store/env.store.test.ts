@@ -2,7 +2,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { hasTavilyApiKey, readEnv, saveTavilyApiKey } from './env.store';
+import {
+  getApiKeyPreview,
+  getTavilyApiKeyPreview,
+  hasTavilyApiKey,
+  readEnv,
+  saveTavilyApiKey,
+} from './env.store';
 
 describe('Tavily env storage', () => {
   let tempDir: string;
@@ -29,6 +35,7 @@ describe('Tavily env storage', () => {
 
     expect(readEnv().TAVILY_API_KEY).toBe('tvly-test-key');
     expect(hasTavilyApiKey()).toBe(true);
+    expect(getTavilyApiKeyPreview()).toBe('tvly-...t-key');
     expect(fs.readFileSync(path.join(tempDir, '.env'), 'utf-8')).toContain(
       'TAVILY_API_KEY="tvly-test-key"'
     );
@@ -40,5 +47,9 @@ describe('Tavily env storage', () => {
 
     expect(readEnv().TAVILY_API_KEY).toBeUndefined();
     expect(hasTavilyApiKey()).toBe(false);
+  });
+
+  it('shows only the first and last five key characters', () => {
+    expect(getApiKeyPreview('abcde-secret-value-vwxyz')).toBe('abcde...vwxyz');
   });
 });
