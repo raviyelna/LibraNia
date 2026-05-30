@@ -21,6 +21,31 @@ export interface ChatRequest {
   researchMode?: boolean;
 }
 
+const MAX_TOOL_ITERATIONS = 10;
+const MAX_WEB_SEARCH_CALLS = 3;
+const FINAL_SYNTHESIS_PROMPT =
+  'Tool use is complete. Answer the user now using the information already gathered. ' +
+  'Do not request more tools. Be concise, factual, and include useful source links when available.';
+
+interface ToolBudget {
+  webSearchCalls: number;
+}
+
+function consumeToolBudget(toolName: string, budget: ToolBudget): string | null {
+  if (toolName !== 'web_search') return null;
+
+  if (budget.webSearchCalls >= MAX_WEB_SEARCH_CALLS) {
+    return `Web search budget exhausted after ${MAX_WEB_SEARCH_CALLS} searches. Synthesize the final answer from existing results.`;
+  }
+
+  budget.webSearchCalls++;
+  return null;
+}
+
+function shouldForceFinalAnswer(iteration: number, budget: ToolBudget): boolean {
+  return iteration >= MAX_TOOL_ITERATIONS || budget.webSearchCalls >= MAX_WEB_SEARCH_CALLS;
+}
+
 function getChatCompletionsUrl(baseURL?: string): string {
   const normalizedBaseURL = (baseURL || 'https://api.deepseek.com/v1').replace(/\/+$/, '');
   return normalizedBaseURL.endsWith('/v1')
@@ -114,11 +139,11 @@ export async function callDeepSeek(
   let data = await response.json();
 
   // Handle tool calls loop (same as OpenAI)
-  const maxIterations = 10;
   let iteration = 0;
+  const toolBudget: ToolBudget = { webSearchCalls: 0 };
   const conversationMessages = [...messages];
 
-  while (getOpenAICompatibleMessage(data, 'DeepSeek').tool_calls && iteration < maxIterations) {
+  while (getOpenAICompatibleMessage(data, 'DeepSeek').tool_calls && iteration < MAX_TOOL_ITERATIONS) {
     iteration++;
     logger.info(`Tool call iteration ${iteration}`);
 
@@ -134,6 +159,11 @@ export async function callDeepSeek(
 
       try {
         const args = JSON.parse(toolCall.function.arguments);
+        const budgetError = consumeToolBudget(toolCall.function.name, toolBudget);
+
+        if (budgetError) {
+          throw new Error(budgetError);
+        }
 
         // Create web search function if API key available
         const env = readEnv();
@@ -158,6 +188,11 @@ export async function callDeepSeek(
       }
     }
 
+    const forceFinalAnswer = shouldForceFinalAnswer(iteration, toolBudget);
+    const continuationMessages = forceFinalAnswer
+      ? [...conversationMessages, { role: 'system', content: FINAL_SYNTHESIS_PROMPT }]
+      : conversationMessages;
+
     // Continue conversation
     response = await fetch(url, {
       method: 'POST',
@@ -167,8 +202,8 @@ export async function callDeepSeek(
       },
       body: JSON.stringify({
         model,
-        messages: conversationMessages,
-        tools: requestBody.tools,
+        messages: continuationMessages,
+        tools: forceFinalAnswer ? undefined : requestBody.tools,
         stream: false,
       }),
     });
@@ -179,10 +214,14 @@ export async function callDeepSeek(
     }
 
     data = await response.json();
+
+    if (forceFinalAnswer) {
+      return getOpenAICompatibleText(data, 'DeepSeek');
+    }
   }
 
   if (getOpenAICompatibleMessage(data, 'DeepSeek').tool_calls) {
-    throw new Error(`DeepSeek API exceeded the ${maxIterations}-iteration tool-call limit.`);
+    throw new Error(`DeepSeek API exceeded the ${MAX_TOOL_ITERATIONS}-iteration tool-call limit.`);
   }
 
   return getOpenAICompatibleText(data, 'DeepSeek');
@@ -238,9 +277,9 @@ export async function callClaude(
   let data = await response.json();
 
   // Handle tool use loop
-  const maxIterations = 10;
   let iteration = 0;
-  while (data.stop_reason === 'tool_use' && iteration < maxIterations) {
+  const toolBudget: ToolBudget = { webSearchCalls: 0 };
+  while (data.stop_reason === 'tool_use' && iteration < MAX_TOOL_ITERATIONS) {
     iteration++;
     logger.info(`Tool use iteration ${iteration}`, { stopReason: data.stop_reason });
 
@@ -261,6 +300,12 @@ export async function callClaude(
       }
 
       try {
+        const budgetError = consumeToolBudget(toolUse.name, toolBudget);
+
+        if (budgetError) {
+          throw new Error(budgetError);
+        }
+
         // Create web search function if API key available
         const env = readEnv();
         const tavilyApiKey = env.TAVILY_API_KEY;
@@ -291,9 +336,10 @@ export async function callClaude(
       role: 'assistant',
       content: data.content,
     });
+    const forceFinalAnswer = shouldForceFinalAnswer(iteration, toolBudget);
     conversationMessages.push({
       role: 'user',
-      content: JSON.stringify(toolResults),
+      content: JSON.stringify(toolResults) + (forceFinalAnswer ? `\n\n${FINAL_SYNTHESIS_PROMPT}` : ''),
     });
 
     response = await fetch(url, {
@@ -308,7 +354,7 @@ export async function callClaude(
         max_tokens: 4096,
         system: systemMessage?.content,
         messages: conversationMessages,
-        tools: tools,
+        tools: forceFinalAnswer ? undefined : tools,
       }),
     });
 
@@ -318,6 +364,11 @@ export async function callClaude(
     }
 
     data = await response.json();
+
+    if (forceFinalAnswer) {
+      const textContent = data.content.find((block: any) => block.type === 'text');
+      return textContent?.text || '';
+    }
   }
 
   // Extract final text response
@@ -377,11 +428,11 @@ export async function callOpenAI(
   let data = await response.json();
 
   // Handle tool calls loop
-  const maxIterations = 10;
   let iteration = 0;
+  const toolBudget: ToolBudget = { webSearchCalls: 0 };
   const conversationMessages = [...messages];
 
-  while (getOpenAICompatibleMessage(data, 'OpenAI').tool_calls && iteration < maxIterations) {
+  while (getOpenAICompatibleMessage(data, 'OpenAI').tool_calls && iteration < MAX_TOOL_ITERATIONS) {
     iteration++;
     logger.info(`Tool call iteration ${iteration}`);
 
@@ -397,6 +448,11 @@ export async function callOpenAI(
 
       try {
         const args = JSON.parse(toolCall.function.arguments);
+        const budgetError = consumeToolBudget(toolCall.function.name, toolBudget);
+
+        if (budgetError) {
+          throw new Error(budgetError);
+        }
 
         // Create web search function if API key available
         const env = readEnv();
@@ -421,6 +477,11 @@ export async function callOpenAI(
       }
     }
 
+    const forceFinalAnswer = shouldForceFinalAnswer(iteration, toolBudget);
+    const continuationMessages = forceFinalAnswer
+      ? [...conversationMessages, { role: 'system', content: FINAL_SYNTHESIS_PROMPT }]
+      : conversationMessages;
+
     // Continue conversation
     response = await fetch(url, {
       method: 'POST',
@@ -430,8 +491,8 @@ export async function callOpenAI(
       },
       body: JSON.stringify({
         model,
-        messages: conversationMessages,
-        tools: requestBody.tools,
+        messages: continuationMessages,
+        tools: forceFinalAnswer ? undefined : requestBody.tools,
         stream: false,
       }),
     });
@@ -442,10 +503,14 @@ export async function callOpenAI(
     }
 
     data = await response.json();
+
+    if (forceFinalAnswer) {
+      return getOpenAICompatibleText(data, 'OpenAI');
+    }
   }
 
   if (getOpenAICompatibleMessage(data, 'OpenAI').tool_calls) {
-    throw new Error(`OpenAI API exceeded the ${maxIterations}-iteration tool-call limit.`);
+    throw new Error(`OpenAI API exceeded the ${MAX_TOOL_ITERATIONS}-iteration tool-call limit.`);
   }
 
   return getOpenAICompatibleText(data, 'OpenAI');
