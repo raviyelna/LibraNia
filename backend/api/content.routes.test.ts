@@ -3,7 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import { initDatabase, closeDatabase, getORM } from '../database/connection';
 import contentRoutes from './content.routes';
-import { content } from '../database/schema';
+import { content, notes } from '../database/schema';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -31,6 +31,7 @@ describe('Content Routes', () => {
     // Clear content table before each test
     const db = getORM();
     await db.delete(content);
+    await db.delete(notes);
   });
 
   it('POST /api/content/upload with valid file returns 201 with content object', async () => {
@@ -50,6 +51,7 @@ describe('Content Routes', () => {
     expect(response.body.data.mime_type).toBe('text/plain');
 
     // Clean up test file
+    await fs.unlink(response.body.data.file_path).catch(() => {});
     await fs.unlink(testFilePath).catch(() => {});
   });
 
@@ -128,6 +130,84 @@ describe('Content Routes', () => {
     expect(response.body.data.length).toBe(2);
   });
 
+  it('GET /api/content?noteId filters content for the selected note', async () => {
+    const db = getORM();
+    const now = new Date();
+    await db.insert(content).values([
+      {
+        id: 'note-content',
+        file_path: 'content/note.txt',
+        mime_type: 'text/plain',
+        original_filename: 'note.txt',
+        file_size: 100,
+        source: 'manual',
+        note_id: 'note-1',
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: 'other-content',
+        file_path: 'content/other.txt',
+        mime_type: 'text/plain',
+        original_filename: 'other.txt',
+        file_size: 100,
+        source: 'manual',
+        note_id: 'note-2',
+        created_at: now,
+        updated_at: now,
+      },
+    ]);
+
+    const response = await request(app)
+      .get('/api/content?noteId=note-1')
+      .expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0].id).toBe('note-content');
+  });
+
+  it('POST /api/content/upload associates content and appends a markdown reference', async () => {
+    const db = getORM();
+    const now = new Date();
+    await db.insert(notes).values({
+      id: 'note-upload',
+      title: 'Upload Note',
+      body: 'Existing body',
+      created_at: now,
+      updated_at: now,
+    });
+    const testFilePath = path.join('data', 'uploads', 'associated.txt');
+    await fs.writeFile(testFilePath, 'Associated file content');
+
+    const response = await request(app)
+      .post('/api/content/upload')
+      .field('note_id', 'note-upload')
+      .attach('file', testFilePath)
+      .expect(201);
+
+    const [note] = await db.select().from(notes);
+    expect(response.body.data.note_id).toBe('note-upload');
+    expect(note.body).toContain(`[associated.txt](${response.body.data.file_path})`);
+    await fs.unlink(response.body.data.file_path).catch(() => {});
+    await fs.unlink(testFilePath).catch(() => {});
+  });
+
+  it('POST /api/content/upload rejects an unknown note without leaving content behind', async () => {
+    const db = getORM();
+    const testFilePath = path.join('data', 'uploads', 'unknown-note.txt');
+    await fs.writeFile(testFilePath, 'Unknown note file');
+
+    const response = await request(app)
+      .post('/api/content/upload')
+      .field('note_id', 'missing-note')
+      .attach('file', testFilePath)
+      .expect(404);
+
+    expect(response.body.error).toContain('missing-note');
+    expect(await db.select().from(content)).toHaveLength(0);
+    await fs.unlink(testFilePath).catch(() => {});
+  });
+
   it('GET /api/content/:id returns 200 with content object or 404 if not found', async () => {
     // Create test content
     const db = getORM();
@@ -200,5 +280,39 @@ describe('Content Routes', () => {
       .expect(404);
 
     expect(checkResponse.body.success).toBe(false);
+  });
+
+  it('DELETE /api/content/:id removes the local file and note markdown reference', async () => {
+    const db = getORM();
+    const now = new Date();
+    const filePath = path.join('content', 'delete-linked.txt');
+    await fs.mkdir('content', { recursive: true });
+    await fs.writeFile(filePath, 'Delete me');
+    await db.insert(notes).values({
+      id: 'linked-note',
+      title: 'Linked Note',
+      body: `Before\n\n[delete-linked.txt](${filePath})\nAfter`,
+      created_at: now,
+      updated_at: now,
+    });
+    await db.insert(content).values({
+      id: 'linked-content',
+      file_path: filePath,
+      mime_type: 'text/plain',
+      original_filename: 'delete-linked.txt',
+      file_size: 9,
+      source: 'manual',
+      note_id: 'linked-note',
+      created_at: now,
+      updated_at: now,
+    });
+
+    await request(app)
+      .delete('/api/content/linked-content')
+      .expect(200);
+
+    const [note] = await db.select().from(notes);
+    expect(note.body).toBe('Before\n\nAfter');
+    await expect(fs.stat(filePath)).rejects.toThrow();
   });
 });

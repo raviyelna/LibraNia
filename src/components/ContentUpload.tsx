@@ -4,17 +4,18 @@ import { useUploadContent, type Content } from '../hooks/useContent';
 import toast from 'react-hot-toast';
 
 interface ContentUploadProps {
+  noteId?: string;
   onUploadComplete?: (content: Content) => void;
 }
 
-export const ContentUpload: React.FC<ContentUploadProps> = ({ onUploadComplete }) => {
+export const ContentUpload: React.FC<ContentUploadProps> = ({ noteId, onUploadComplete }) => {
   const { upload, uploading, progress, error } = useUploadContent();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
   const handleFile = async (file: File) => {
     try {
-      const content = await upload(file, 'manual');
+      const content = await upload(file, 'manual', { note_id: noteId });
       toast.success(`Uploaded ${file.name}`);
       if (onUploadComplete) {
         onUploadComplete(content);

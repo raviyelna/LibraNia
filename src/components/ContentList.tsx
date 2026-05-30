@@ -89,6 +89,7 @@ export const ContentList: React.FC<ContentListProps> = ({ content, onDelete, onS
             <div className="text-xs text-secondary space-y-1">
               <div>{formatDate(item.created_at)}</div>
               <div>{formatFileSize(item.file_size)}</div>
+              <div className="break-all" title={item.file_path}>Local path: {item.file_path}</div>
             </div>
           </div>
 

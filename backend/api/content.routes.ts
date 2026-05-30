@@ -4,14 +4,17 @@
  */
 
 import { Router, Request } from 'express';
+import { promises as fs } from 'fs';
 import { getORM } from '../database/connection.js';
 import { upload } from '../middleware/upload.middleware.js';
 import {
   createContent,
+  appendContentReferenceToNote,
   getContentById,
   getAllContent,
   deleteContent,
 } from '../services/content.service.js';
+import { getNoteById } from '../services/notes.service.js';
 
 const router = Router();
 
@@ -44,6 +47,8 @@ router.post('/api/content/upload', (req, res, next) => {
     next();
   });
 }, async (req: MulterRequest, res) => {
+  let createdContentId: string | undefined;
+
   try {
     // Check if file was uploaded
     if (!req.file) {
@@ -54,20 +59,44 @@ router.post('/api/content/upload', (req, res, next) => {
     }
 
     const db = getORM();
+    const noteId = req.body.note_id || undefined;
+
+    if (noteId && !(await getNoteById(noteId, db))) {
+      await fs.unlink(req.file.path).catch(() => {});
+      return res.status(404).json({ success: false, error: `Note with id ${noteId} not found` });
+    }
+
+    const confidenceScore = req.body.confidence_score !== undefined
+      ? Number(req.body.confidence_score)
+      : undefined;
 
     // Create content record with uploaded file
-    const contentRecord = await createContent(
-      {
-        filePath: req.file.path,
-        source: 'manual',
-        originalFilename: req.file.originalname,
-      },
-      db
-    );
+    const contentRecord = await createContent({
+      filePath: req.file.path,
+      source: req.body.source === 'ai-generated' ? 'ai-generated' : 'manual',
+      originalFilename: req.file.originalname,
+      confidence_score: Number.isFinite(confidenceScore) ? confidenceScore : undefined,
+      note_id: noteId,
+      message_id: req.body.message_id || undefined,
+    }, db);
+    createdContentId = contentRecord.id;
+
+    if (req.body.append_reference !== 'false') {
+      await appendContentReferenceToNote(contentRecord, db);
+    }
+
+    // Multer stores an upload staging file; createContent copied it to managed storage.
+    await fs.unlink(req.file.path).catch(() => {});
 
     res.status(201).json({ success: true, data: contentRecord });
   } catch (error: any) {
     console.error('[Content API] Upload failed:', error);
+    if (createdContentId) {
+      await deleteContent(createdContentId, getORM()).catch(() => {});
+    }
+    if (req.file) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
 
     // Check for validation errors
     if (error.message.includes('not allowed') || error.message.includes('too large')) {
@@ -85,7 +114,8 @@ router.post('/api/content/upload', (req, res, next) => {
 router.get('/api/content', async (req, res) => {
   try {
     const db = getORM();
-    const contentRecords = await getAllContent(db);
+    const noteId = typeof req.query.noteId === 'string' ? req.query.noteId : undefined;
+    const contentRecords = await getAllContent(db, noteId);
 
     res.json({ success: true, data: contentRecords });
   } catch (error: any) {
