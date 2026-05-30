@@ -10,15 +10,28 @@ interface SearchResult {
   url: string;
   content: string;
   score: number;
+  images?: Array<string | SearchImage>;
+}
+
+interface SearchImage {
+  url: string;
+  description?: string;
 }
 
 interface TavilyResponse {
+  images?: SearchImage[];
   results: Array<{
     title: string;
     url: string;
     content: string;
     score: number;
+    images?: Array<string | SearchImage>;
   }>;
+}
+
+interface WebSearchResponse {
+  results: SearchResult[];
+  images: SearchImage[];
 }
 
 /**
@@ -31,7 +44,7 @@ export async function searchWeb(
   query: string,
   apiKey: string,
   maxResults: number = 5
-): Promise<SearchResult[]> {
+): Promise<WebSearchResponse> {
   if (!apiKey) {
     throw new Error('Tavily API key not configured');
   }
@@ -51,6 +64,8 @@ export async function searchWeb(
         search_depth: 'basic',
         include_answer: false,
         include_raw_content: false,
+        include_images: true,
+        include_image_descriptions: true,
       }),
     });
 
@@ -62,12 +77,16 @@ export async function searchWeb(
     const data: TavilyResponse = await response.json();
     logger.info('Web search results:', { count: data.results.length });
 
-    return data.results.map(result => ({
-      title: result.title,
-      url: result.url,
-      content: result.content,
-      score: result.score,
-    }));
+    return {
+      results: data.results.map(result => ({
+        title: result.title,
+        url: result.url,
+        content: result.content,
+        score: result.score,
+        images: result.images,
+      })),
+      images: data.images || [],
+    };
   } catch (error) {
     logger.error('Web search failed:', error);
     throw error;
