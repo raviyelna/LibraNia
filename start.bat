@@ -1,5 +1,5 @@
 @echo off
-echo Building backend...
+echo Building...
 call npm run build:package
 if %errorlevel% neq 0 (
     echo Backend build failed!

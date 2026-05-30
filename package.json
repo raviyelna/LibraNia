@@ -33,14 +33,15 @@
   "scripts": {
     "dev": "vite",
     "build:frontend": "vite build",
-    "build:backend": "tsc -p tsconfig.backend.json --noEmitOnError false || true",
+    "build:backend": "tsc -p tsconfig.backend.json --noEmitOnError false && powershell -ExecutionPolicy Bypass -File ./fix-esm-imports.ps1",
     "build:package": "npm run build:frontend && npm run build:backend",
     "preview": "vite preview",
     "prepublishOnly": "npm run build:package",
     "postinstall": "npm rebuild better-sqlite3 sharp",
     "test": "vitest",
     "test:api": "tsx test-api.ts",
-    "start:cli": "tsx bin/librania.js start"
+    "start:cli": "tsx bin/librania.js start",
+    "start": "node start.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.0",
