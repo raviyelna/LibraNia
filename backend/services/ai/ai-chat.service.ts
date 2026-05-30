@@ -1,6 +1,8 @@
 import { logger } from '../../logger.js';
 import { loadProviderFromEnv, readEnv } from '../../store/env.store.js';
 import { createMessage, getMessagesByConversation } from '../message.service.js';
+import { autoGenerateTitle } from '../conversation-title.service.js';
+import { getORM } from '../../database/connection.js';
 import { RESEARCH_SYSTEM_PROMPT } from '../../prompts/research.system.js';
 import { RESEARCH_TOOLS, executeToolCall } from '../../tools/research.tools.js';
 import { searchWeb } from '../web-search.service.js';
@@ -19,10 +21,52 @@ export interface ChatRequest {
   researchMode?: boolean;
 }
 
+function getChatCompletionsUrl(baseURL?: string): string {
+  const normalizedBaseURL = (baseURL || 'https://api.deepseek.com/v1').replace(/\/+$/, '');
+  return normalizedBaseURL.endsWith('/v1')
+    ? `${normalizedBaseURL}/chat/completions`
+    : `${normalizedBaseURL}/v1/chat/completions`;
+}
+
+function getOpenAICompatibleMessage(data: any, providerName: string): any {
+  const message = data?.choices?.[0]?.message;
+
+  if (!message) {
+    throw new Error(`${providerName} API returned no completion message.`);
+  }
+
+  return message;
+}
+
+function getOpenAICompatibleText(data: any, providerName: string): string {
+  const message = getOpenAICompatibleMessage(data, providerName);
+  const content = message.content;
+  const text = typeof content === 'string'
+    ? content
+    : Array.isArray(content)
+      ? content
+          .map((part: any) => typeof part === 'string' ? part : part?.text || '')
+          .join('')
+      : '';
+
+  if (!text.trim()) {
+    const finishReason = data?.choices?.[0]?.finish_reason;
+    const reasoningOnly = !!message.reasoning_content;
+    throw new Error(
+      `${providerName} API returned an empty final answer` +
+      `${finishReason ? ` (finish_reason: ${finishReason})` : ''}` +
+      `${reasoningOnly ? '. The model returned reasoning but no final content.' : '.'}`
+    );
+  }
+
+  return text;
+}
+
 export async function callDeepSeek(
   messages: ChatMessage[],
   apiKey: string,
   model: string,
+  baseURL?: string,
   tools?: any[],
   onProgress?: (status: string) => void
 ): Promise<string> {
@@ -51,7 +95,9 @@ export async function callDeepSeek(
     }));
   }
 
-  let response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+  const url = getChatCompletionsUrl(baseURL);
+
+  let response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -72,11 +118,11 @@ export async function callDeepSeek(
   let iteration = 0;
   const conversationMessages = [...messages];
 
-  while (data.choices[0].message.tool_calls && iteration < maxIterations) {
+  while (getOpenAICompatibleMessage(data, 'DeepSeek').tool_calls && iteration < maxIterations) {
     iteration++;
     logger.info(`Tool call iteration ${iteration}`);
 
-    const assistantMessage = data.choices[0].message;
+    const assistantMessage = getOpenAICompatibleMessage(data, 'DeepSeek');
     conversationMessages.push(assistantMessage);
 
     // Execute tool calls
@@ -113,7 +159,7 @@ export async function callDeepSeek(
     }
 
     // Continue conversation
-    response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -135,7 +181,11 @@ export async function callDeepSeek(
     data = await response.json();
   }
 
-  return data.choices[0].message.content;
+  if (getOpenAICompatibleMessage(data, 'DeepSeek').tool_calls) {
+    throw new Error(`DeepSeek API exceeded the ${maxIterations}-iteration tool-call limit.`);
+  }
+
+  return getOpenAICompatibleText(data, 'DeepSeek');
 }
 
 export async function callClaude(
@@ -331,11 +381,11 @@ export async function callOpenAI(
   let iteration = 0;
   const conversationMessages = [...messages];
 
-  while (data.choices[0].message.tool_calls && iteration < maxIterations) {
+  while (getOpenAICompatibleMessage(data, 'OpenAI').tool_calls && iteration < maxIterations) {
     iteration++;
     logger.info(`Tool call iteration ${iteration}`);
 
-    const assistantMessage = data.choices[0].message;
+    const assistantMessage = getOpenAICompatibleMessage(data, 'OpenAI');
     conversationMessages.push(assistantMessage);
 
     // Execute tool calls
@@ -394,7 +444,11 @@ export async function callOpenAI(
     data = await response.json();
   }
 
-  return data.choices[0].message.content;
+  if (getOpenAICompatibleMessage(data, 'OpenAI').tool_calls) {
+    throw new Error(`OpenAI API exceeded the ${maxIterations}-iteration tool-call limit.`);
+  }
+
+  return getOpenAICompatibleText(data, 'OpenAI');
 }
 
 /**
@@ -456,7 +510,7 @@ export async function handleAIChat(request: ChatRequest): Promise<{ success: boo
     let response: string;
     switch (config.id) {
       case 'deepseek':
-        response = await callDeepSeek(messagesToSend, config.apiKey, model, tools);
+        response = await callDeepSeek(messagesToSend, config.apiKey, model, config.baseURL, tools);
         break;
       case 'claude':
         response = await callClaude(messagesToSend, config.apiKey, model, config.baseURL, tools);
@@ -478,6 +532,37 @@ export async function handleAIChat(request: ChatRequest): Promise<{ success: boo
       provider_id: config.id,
       model: model,
     });
+
+    // Auto-generate title if conversation still has default title
+    try {
+      const db = getORM();
+      const { conversations } = await import('../../database/schema.js');
+      const { eq } = await import('drizzle-orm');
+
+      console.log('[AI-Chat] Checking conversation title for:', request.conversationId);
+      const conv = await db.query.conversations.findFirst({
+        where: eq(conversations.id, request.conversationId),
+      });
+
+      console.log('[AI-Chat] Conversation found:', conv ? `title="${conv.title}"` : 'NOT FOUND');
+
+      if (conv && conv.title === 'New Conversation') {
+        const existingMessages = await getMessagesByConversation(request.conversationId);
+        const firstUserMsg = existingMessages.find(m => m.role === 'user');
+        if (firstUserMsg) {
+          console.log('[AI-Chat] Triggering auto-title generation');
+          autoGenerateTitle(request.conversationId, firstUserMsg.content, config.id).catch(err => {
+            logger.error('Auto-title generation failed', err);
+          });
+        } else {
+          console.log('[AI-Chat] No user message found');
+        }
+      } else {
+        console.log('[AI-Chat] Skipping auto-title (already renamed or not found)');
+      }
+    } catch (err) {
+      console.error('[AI-Chat] Auto-title check failed:', err);
+    }
 
     return { success: true, content: response };
 

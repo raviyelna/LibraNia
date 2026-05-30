@@ -50,6 +50,7 @@ export function AIProviderSettings() {
   const { providers, setConfig } = useAIProviders();
   const { validate } = useProviderValidation();
   const [tavilyApiKey, setTavilyApiKey] = useState<string>('');
+  const [tavilyConfigured, setTavilyConfigured] = useState<boolean>(false);
   const [showTavilyKey, setShowTavilyKey] = useState<boolean>(false);
 
   // Initialize form state for each provider
@@ -87,10 +88,6 @@ export function AIProviderSettings() {
   useEffect(() => {
     console.log('[AIProviderSettings] Loading providers into form:', providers);
 
-    // Load Tavily key from localStorage
-    const savedTavilyKey = localStorage.getItem('tavilyApiKey') || '';
-    setTavilyApiKey(savedTavilyKey);
-
     // Guard against undefined providers
     if (!providers || !Array.isArray(providers)) {
       console.warn('[AIProviderSettings] Providers not loaded yet or invalid format');
@@ -117,6 +114,12 @@ export function AIProviderSettings() {
       }));
     });
   }, [providers]);
+
+  useEffect(() => {
+    configAPI.get()
+      .then((config) => setTavilyConfigured(!!config.tavilyApiKeyConfigured))
+      .catch((error) => console.error('Failed to load Tavily status:', error));
+  }, []);
 
   const handleFieldChange = (
     providerId: ProviderId,
@@ -201,9 +204,10 @@ export function AIProviderSettings() {
 
   const handleSaveTavily = async () => {
     try {
-      localStorage.setItem('tavilyApiKey', tavilyApiKey);
-      // Save to .env via IPC
+      // Save to data/.env via backend API
       await configAPI.update({ tavilyApiKey });
+      setTavilyConfigured(!!tavilyApiKey);
+      setTavilyApiKey('');
       alert('Tavily API key saved successfully!');
     } catch (error) {
       console.error('Failed to save Tavily key:', error);
@@ -352,6 +356,9 @@ export function AIProviderSettings() {
           Configure Tavily API for high-quality web search. Without it, providers will use their own search (if available).
           Get free API key at <a href="https://tavily.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">tavily.com</a>
         </p>
+        {tavilyConfigured && (
+          <p className="text-sm text-green-600 mb-4">Tavily API key is configured.</p>
+        )}
 
         <div className="space-y-4">
           <div>

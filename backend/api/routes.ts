@@ -94,8 +94,20 @@ router.delete('/api/providers/:id', async (req, res) => {
 router.get('/api/conversations', async (req, res) => {
   try {
     const db = getORM();
-    const conversations = await getAllConversations(db);
-    res.json({ success: true, conversations });
+    const allConversations = await getAllConversations(db);
+
+    // Add message count to each conversation
+    const conversationsWithCount = await Promise.all(
+      allConversations.map(async (conv) => {
+        const msgs = await getMessagesByConversation(conv.id);
+        return {
+          ...conv,
+          messages: msgs,
+        };
+      })
+    );
+
+    res.json({ success: true, conversations: conversationsWithCount });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -140,7 +152,7 @@ router.patch('/api/conversations/:id', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Conversation not found' });
     }
     // Update conversation title
-    const { conversations } = await import('../database/schema');
+    const { conversations } = await import('../database/schema.js');
     const { eq } = await import('drizzle-orm');
     await db.update(conversations).set({ title, updated_at: new Date() }).where(eq(conversations.id, req.params.id));
     res.json({ success: true });

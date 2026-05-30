@@ -20,7 +20,6 @@ vitest.config.ts
 .env*
 .git*
 .claude/
-.planning/
 
 # Exclude duplicate compiled output (TypeScript bug creates electron/electron/)
 electron/electron/

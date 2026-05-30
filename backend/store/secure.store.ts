@@ -41,7 +41,6 @@ async function getSecureStore() {
     });
     console.log('[SECURE STORE] Store initialized at:', secureStore.path);
     console.log('[SECURE STORE] Store size:', secureStore.size);
-    console.log('[SECURE STORE] Store contents:', JSON.stringify([...secureStore], null, 2));
   } else {
     console.log('[SECURE STORE] Reusing existing store instance');
     console.log('[SECURE STORE] Current size:', secureStore.size);
@@ -86,7 +85,6 @@ export async function setProviderConfig(config: ProviderConfig): Promise<void> {
   console.log('[SECURE STORE] Setting key:', key);
   store.set(key, config);
   console.log('[SECURE STORE] Store size after set:', store.size);
-  console.log('[SECURE STORE] All store keys:', [...store]);
 
   // Immediate verification
   const verify = store.get(key);
@@ -99,10 +97,30 @@ export async function setProviderConfig(config: ProviderConfig): Promise<void> {
 
 /**
  * Retrieve decrypted provider configuration
+ * Falls back to environment variables if not in store
  */
 export async function getProviderConfig(providerId: string): Promise<ProviderConfig | undefined> {
   const store = await getSecureStore();
-  return store.get(`providers.${providerId}`) as ProviderConfig | undefined;
+  let config = store.get(`providers.${providerId}`) as ProviderConfig | undefined;
+
+  // Fallback to environment variables if not in store
+  if (!config) {
+    const envPrefix = providerId.toUpperCase();
+    const apiKey = process.env[`${envPrefix}_API_KEY`];
+    const baseURL = process.env[`${envPrefix}_BASE_URL`];
+    const model = process.env[`${envPrefix}_MODEL`];
+
+    if (apiKey && model) {
+      config = {
+        id: providerId as 'claude' | 'openai' | 'deepseek',
+        apiKey,
+        baseURL,
+        model,
+      };
+    }
+  }
+
+  return config;
 }
 
 /**
@@ -115,26 +133,42 @@ export async function deleteProviderConfig(providerId: string): Promise<void> {
 
 /**
  * Get all configured providers
+ * Includes both store configs and environment variable configs
  */
 export async function getAllProviderConfigs(): Promise<ProviderConfig[]> {
   console.log('[SECURE STORE] getAllProviderConfigs called');
   const store = await getSecureStore();
   console.log('[SECURE STORE] Store size:', store.size);
-  console.log('[SECURE STORE] All keys:', [...store]);
 
   const providers = store.get('providers') as Record<string, ProviderConfig> | undefined;
-  console.log('[SECURE STORE] Raw providers object:', providers);
 
-  if (!providers) {
-    console.log('[SECURE STORE] No providers found, returning empty array');
-    return [];
+  const configs: ProviderConfig[] = providers ? Object.values(providers) : [];
+
+  // Add environment variable configs if not in store
+  const envProviders: Array<'claude' | 'openai' | 'deepseek'> = ['claude', 'openai', 'deepseek'];
+  for (const providerId of envProviders) {
+    const existsInStore = configs.some(c => c.id === providerId);
+    if (!existsInStore) {
+      const envPrefix = providerId.toUpperCase();
+      const apiKey = process.env[`${envPrefix}_API_KEY`];
+      const baseURL = process.env[`${envPrefix}_BASE_URL`];
+      const model = process.env[`${envPrefix}_MODEL`];
+
+      if (apiKey && model) {
+        configs.push({
+          id: providerId,
+          apiKey,
+          baseURL,
+          model,
+        });
+      }
+    }
   }
 
-  const result = Object.values(providers);
-  console.log('[SECURE STORE] Returning configs:', result.map(c => ({
+  console.log('[SECURE STORE] Returning configs:', configs.map(c => ({
     id: c.id,
     hasApiKey: !!c.apiKey,
     model: c.model
   })));
-  return result;
+  return configs;
 }

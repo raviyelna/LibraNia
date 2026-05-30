@@ -4,11 +4,16 @@ import path from 'path';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { fileURLToPath } from 'url';
+import { config } from 'dotenv';
 import { initDatabase } from './database/connection.js';
 import { initFileStorage } from './services/file-storage.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load data/.env for provider configs
+const dataDir = process.env.LIBRANIA_DATA_DIR || path.join(process.cwd(), 'data');
+config({ path: path.join(dataDir, '.env') });
 
 export interface ServerInstance {
   server: http.Server;

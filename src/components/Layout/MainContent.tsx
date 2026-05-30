@@ -12,10 +12,10 @@ export function MainContent({ children, sidebarCollapsed = false }: MainContentP
 
   // Graph page needs full viewport without padding
   const isGraphPage = location.pathname === '/graph';
-  const paddingClass = isGraphPage ? '' : 'p-4 lg:p-6';
+  const paddingClass = isGraphPage ? '' : '';
 
   return (
-    <main className={`flex-1 bg-background transition-all duration-200 ${marginLeft} ${paddingClass} min-h-screen overflow-x-hidden`}>
+    <main className={`flex-1 bg-background transition-all duration-200 ${marginLeft} ${paddingClass} h-screen overflow-hidden`}>
       {children}
     </main>
   );

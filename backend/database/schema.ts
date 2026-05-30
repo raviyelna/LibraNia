@@ -73,6 +73,7 @@ export const noteVersions = sqliteTable('note_versions', {
 export const conversations = sqliteTable('conversations', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
+  context_summary: text('context_summary'), // Hidden recap for LLM context continuity
   created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
   updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });

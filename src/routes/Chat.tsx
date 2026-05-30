@@ -79,11 +79,11 @@ export function Chat() {
       </button>
 
       {/* Conversation list sidebar (left) */}
-      <aside className={`conversation-sidebar w-80 border-r border-border overflow-y-auto bg-background
+      <aside className={`conversation-sidebar w-80 border-r border-border overflow-y-auto scrollable bg-background
         fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-4 border-b border-border sticky top-0 bg-background z-10">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Conversations</h2>
           </div>
           <Button
@@ -121,9 +121,9 @@ export function Chat() {
                 <div
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation.id)}
-                  className={`group relative px-3 py-3 rounded-md transition-colors cursor-pointer ${
+                  className={`group relative px-3 py-3 rounded-md transition-colors duration-200 cursor-pointer ${
                     selectedConversationId === conversation.id
-                      ? 'bg-accent text-accent-foreground'
+                      ? 'bg-primary/10 text-primary border-l-2 border-primary'
                       : 'hover:bg-muted text-foreground'
                   }`}
                 >
@@ -137,7 +137,7 @@ export function Chat() {
                           if (e.key === 'Enter') handleSaveEdit(conversation.id, e as any);
                           if (e.key === 'Escape') handleCancelEdit(e as any);
                         }}
-                        className="flex-1 px-2 py-1 text-sm border border-border rounded bg-background text-foreground"
+                        className="flex-1 px-2 py-1 text-sm border border-border rounded bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                         autoFocus
                       />
                       <button
@@ -170,20 +170,20 @@ export function Chat() {
                             {new Date(conversation.updated_at).toLocaleDateString()} · {conversation.messages?.length || 0} msgs
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <button
                             onClick={(e) => handleStartEdit(conversation.id, conversation.title, e)}
-                            className="p-1 hover:bg-accent rounded"
+                            className="p-1 hover:bg-muted rounded transition-colors duration-200"
                             title="Rename"
                           >
                             <Pencil size={14} />
                           </button>
                           <button
                             onClick={(e) => handleDelete(conversation.id, e)}
-                            className="p-1 hover:bg-accent rounded"
+                            className="p-1 hover:bg-destructive/10 rounded transition-colors duration-200"
                             title="Delete"
                           >
-                            <Trash2 size={14} className="text-red-600" />
+                            <Trash2 size={14} className="text-destructive" />
                           </button>
                         </div>
                       </div>
