@@ -26,7 +26,7 @@ const storage = multer.diskStorage({
 });
 
 // File filter for allowed types
-const fileFilter = (req: Request, file: multer.File, cb: FileFilterCallback) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   // Allowed file extensions
   const allowedExtensions = /jpeg|jpg|png|gif|pdf|doc|docx|txt|md/;
 

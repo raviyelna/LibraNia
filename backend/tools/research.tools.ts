@@ -2,10 +2,13 @@
  * Tool definitions for AI research workflow
  */
 
-import { getAllNotes, getNoteById, createNote } from '../services/file-storage.service.js';
+import { getDatabase } from '../database/connection.js';
+import { getORM } from '../database/connection.js';
+import { updateNoteLinks } from '../services/links.service.js';
 import { getBacklinks } from '../services/links.service.js';
 import { getNoteTags, setNoteTags } from '../services/tags.service.js';
 import { logger } from '../logger.js';
+import { randomUUID } from 'crypto';
 import type Database from 'better-sqlite3';
 
 export interface Tool {
@@ -136,36 +139,38 @@ export async function executeToolCall(
   toolInput: any,
   webSearchFn?: (query: string) => Promise<any[]>
 ): Promise<any> {
+  const db = getDatabase();
+
   switch (toolName) {
     case 'search_notes': {
-      const notes = getAllNotes();
       const query = toolInput.query.toLowerCase();
-      const results = notes
-        .filter(note => !note.deleted_at)
-        .filter(note =>
-          note.title.toLowerCase().includes(query) ||
-          note.body.toLowerCase().includes(query)
-        )
-        .map(note => ({
-          id: note.id,
-          title: note.title,
-          body: note.body.substring(0, 200) + '...',
-        }));
-      return results;
+      const results = db.prepare(`
+        SELECT id, title, body, created_at, updated_at
+        FROM notes
+        WHERE deleted_at IS NULL
+          AND (title LIKE ? OR body LIKE ?)
+        ORDER BY updated_at DESC
+        LIMIT 10
+      `).all(`%${query}%`, `%${query}%`);
+
+      return results.map((note: any) => ({
+        id: note.id,
+        title: note.title,
+        body: note.body.substring(0, 200) + '...',
+      }));
     }
 
     case 'get_note': {
-      const note = getNoteById(toolInput.noteId, false);
+      const note = db.prepare(`
+        SELECT id, title, body, created_at, updated_at
+        FROM notes
+        WHERE id = ? AND deleted_at IS NULL
+      `).get(toolInput.noteId);
+
       if (!note) {
         throw new Error(`Note not found: ${toolInput.noteId}`);
       }
-      return {
-        id: note.id,
-        title: note.title,
-        body: note.body,
-        created_at: note.created_at,
-        updated_at: note.updated_at,
-      };
+      return note;
     }
 
     case 'get_backlinks': {
@@ -186,15 +191,60 @@ export async function executeToolCall(
     }
 
     case 'create_note': {
-      const note = createNote({
-        title: toolInput.title,
-        body: toolInput.body,
-        tags: [], // Tags added separately via add_tags
-      });
+      const noteId = randomUUID();
+      const now = Date.now();
+
+      // Extract keywords from title for better matching
+      // Remove common words and use significant terms
+      const stopWords = ['how', 'what', 'why', 'when', 'where', 'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can', 'against', 'vs', 'versus'];
+      const keywords = toolInput.title
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(word => word.length > 3 && !stopWords.includes(word))
+        .slice(0, 3); // Top 3 keywords
+
+      // Search for related notes using keywords
+      const relatedNotesMap = new Map();
+      for (const keyword of keywords) {
+        const matches = db.prepare(`
+          SELECT id, title
+          FROM notes
+          WHERE deleted_at IS NULL
+            AND id != ?
+            AND (title LIKE ? OR body LIKE ?)
+          LIMIT 5
+        `).all(noteId, `%${keyword}%`, `%${keyword}%`);
+
+        matches.forEach((note: any) => {
+          relatedNotesMap.set(note.id, note);
+        });
+      }
+
+      const relatedNotes = Array.from(relatedNotesMap.values()).slice(0, 5);
+
+      // Add wiki-links to related notes at end of body
+      let bodyWithLinks = toolInput.body;
+      if (relatedNotes.length > 0) {
+        const linkSection = '\n\n## Related Notes\n' +
+          relatedNotes.map((n: any) => `- [[${n.title}]]`).join('\n');
+        bodyWithLinks += linkSection;
+      }
+
+      db.prepare(`
+        INSERT INTO notes (id, title, body, metadata, created_at, updated_at)
+        VALUES (?, ?, ?, NULL, ?, ?)
+      `).run(noteId, toolInput.title, bodyWithLinks, now, now);
+
+      // Create link records from wiki-links
+      const orm = getORM();
+      await updateNoteLinks(noteId, bodyWithLinks, orm);
+
+      logger.info(`Note created: ${noteId} - ${toolInput.title} with ${relatedNotes.length} auto-links`);
+
       return {
-        id: note.id,
-        title: note.title,
-        body: note.body,
+        id: noteId,
+        title: toolInput.title,
+        body: bodyWithLinks,
       };
     }
 

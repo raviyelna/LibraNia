@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, blob, real } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, blob, real, primaryKey } from 'drizzle-orm/sqlite-core';
 
 /**
  * Notes table - stores user's knowledge notes
@@ -25,16 +25,16 @@ export const tags = sqliteTable('tags', {
 /**
  * Note-Tags junction table - many-to-many relationship
  */
-export const noteTags = sqliteTable('note_tags', {
-  note_id: text('note_id')
+export const noteTags = sqliteTable('note_tags', (t) => ({
+  note_id: t.text('note_id')
     .notNull()
     .references(() => notes.id, { onDelete: 'cascade' }),
-  tag_id: text('tag_id')
+  tag_id: t.text('tag_id')
     .notNull()
     .references(() => tags.id, { onDelete: 'cascade' }),
-}, (table) => ({
-  pk: { columns: [table.note_id, table.tag_id] },
-}));
+}), (table) => [
+  primaryKey({ columns: [table.note_id, table.tag_id] }),
+]);
 
 /**
  * Links table - stores bidirectional links between notes
@@ -130,16 +130,16 @@ export const content = sqliteTable('content', {
 /**
  * Content-Tags junction table - many-to-many relationship
  */
-export const contentTags = sqliteTable('content_tags', {
-  content_id: text('content_id')
+export const contentTags = sqliteTable('content_tags', (t) => ({
+  content_id: t.text('content_id')
     .notNull()
     .references(() => content.id, { onDelete: 'cascade' }),
-  tag_id: text('tag_id')
+  tag_id: t.text('tag_id')
     .notNull()
     .references(() => tags.id, { onDelete: 'cascade' }),
-}, (table) => ({
-  pk: { columns: [table.content_id, table.tag_id] },
-}));
+}), (table) => [
+  primaryKey({ columns: [table.content_id, table.tag_id] }),
+]);
 
 /**
  * Embeddings table - stores 384-dimensional vectors for semantic search

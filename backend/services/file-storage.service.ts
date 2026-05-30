@@ -273,8 +273,8 @@ export async function syncFilesystemToDb(): Promise<{
   const fileIds = new Set(files.map(f => path.basename(f, '.md')));
 
   // Get all note IDs from DB
-  const dbNoteIds = new Set(
-    db.prepare('SELECT id FROM notes').all().map((row: any) => row.id)
+  const dbNoteIds = new Set<string>(
+    db.prepare('SELECT id FROM notes').all().map((row: any) => row.id as string)
   );
 
   let synced = 0;

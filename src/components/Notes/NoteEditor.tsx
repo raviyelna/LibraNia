@@ -11,6 +11,7 @@ import { useNote, useUpdateNote, useDeleteNote } from '../../hooks/useNotes';
 import { BacklinksPanel } from './BacklinksPanel';
 import { RelatedPanel } from './RelatedPanel';
 import { Eye, Edit, Columns } from 'lucide-react';
+import { contentAPI } from '../../api/content';
 
 interface NoteEditorProps {
   noteId: string;
@@ -75,7 +76,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
                 try {
                   // Save image to disk
-                  const result = await window.api.content.saveImage({
+                  const result = await contentAPI.saveImage({
                     buffer: arrayBuffer,
                     filename: file.name || 'image.png',
                     noteId: noteId,
@@ -254,17 +255,18 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
           </div>
         </div>
 
-        <div className="editor-body flex-1 overflow-hidden flex">
-          {/* Editor pane */}
-          {(viewMode === 'edit' || viewMode === 'split') && (
-            <div className={`editor-pane ${viewMode === 'split' ? 'w-1/2 border-r border-border' : 'w-full'} overflow-y-auto p-4`}>
-              <div ref={editorRef} className="editor-container" />
-            </div>
-          )}
+        <div className="editor-body flex-1 overflow-hidden flex flex-col md:flex-row">
+          {/* Editor pane - always mounted but hidden when not needed */}
+          <div
+            className={`editor-pane ${viewMode === 'split' ? 'md:w-1/2 md:border-r border-border' : 'w-full'} overflow-y-auto p-4`}
+            style={{ display: viewMode === 'preview' ? 'none' : 'block' }}
+          >
+            <div ref={editorRef} className="editor-container" />
+          </div>
 
           {/* Preview pane */}
           {(viewMode === 'preview' || viewMode === 'split') && (
-            <div className={`preview-pane ${viewMode === 'split' ? 'w-1/2' : 'w-full'} overflow-y-auto p-4`}>
+            <div className={`preview-pane ${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} overflow-y-auto p-4`}>
               <div className="prose prose-sm dark:prose-invert max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
@@ -300,11 +302,6 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="editor-sidebar w-80 border-l border-border overflow-y-auto">
-        <BacklinksPanel noteId={noteId} onNavigate={handleNavigate} />
-        <RelatedPanel noteId={noteId} onNavigate={handleNavigate} />
       </div>
     </div>
   );

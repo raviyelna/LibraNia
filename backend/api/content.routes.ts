@@ -3,7 +3,7 @@
  * Converted from electron/ipc/content.handlers.ts per Plan 01-03
  */
 
-import { Router } from 'express';
+import { Router, Request } from 'express';
 import { getORM } from '../database/connection.js';
 import { upload } from '../middleware/upload.middleware.js';
 import {
@@ -14,6 +14,11 @@ import {
 } from '../services/content.service.js';
 
 const router = Router();
+
+// Extend Express Request type for multer
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 // Logging middleware
 router.use((req, res, next) => {
@@ -38,7 +43,7 @@ router.post('/api/content/upload', (req, res, next) => {
     }
     next();
   });
-}, async (req, res) => {
+}, async (req: MulterRequest, res) => {
   try {
     // Check if file was uploaded
     if (!req.file) {

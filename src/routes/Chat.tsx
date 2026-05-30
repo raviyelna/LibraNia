@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { useConversations } from '../hooks/useConversations';
 import { ChatInterface } from '../components/Chat/ChatInterface';
 import { Button } from '../components/ui/Button';
-import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, Menu } from 'lucide-react';
+import { conversationsAPI } from '../api/conversations';
 
 export function Chat() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { conversations, loading, error, refetch } = useConversations();
 
   const handleNewConversation = async () => {
     try {
-      const newConversation = await window.api.conversation.create({
+      const newConversation = await conversationsAPI.create({
         title: 'New Conversation',
       });
       setSelectedConversationId(newConversation.id);
@@ -25,6 +27,7 @@ export function Chat() {
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id);
     setEditingId(null);
+    setSidebarOpen(false); // Close sidebar on mobile after selection
   };
 
   const handleStartEdit = (id: string, currentTitle: string, e: React.MouseEvent) => {
@@ -37,7 +40,7 @@ export function Chat() {
     e.stopPropagation();
     if (!editTitle.trim()) return;
     try {
-      await window.api.conversation.rename(id, editTitle.trim());
+      await conversationsAPI.update(id, { title: editTitle.trim() });
       setEditingId(null);
       refetch();
     } catch (err) {
@@ -55,7 +58,7 @@ export function Chat() {
     e.stopPropagation();
     if (!confirm('Delete this conversation?')) return;
     try {
-      await window.api.conversation.delete(id);
+      await conversationsAPI.delete(id);
       if (selectedConversationId === id) {
         setSelectedConversationId(null);
       }
@@ -66,9 +69,19 @@ export function Chat() {
   };
 
   return (
-    <div className="chat-layout flex h-screen">
+    <div className="chat-layout flex h-screen relative">
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-background border border-border rounded-md shadow-lg"
+      >
+        <Menu size={20} />
+      </button>
+
       {/* Conversation list sidebar (left) */}
-      <aside className="conversation-sidebar w-80 border-r border-border overflow-y-auto bg-background">
+      <aside className={`conversation-sidebar w-80 border-r border-border overflow-y-auto bg-background
+        fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-4 border-b border-border sticky top-0 bg-background z-10">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-foreground">Conversations</h2>
@@ -183,8 +196,16 @@ export function Chat() {
         </div>
       </aside>
 
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main chat area (center) */}
-      <main className="chat-main flex-1 flex flex-col overflow-hidden">
+      <main className="chat-main flex-1 flex flex-col overflow-hidden pt-16 lg:pt-0">
         <ChatInterface conversationId={selectedConversationId || undefined} />
       </main>
     </div>

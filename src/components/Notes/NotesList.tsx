@@ -11,7 +11,7 @@ export function NotesList({ selectedNoteId, onSelectNote }: NotesListProps) {
   const { createNote } = useCreateNote();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredNotes = notes.filter(note =>
+  const filteredNotes = (notes || []).filter(note =>
     note.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAIProviders, useProviderValidation } from '../../hooks/useAIProviders';
 import { Button } from '../ui/Button';
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
-import { configAPI } from '../../api';
+import { configAPI, aiAPI } from '../../api';
 
 type ProviderId = 'claude' | 'openai' | 'deepseek';
 
@@ -91,6 +91,12 @@ export function AIProviderSettings() {
     const savedTavilyKey = localStorage.getItem('tavilyApiKey') || '';
     setTavilyApiKey(savedTavilyKey);
 
+    // Guard against undefined providers
+    if (!providers || !Array.isArray(providers)) {
+      console.warn('[AIProviderSettings] Providers not loaded yet or invalid format');
+      return;
+    }
+
     providers.forEach((config) => {
       console.log('[AIProviderSettings] Loading config:', config.id, 'apiKey length:', config.apiKey?.length);
 
@@ -154,7 +160,7 @@ export function AIProviderSettings() {
       const result = await validate(providerId, state.apiKey, baseURL);
 
       if (result.valid) {
-        // Save config
+        // Save config to .env via /api/providers
         const modelToSave = state.useCustomModel && state.customModel ? state.customModel : state.model;
         await setConfig({
           id: providerId,

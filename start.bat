@@ -1,6 +1,6 @@
 @echo off
 echo Building backend...
-call npm run build:backend
+call npm run build:package
 if %errorlevel% neq 0 (
     echo Backend build failed!
     pause

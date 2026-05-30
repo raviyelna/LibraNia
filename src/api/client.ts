@@ -2,7 +2,7 @@
  * Base API client with error handling
  */
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export class APIError extends Error {
   constructor(

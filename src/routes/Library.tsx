@@ -8,13 +8,15 @@ import { ExportDialog } from '../components/Export/ExportDialog';
 import { ContentUpload } from '../components/ContentUpload';
 import { ContentList } from '../components/ContentList';
 import { useContent, useDeleteContent } from '../hooks/useContent';
-import { Download, RefreshCw } from 'lucide-react';
+import { Download, RefreshCw, Menu, X } from 'lucide-react';
 
 export function LibraryPage() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'notes' | 'content'>('notes');
   const [syncing, setSyncing] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
   const { content, loading: contentLoading, refetch: refetchContent } = useContent();
   const { deleteContent } = useDeleteContent();
@@ -41,8 +43,19 @@ export function LibraryPage() {
   };
 
   return (
-    <div className="library-layout flex h-screen">
-      <aside className="notes-sidebar w-64 border-r border-border overflow-y-auto">
+    <div className="library-layout flex h-screen relative">
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-background border border-border rounded-md shadow-lg"
+      >
+        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Left sidebar - notes list */}
+      <aside className={`notes-sidebar w-64 border-r border-border overflow-y-auto bg-background
+        fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-4 border-b border-border space-y-2">
           <button
             onClick={handleSync}
@@ -62,17 +75,28 @@ export function LibraryPage() {
         </div>
         <NotesList
           selectedNoteId={selectedNoteId || undefined}
-          onSelectNote={setSelectedNoteId}
+          onSelectNote={(id) => {
+            setSelectedNoteId(id);
+            setSidebarOpen(false); // Close sidebar on mobile after selection
+          }}
         />
       </aside>
 
-      <main className="notes-main flex-1 flex flex-col overflow-hidden">
+      {/* Overlay for mobile sidebar */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <main className="notes-main flex-1 flex flex-col overflow-hidden pt-16 lg:pt-0">
         {/* Tab Navigation */}
         <div className="tabs border-b border-border">
           <div className="flex">
             <button
               onClick={() => setActiveTab('notes')}
-              className={`px-6 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 md:px-6 py-3 text-sm font-medium transition-colors ${
                 activeTab === 'notes'
                   ? 'text-primary border-b-2 border-primary'
                   : 'text-secondary hover:text-foreground'
@@ -82,7 +106,7 @@ export function LibraryPage() {
             </button>
             <button
               onClick={() => setActiveTab('content')}
-              className={`px-6 py-3 text-sm font-medium transition-colors ${
+              className={`px-4 md:px-6 py-3 text-sm font-medium transition-colors ${
                 activeTab === 'content'
                   ? 'text-primary border-b-2 border-primary'
                   : 'text-secondary hover:text-foreground'
@@ -119,13 +143,17 @@ export function LibraryPage() {
             {contentLoading ? (
               <div className="p-8 text-center text-secondary">Loading content...</div>
             ) : (
-              <ContentList content={content} onDelete={handleDeleteContent} />
+              <ContentList content={content || []} onDelete={handleDeleteContent} />
             )}
           </div>
         )}
       </main>
 
-      <aside className="backlinks-sidebar w-64 border-l border-border overflow-y-auto">
+      {/* Right sidebar - backlinks (hidden on mobile/tablet, shown on desktop) */}
+      <aside className={`backlinks-sidebar w-64 border-l border-border overflow-y-auto bg-background
+        fixed xl:static inset-y-0 right-0 z-40 transform transition-transform duration-200
+        ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'}
+        hidden xl:block`}>
         {selectedNoteId && (
           <BacklinksPanel
             noteId={selectedNoteId}
@@ -133,6 +161,25 @@ export function LibraryPage() {
           />
         )}
       </aside>
+
+      {/* Mobile backlinks toggle button */}
+      {selectedNoteId && (
+        <button
+          onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+          className="xl:hidden fixed bottom-4 right-4 z-50 p-3 bg-primary text-primary-foreground rounded-full shadow-lg"
+          title="Toggle backlinks"
+        >
+          <Menu size={20} />
+        </button>
+      )}
+
+      {/* Overlay for mobile right sidebar */}
+      {rightSidebarOpen && (
+        <div
+          className="xl:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setRightSidebarOpen(false)}
+        />
+      )}
 
       <QuickNav onNavigate={setSelectedNoteId} />
       <ExportDialog

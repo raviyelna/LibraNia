@@ -5,6 +5,8 @@
 
 import { Router } from 'express';
 import { loadConfig, saveConfig, updateConfig } from '../../src/config/appConfig.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 const router = Router();
 
@@ -13,6 +15,37 @@ router.use((req, res, next) => {
   console.log(`[Config API] ${req.method} ${req.path}`);
   next();
 });
+
+/**
+ * Update .env file with new key-value pair
+ */
+async function updateEnvFile(key: string, value: string): Promise<void> {
+  const envPath = path.join(process.cwd(), 'data', '.env');
+
+  try {
+    // Read current .env
+    let envContent = await fs.readFile(envPath, 'utf-8');
+
+    // Check if key exists
+    const keyRegex = new RegExp(`^${key}=.*$`, 'm');
+    const newLine = `${key}="${value}"`;
+
+    if (keyRegex.test(envContent)) {
+      // Replace existing key
+      envContent = envContent.replace(keyRegex, newLine);
+    } else {
+      // Append new key
+      envContent += `\n${newLine}`;
+    }
+
+    // Write back
+    await fs.writeFile(envPath, envContent, 'utf-8');
+    console.log(`[Config API] Updated ${key} in .env`);
+  } catch (error) {
+    console.error(`[Config API] Failed to update .env:`, error);
+    throw error;
+  }
+}
 
 /**
  * GET /api/config - Get application configuration
@@ -35,7 +68,18 @@ router.get('/api/config', async (req, res) => {
  */
 router.put('/api/config', async (req, res) => {
   try {
-    await updateConfig(req.body);
+    // Handle Tavily API key specially - save to .env
+    if (req.body.tavilyApiKey !== undefined) {
+      await updateEnvFile('TAVILY_API_KEY', req.body.tavilyApiKey);
+      // Remove from body so it doesn't go to JSON config
+      delete req.body.tavilyApiKey;
+    }
+
+    // Update JSON config for other settings
+    if (Object.keys(req.body).length > 0) {
+      await updateConfig(req.body);
+    }
+
     res.json({ success: true });
   } catch (error: any) {
     console.error('[Config API] Update config failed:', error);
@@ -51,7 +95,7 @@ router.post('/api/config/reset', async (req, res) => {
   try {
     // Reset to default config
     const defaultConfig = {
-      theme: 'light',
+      theme: 'light' as const,
       language: 'en',
       autoSave: true,
     };

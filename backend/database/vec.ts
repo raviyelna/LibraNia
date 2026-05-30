@@ -68,11 +68,11 @@ See: https://github.com/asg017/sqlite-vec#installation
     // Build platform-specific guidance
     let platformGuidance = '';
     if (platform === 'win32') {
-      platformGuidance = 'Ensure vec0.dll is present in electron/extensions/';
+      platformGuidance = 'Ensure vec0.dll is present in backend/extensions/';
     } else if (platform === 'linux') {
-      platformGuidance = 'Ensure vec0.so is present in electron/extensions/';
+      platformGuidance = 'Ensure vec0.so is present in backend/extensions/';
     } else if (platform === 'darwin') {
-      platformGuidance = 'Ensure vec0.dylib is present in electron/extensions/';
+      platformGuidance = 'Ensure vec0.dylib is present in backend/extensions/';
     } else {
       platformGuidance = `Platform '${platform}' is not supported. Supported platforms: win32, linux, darwin`;
     }

@@ -62,7 +62,7 @@ describe('Graph Service', () => {
   });
 
   it('should return empty graph when no notes exist', async () => {
-    const result = await getGraphData(db);
+    const result = await getGraphData();
 
     expect(result).toEqual({
       nodes: [],
@@ -101,7 +101,7 @@ describe('Graph Service', () => {
       VALUES (?, ?)
     `).run('note-1', 'tag-2');
 
-    const result = await getGraphData(db);
+    const result = await getGraphData();
 
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0]).toEqual({
@@ -137,7 +137,7 @@ describe('Graph Service', () => {
       VALUES (?, ?, ?, ?, ?, ?)
     `).run('link-2', 'note-2', 'note-1', 'semantic', 0.85, now);
 
-    const result = await getGraphData(db);
+    const result = await getGraphData();
 
     expect(result.links).toHaveLength(2);
 
@@ -173,7 +173,7 @@ describe('Graph Service', () => {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run('note-2', 'Deleted Note', 'Body', null, now, now, now);
 
-    const result = await getGraphData(db);
+    const result = await getGraphData();
 
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0].id).toBe('note-1');
@@ -211,7 +211,7 @@ describe('Graph Service', () => {
       VALUES (?, ?, ?, ?, ?, ?)
     `).run('link-2', 'note-1', 'note-3', 'manual', null, now);
 
-    const result = await getGraphData(db);
+    const result = await getGraphData();
 
     expect(result.links).toHaveLength(1);
     expect(result.links[0].target).toBe('note-2');
@@ -225,7 +225,7 @@ describe('Graph Service', () => {
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run('note-1', 'Untagged Note', 'Body', null, now, now, null);
 
-    const result = await getGraphData(db);
+    const result = await getGraphData();
 
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0].tags).toEqual([]);

@@ -30,13 +30,13 @@ let secureStore: any = null;
 async function getSecureStore() {
   if (!secureStore) {
     console.log('[SECURE STORE] Initializing new store instance');
-    const Store = (await import('electron-store')).default;
+    const Store = (await import('conf')).default;
     const encryptionKey = await getEncryptionKey();
     console.log('[SECURE STORE] Encryption key length:', encryptionKey.length);
     console.log('[SECURE STORE] Store options:', storeOptions);
     secureStore = new Store({
       ...storeOptions,
-      name: 'secure-config',
+      configName: 'secure-config',
       encryptionKey,
     });
     console.log('[SECURE STORE] Store initialized at:', secureStore.path);
@@ -54,10 +54,10 @@ async function getSecureStore() {
  * Key is generated once on first launch and persisted
  */
 async function getEncryptionKey(): Promise<string> {
-  const Store = (await import('electron-store')).default;
+  const Store = (await import('conf')).default;
   const keyStore = new Store({
     ...storeOptions,
-    name: 'encryption-key',
+    configName: 'encryption-key',
   });
   let key = keyStore.get('encryptionKey') as string | undefined;
 

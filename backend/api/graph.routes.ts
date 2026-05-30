@@ -55,7 +55,7 @@ router.post('/api/graph/nodes', async (req: Request, res: Response) => {
  */
 router.put('/api/graph/nodes/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { title, tags } = req.body;
 
     if (!title) {
@@ -80,7 +80,7 @@ router.put('/api/graph/nodes/:id', async (req: Request, res: Response) => {
  */
 router.delete('/api/graph/nodes/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // Import service function
     const { deleteNode } = await import('../services/graph.service');
@@ -124,7 +124,7 @@ router.post('/api/graph/edges', async (req: Request, res: Response) => {
  */
 router.delete('/api/graph/edges/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // Import service function
     const { deleteEdge } = await import('../services/graph.service');

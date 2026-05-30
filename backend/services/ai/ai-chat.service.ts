@@ -243,7 +243,7 @@ export async function callClaude(
     });
     conversationMessages.push({
       role: 'user',
-      content: toolResults,
+      content: JSON.stringify(toolResults),
     });
 
     response = await fetch(url, {

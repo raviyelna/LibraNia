@@ -17,11 +17,12 @@ export interface Note {
 export const notesAPI = {
   async getAll(): Promise<Note[]> {
     const response = await apiRequest<{ success: boolean; data: Note[] }>('/api/notes');
-    return response.data;
+    return response.data || [];
   },
 
   async getById(id: string): Promise<Note> {
     const response = await apiRequest<{ success: boolean; data: Note }>(`/api/notes/${id}`);
+    if (!response.data) throw new Error('Note not found');
     return response.data;
   },
 
@@ -30,6 +31,7 @@ export const notesAPI = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    if (!response.data) throw new Error('Failed to create note');
     return response.data;
   },
 
@@ -38,6 +40,7 @@ export const notesAPI = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+    if (!response.data) throw new Error('Failed to update note');
     return response.data;
   },
 
@@ -51,11 +54,12 @@ export const notesAPI = {
     const response = await apiRequest<{ success: boolean; data: Note }>(`/api/notes/${id}/restore`, {
       method: 'POST',
     });
+    if (!response.data) throw new Error('Failed to restore note');
     return response.data;
   },
 
   async getDeleted(): Promise<Note[]> {
     const response = await apiRequest<{ success: boolean; data: Note[] }>('/api/notes/deleted');
-    return response.data;
+    return response.data || [];
   },
 };

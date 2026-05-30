@@ -63,11 +63,12 @@ router.get('/api/ai/providers', async (req, res) => {
   try {
     const providers = loadAllProvidersFromEnv();
 
-    const providerStatus = Object.entries(providers).map(([id, config]) => ({
-      id,
+    const providerStatus = providers.map((config) => ({
+      id: config.id,
       configured: !!config.apiKey,
       model: config.model,
       baseURL: config.baseURL,
+      apiKey: config.apiKey, // Include for form population
     }));
 
     res.json({ success: true, data: providerStatus });

@@ -13,6 +13,7 @@ interface AIChatData {
   messages: ChatMessage[];
   providerId?: string;
   model?: string;
+  researchMode?: boolean;
 }
 
 interface GraphSubscribeData {
@@ -64,26 +65,56 @@ export function setupSocketHandlers(io: Server): void {
           id: config.id,
           model: model,
           hasApiKey: !!config.apiKey,
+          researchMode: data.researchMode,
         });
+
+        // Save user message to DB
+        const { createMessage } = await import('../services/message.service.js');
+        const userMessage = data.messages[data.messages.length - 1];
+        if (userMessage.role === 'user') {
+          await createMessage({
+            conversation_id: data.conversationId,
+            role: userMessage.role,
+            content: userMessage.content,
+          });
+        }
+
+        // Prepare tools for research mode
+        let tools = undefined;
+        let messagesToSend = data.messages;
+
+        if (data.researchMode) {
+          const { RESEARCH_TOOLS } = await import('../tools/research.tools.js');
+          const { RESEARCH_SYSTEM_PROMPT } = await import('../prompts/research.system.js');
+          tools = RESEARCH_TOOLS;
+
+          // Add research system prompt
+          messagesToSend = [
+            { role: 'system', content: RESEARCH_SYSTEM_PROMPT },
+            ...data.messages.filter(m => m.role !== 'system')
+          ];
+
+          logger.info('Research mode enabled with tools:', tools.map(t => t.name));
+        }
 
         // Call AI provider with streaming callback
         let response: string;
         const onProgress = (status: string) => {
-          socket.emit('ai:token', {
+          socket.emit('ai:progress', {
             conversationId: data.conversationId,
-            token: status,
+            status: status,
           });
         };
 
         switch (config.id) {
           case 'deepseek':
-            response = await callDeepSeek(data.messages, config.apiKey, model, undefined, onProgress);
+            response = await callDeepSeek(messagesToSend, config.apiKey, model, tools, onProgress);
             break;
           case 'claude':
-            response = await callClaude(data.messages, config.apiKey, model, config.baseURL, undefined, onProgress);
+            response = await callClaude(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
             break;
           case 'openai':
-            response = await callOpenAI(data.messages, config.apiKey, model, config.baseURL, undefined, onProgress);
+            response = await callOpenAI(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
             break;
           default:
             socket.emit('ai:error', {
@@ -92,6 +123,15 @@ export function setupSocketHandlers(io: Server): void {
             });
             return;
         }
+
+        // Save assistant message to DB
+        await createMessage({
+          conversation_id: data.conversationId,
+          role: 'assistant',
+          content: response,
+          provider_id: config.id,
+          model: model,
+        });
 
         // Emit completion event
         socket.emit('ai:complete', {

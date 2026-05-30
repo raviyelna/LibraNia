@@ -11,6 +11,11 @@ out
 *.sqlite-shm
 *.sqlite-wal
 content/
+data/
+archive/
+test-logs/
+test-storage/
+.env
 .env.development
 .env.production
 
