@@ -272,41 +272,50 @@ export async function createContent(
   // Ensure content directory exists
   await fs.mkdir('content', { recursive: true });
 
-  // Write file atomically
-  await writeFileAtomic(destinationPath, fileBuffer);
+  let thumbnailPath: string | null = null;
+  try {
+    // Write file atomically
+    await writeFileAtomic(destinationPath, fileBuffer);
 
-  // Extract text from documents
-  const extractedText = await extractText(destinationPath, mime);
+    // Extract text from documents
+    const extractedText = await extractText(destinationPath, mime);
 
-  // Generate thumbnail for images
-  const thumbnailPath = await generateThumbnail(destinationPath, mime);
+    // Generate thumbnail for images
+    thumbnailPath = await generateThumbnail(destinationPath, mime);
 
-  // Get original filename
-  const originalFilename = data.originalFilename || path.basename(data.filePath);
+    // Get original filename
+    const originalFilename = data.originalFilename || path.basename(data.filePath);
 
-  // Insert metadata to database
-  const now = new Date();
-  const [record] = await db
-    .insert(content)
-    .values({
-      id: uuid,
-      file_path: destinationPath,
-      thumbnail_path: thumbnailPath,
-      mime_type: mime,
-      original_filename: originalFilename,
-      file_size: fileSize,
-      extracted_text: extractedText || null,
-      source: data.source,
-      confidence_score: data.confidence_score ?? null,
-      metadata: null,
-      note_id: data.note_id ?? null,
-      message_id: data.message_id ?? null,
-      created_at: now,
-      updated_at: now,
-    })
-    .returning();
+    // Insert metadata to database
+    const now = new Date();
+    const [record] = await db
+      .insert(content)
+      .values({
+        id: uuid,
+        file_path: destinationPath,
+        thumbnail_path: thumbnailPath,
+        mime_type: mime,
+        original_filename: originalFilename,
+        file_size: fileSize,
+        extracted_text: extractedText || null,
+        source: data.source,
+        confidence_score: data.confidence_score ?? null,
+        metadata: null,
+        note_id: data.note_id ?? null,
+        message_id: data.message_id ?? null,
+        created_at: now,
+        updated_at: now,
+      })
+      .returning();
 
-  return record as Content;
+    return record as Content;
+  } catch (error) {
+    await fs.unlink(destinationPath).catch(() => {});
+    if (thumbnailPath) {
+      await fs.unlink(thumbnailPath).catch(() => {});
+    }
+    throw error;
+  }
 }
 
 /**

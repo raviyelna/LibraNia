@@ -9,7 +9,7 @@ import { getBacklinks } from '../services/links.service.js';
 import { getNoteTags, setNoteTags } from '../services/tags.service.js';
 import { logger } from '../logger.js';
 import { randomUUID } from 'crypto';
-import type Database from 'better-sqlite3';
+import { importRemoteImagesToNote } from '../services/remote-image.service.js';
 
 export interface Tool {
   name: string;
@@ -106,6 +106,11 @@ export const RESEARCH_TOOLS: Tool[] = [
           type: 'string',
           description: 'Body content in Markdown format',
         },
+        imageUrls: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional public HTTP(S) image URLs from web research to import locally into the note. Use up to 3 relevant images.',
+        },
       },
       required: ['title', 'body'],
     },
@@ -137,7 +142,7 @@ export const RESEARCH_TOOLS: Tool[] = [
 export async function executeToolCall(
   toolName: string,
   toolInput: any,
-  webSearchFn?: (query: string) => Promise<any[]>
+  webSearchFn?: (query: string) => Promise<any>
 ): Promise<any> {
   const db = getDatabase();
 
@@ -238,13 +243,23 @@ export async function executeToolCall(
       // Create link records from wiki-links
       const orm = getORM();
       await updateNoteLinks(noteId, bodyWithLinks, orm);
+      const importedImages = Array.isArray(toolInput.imageUrls)
+        ? await importRemoteImagesToNote(toolInput.imageUrls, noteId, orm)
+        : [];
 
-      logger.info(`Note created: ${noteId} - ${toolInput.title} with ${relatedNotes.length} auto-links`);
+      logger.info(`Note created: ${noteId} - ${toolInput.title} with ${relatedNotes.length} auto-links and ${importedImages.length} images`);
 
       return {
         id: noteId,
         title: toolInput.title,
-        body: bodyWithLinks,
+        body: importedImages.length > 0
+          ? (db.prepare('SELECT body FROM notes WHERE id = ?').get(noteId) as { body: string }).body
+          : bodyWithLinks,
+        importedImages: importedImages.map(image => ({
+          id: image.id,
+          filePath: image.file_path,
+          sourceUrl: JSON.parse(image.metadata || '{}').sourceUrl,
+        })),
       };
     }
 

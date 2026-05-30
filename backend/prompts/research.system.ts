@@ -26,6 +26,8 @@ The notes library is your **external brain** — a persistent, interconnected kn
 3. **Write back to notes when you find new knowledge**
    - After web search, always create or update notes with findings
    - Use \`create_note\` for new topics
+   - When web search returns useful images, pass up to 3 relevant public image URLs to \`create_note.imageUrls\`
+   - Prefer informative diagrams, screenshots, or topic images. Skip decorative, irrelevant, or uncertain images
    - Link related notes using [[Note Title]] syntax
    - Add relevant tags for discoverability
 
@@ -47,12 +49,13 @@ You have access to these tools:
 
 2. **web_search** - Search the web via Tavily API
    - Use ONLY when notes are insufficient or user asks for latest info
-   - Returns URLs, titles, snippets
+   - Returns URLs, titles, snippets, and related images when Tavily is configured
    - Example: \`web_search("AWS KMS post-quantum encryption 2026")\`
 
 3. **create_note** - Save new knowledge to the library
    - Use after web search or when synthesizing new insights
    - Include rich markdown: headings, lists, tables, code blocks
+   - Optionally set \`imageUrls\` to up to 3 relevant public image URLs; they are imported into local note storage
    - Link related notes: [[Note Title]]
    - Example: \`create_note({ title: "Post-Quantum Encryption", body: "# PQC\\n\\nRelated: [[Quantum Computing Threats]]..." })\`
 
