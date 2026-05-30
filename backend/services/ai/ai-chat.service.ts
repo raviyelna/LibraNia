@@ -4,7 +4,7 @@ import { createMessage, getMessagesByConversation } from '../message.service.js'
 import { autoGenerateTitle } from '../conversation-title.service.js';
 import { getORM } from '../../database/connection.js';
 import { RESEARCH_SYSTEM_PROMPT } from '../../prompts/research.system.js';
-import { RESEARCH_TOOLS, executeToolCall } from '../../tools/research.tools.js';
+import { RESEARCH_TOOLS, executeToolCall, type ResearchToolContext } from '../../tools/research.tools.js';
 import { searchWeb } from '../web-search.service.js';
 import { searchWithClaude, searchWithDeepSeek, searchWithOpenAI } from '../provider-search.service.js';
 import { randomUUID } from 'crypto';
@@ -210,6 +210,7 @@ export async function callDeepSeek(
   // Handle tool calls loop (same as OpenAI)
   let iteration = 0;
   const toolBudget: ToolBudget = { webSearchCalls: 0 };
+  const toolContext: ResearchToolContext = { pendingImageUrls: [] };
   const conversationMessages = [...messages];
 
   while (getOpenAICompatibleMessage(data, 'DeepSeek').tool_calls && iteration < MAX_TOOL_ITERATIONS) {
@@ -241,7 +242,7 @@ export async function callDeepSeek(
           ? async (query: string) => await searchWeb(query, tavilyApiKey)
           : undefined;
 
-        const result = await executeToolCall(toolCall.function.name, args, webSearchFn);
+        const result = await executeToolCall(toolCall.function.name, args, webSearchFn, toolContext);
         conversationMessages.push({
           role: 'tool',
           tool_call_id: toolCall.id,
@@ -352,6 +353,7 @@ export async function callClaude(
   // Handle tool use loop
   let iteration = 0;
   const toolBudget: ToolBudget = { webSearchCalls: 0 };
+  const toolContext: ResearchToolContext = { pendingImageUrls: [] };
   while (data.stop_reason === 'tool_use' && iteration < MAX_TOOL_ITERATIONS) {
     iteration++;
     logger.info(`Tool use iteration ${iteration}`, { stopReason: data.stop_reason });
@@ -386,7 +388,7 @@ export async function callClaude(
           ? async (query: string) => await searchWeb(query, tavilyApiKey)
           : async (query: string) => await searchWithClaude(query, apiKey, baseURL);
 
-        const result = await executeToolCall(toolUse.name, toolUse.input, webSearchFn);
+        const result = await executeToolCall(toolUse.name, toolUse.input, webSearchFn, toolContext);
         logger.info(`Tool ${toolUse.name} succeeded`, { resultLength: JSON.stringify(result).length });
         toolResults.push({
           type: 'tool_result',
@@ -508,6 +510,7 @@ export async function callOpenAI(
   // Handle tool calls loop
   let iteration = 0;
   const toolBudget: ToolBudget = { webSearchCalls: 0 };
+  const toolContext: ResearchToolContext = { pendingImageUrls: [] };
   const conversationMessages = [...messages];
 
   while (getOpenAICompatibleMessage(data, 'OpenAI').tool_calls && iteration < MAX_TOOL_ITERATIONS) {
@@ -539,7 +542,7 @@ export async function callOpenAI(
           ? async (query: string) => await searchWeb(query, tavilyApiKey)
           : undefined;
 
-        const result = await executeToolCall(toolCall.function.name, args, webSearchFn);
+        const result = await executeToolCall(toolCall.function.name, args, webSearchFn, toolContext);
         conversationMessages.push({
           role: 'tool',
           tool_call_id: toolCall.id,

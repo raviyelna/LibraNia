@@ -21,6 +21,23 @@ export interface Tool {
   };
 }
 
+export interface ResearchToolContext {
+  pendingImageUrls: string[];
+}
+
+function collectImageUrls(searchResult: any): string[] {
+  const candidates = [
+    ...(Array.isArray(searchResult?.images) ? searchResult.images : []),
+    ...(Array.isArray(searchResult?.results)
+      ? searchResult.results.flatMap((result: any) => Array.isArray(result.images) ? result.images : [])
+      : []),
+  ];
+
+  return candidates
+    .map((image: any) => typeof image === 'string' ? image : image?.url)
+    .filter((url: unknown): url is string => typeof url === 'string' && url.trim().length > 0);
+}
+
 export const RESEARCH_TOOLS: Tool[] = [
   {
     name: 'search_notes',
@@ -142,7 +159,8 @@ export const RESEARCH_TOOLS: Tool[] = [
 export async function executeToolCall(
   toolName: string,
   toolInput: any,
-  webSearchFn?: (query: string) => Promise<any>
+  webSearchFn?: (query: string) => Promise<any>,
+  context?: ResearchToolContext
 ): Promise<any> {
   const db = getDatabase();
 
@@ -192,7 +210,13 @@ export async function executeToolCall(
       if (!webSearchFn) {
         throw new Error('Web search not configured');
       }
-      return await webSearchFn(toolInput.query);
+      const result = await webSearchFn(toolInput.query);
+      if (context) {
+        context.pendingImageUrls = [
+          ...new Set([...context.pendingImageUrls, ...collectImageUrls(result)]),
+        ];
+      }
+      return result;
     }
 
     case 'create_note': {
@@ -243,8 +267,11 @@ export async function executeToolCall(
       // Create link records from wiki-links
       const orm = getORM();
       await updateNoteLinks(noteId, bodyWithLinks, orm);
-      const importedImages = Array.isArray(toolInput.imageUrls)
-        ? await importRemoteImagesToNote(toolInput.imageUrls, noteId, orm)
+      const imageUrls = Array.isArray(toolInput.imageUrls) && toolInput.imageUrls.length > 0
+        ? toolInput.imageUrls
+        : context?.pendingImageUrls || [];
+      const importedImages = imageUrls.length > 0
+        ? await importRemoteImagesToNote(imageUrls, noteId, orm)
         : [];
 
       logger.info(`Note created: ${noteId} - ${toolInput.title} with ${relatedNotes.length} auto-links and ${importedImages.length} images`);
