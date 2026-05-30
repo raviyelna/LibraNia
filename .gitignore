@@ -25,3 +25,4 @@ electron/**/*.js.map
 src/**/*.js
 src/**/*.js.map
 !electron/electron-env.d.ts
+data/.env
