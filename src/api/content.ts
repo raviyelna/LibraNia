@@ -22,15 +22,16 @@ export interface Content {
 }
 
 export const contentAPI = {
-  async getAll(): Promise<Content[]> {
-    const response = await apiRequest<{ success: boolean; data: Content[] }>('/api/content');
+  async getAll(noteId?: string): Promise<Content[]> {
+    const query = noteId ? `?noteId=${encodeURIComponent(noteId)}` : '';
+    const response = await apiRequest<{ success: boolean; data: Content[] }>(`/api/content${query}`);
     return response.data || [];
   },
 
   async getById(id: string): Promise<Content> {
-    const response = await apiRequest<{ success: boolean; content: Content }>(`/api/content/${id}`);
-    if (!response.content) throw new Error('Content not found');
-    return response.content;
+    const response = await apiRequest<{ success: boolean; data: Content }>(`/api/content/${id}`);
+    if (!response.data) throw new Error('Content not found');
+    return response.data;
   },
 
   async delete(id: string): Promise<void> {
@@ -51,6 +52,7 @@ export const contentAPI = {
     formData.append('file', file);
     formData.append('source', 'manual');
     formData.append('note_id', params.noteId);
+    formData.append('append_reference', 'false');
 
     const apiUrl = import.meta.env.VITE_API_URL || '';
     const response = await fetch(`${apiUrl}/api/content/upload`, {
@@ -74,12 +76,22 @@ export const contentAPI = {
 export function uploadContent(
   file: File,
   source: 'manual' | 'ai-generated',
+  options?: { confidence_score?: number; note_id?: string; message_id?: string },
   onProgress?: (percent: number) => void
 ): Promise<Content> {
   return new Promise((resolve, reject) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('source', source);
+    if (options?.confidence_score !== undefined) {
+      formData.append('confidence_score', String(options.confidence_score));
+    }
+    if (options?.note_id) {
+      formData.append('note_id', options.note_id);
+    }
+    if (options?.message_id) {
+      formData.append('message_id', options.message_id);
+    }
 
     const apiUrl = import.meta.env.VITE_API_URL || '';
     const xhr = new XMLHttpRequest();
@@ -96,10 +108,10 @@ export function uploadContent(
 
     // Handle successful upload
     xhr.addEventListener('load', () => {
-      if (xhr.status === 200) {
+      if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const response = JSON.parse(xhr.responseText);
-          resolve(response.content);
+          resolve(response.data);
         } catch (error) {
           reject(new Error('Failed to parse upload response'));
         }

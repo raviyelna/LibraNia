@@ -4,7 +4,7 @@ import { handleAPIError } from '../utils/toast';
 
 export type { Content };
 
-export function useContent() {
+export function useContent(noteId?: string | null) {
   const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -12,7 +12,7 @@ export function useContent() {
   const fetchContent = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await contentAPI.getAll();
+      const data = await contentAPI.getAll(noteId || undefined);
       setContent(data);
       setError(null);
     } catch (err) {
@@ -21,7 +21,7 @@ export function useContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [noteId]);
 
   useEffect(() => {
     fetchContent();
@@ -46,7 +46,7 @@ export function useUploadContent() {
       setError(null);
 
       try {
-        const content = await uploadContent(file, source, (percent) => setProgress(percent));
+        const content = await uploadContent(file, source, options, (percent) => setProgress(percent));
         return content;
       } catch (err) {
         handleAPIError(err);

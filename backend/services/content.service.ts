@@ -8,6 +8,7 @@ import { eq, desc } from 'drizzle-orm';
 import { content, contentTags } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../database/schema.js';
+import { getNoteById, updateNote } from './notes.service.js';
 
 /**
  * Input interface for creating content
@@ -48,6 +49,40 @@ export interface Content {
   message_id: string | null;
   created_at: Date;
   updated_at: Date;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function getContentMarkdownReference(record: Content): string {
+  return record.mime_type.startsWith('image/')
+    ? `![${record.original_filename}](${record.file_path})`
+    : `[${record.original_filename}](${record.file_path})`;
+}
+
+export function removeContentMarkdownReference(body: string, filePath: string): string {
+  const escapedPath = escapeRegExp(filePath);
+  const referencePattern = new RegExp(`!?\\[[^\\]]*\\]\\(${escapedPath}\\)[ \\t]*(?:\\r?\\n)?`, 'g');
+  return body.replace(referencePattern, '');
+}
+
+export async function appendContentReferenceToNote(
+  record: Content,
+  db: BetterSQLite3Database<typeof schema>
+): Promise<void> {
+  if (!record.note_id) return;
+
+  const note = await getNoteById(record.note_id, db);
+  if (!note) {
+    throw new Error(`Note with id ${record.note_id} not found or is deleted`);
+  }
+
+  const reference = getContentMarkdownReference(record);
+  if (note.body.includes(`](${record.file_path})`)) return;
+
+  const separator = note.body.length > 0 && !note.body.endsWith('\n') ? '\n\n' : '';
+  await updateNote(note.id, { body: `${note.body}${separator}${reference}\n` }, db);
 }
 
 /**
@@ -347,6 +382,16 @@ export async function deleteContent(
     return false;
   }
 
+  if (record.note_id) {
+    const note = await getNoteById(record.note_id, db);
+    if (note) {
+      const body = removeContentMarkdownReference(note.body, record.file_path);
+      if (body !== note.body) {
+        await updateNote(note.id, { body }, db);
+      }
+    }
+  }
+
   // Delete from database (CASCADE handles content_tags cleanup)
   const result = await db.delete(content).where(eq(content.id, id));
 
@@ -371,12 +416,13 @@ export async function deleteContent(
  * @returns Array of content records ordered by created_at DESC
  */
 export async function getAllContent(
-  db: BetterSQLite3Database<typeof schema>
+  db: BetterSQLite3Database<typeof schema>,
+  noteId?: string
 ): Promise<Content[]> {
-  const records = await db
-    .select()
-    .from(content)
-    .orderBy(desc(content.created_at));
+  const query = db.select().from(content);
+  const records = noteId
+    ? await query.where(eq(content.note_id, noteId)).orderBy(desc(content.created_at))
+    : await query.orderBy(desc(content.created_at));
 
   return records as Content[];
 }

@@ -18,7 +18,7 @@ export function LibraryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
-  const { content, loading: contentLoading, refetch: refetchContent } = useContent();
+  const { content, loading: contentLoading, refetch: refetchContent } = useContent(selectedNoteId);
   const { deleteContent } = useDeleteContent();
 
   const handleUploadComplete = async () => {
@@ -146,11 +146,19 @@ export function LibraryPage() {
           </>
         ) : (
           <div className="content-tab flex-1 overflow-y-auto scrollable">
-            <ContentUpload onUploadComplete={handleUploadComplete} />
-            {contentLoading ? (
-              <div className="p-8 text-center text-secondary">Loading content...</div>
+            {selectedNoteId ? (
+              <>
+                <ContentUpload noteId={selectedNoteId} onUploadComplete={handleUploadComplete} />
+                {contentLoading ? (
+                  <div className="p-8 text-center text-secondary">Loading content...</div>
+                ) : (
+                  <ContentList content={content || []} onDelete={handleDeleteContent} />
+                )}
+              </>
             ) : (
-              <ContentList content={content || []} onDelete={handleDeleteContent} />
+              <div className="p-8 text-center text-secondary">
+                Select a note to manage its uploaded content.
+              </div>
             )}
           </div>
         )}
