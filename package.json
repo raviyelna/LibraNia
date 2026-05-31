@@ -33,7 +33,7 @@
   "scripts": {
     "dev": "vite",
     "build:frontend": "vite build",
-    "build:backend": "tsc -p tsconfig.backend.json --noEmitOnError false && powershell -ExecutionPolicy Bypass -File ./fix-esm-imports.ps1",
+    "build:backend": "tsc -p tsconfig.backend.json --noEmitOnError false",
     "build:package": "npm run build:frontend && npm run build:backend",
     "preview": "vite preview",
     "prepublishOnly": "npm run build:package",
