@@ -72,6 +72,29 @@ class LibraniaMCPServer {
         capabilities: {
           tools: {},
         },
+        instructions: `LibraNia Knowledge Base Integration
+
+When conducting research or gathering information:
+
+1. **Search LibraNia first**: Use search_notes to check existing knowledge base before web search
+2. **Evaluate sufficiency**: If LibraNia results answer the query, use them as primary source
+3. **Web search fallback**: Only search web if LibraNia lacks sufficient information
+4. **Save findings**: After web research, create_note to save findings with:
+   - Clear title describing the topic
+   - Markdown body with sources and key information
+   - Relevant tags for categorization
+   - [[Note Title]] links to related existing notes (search first to find them)
+5. **Return consolidated answer**: Combine LibraNia + web sources in response
+
+Example workflow:
+- Query: "Docker security best practices"
+- search_notes("Docker security") → found 2 notes
+- Evaluate: partial info, need more on container isolation
+- web_search("Docker container isolation security")
+- create_note with findings, link to existing [[Docker Basics]] note
+- Return answer citing both LibraNia notes and web sources
+
+This ensures knowledge accumulates in LibraNia over time.`,
       }
     );
 
