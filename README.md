@@ -1,6 +1,8 @@
 # LibraNia
 
-**AI-Powered Personal Knowledge Management System**
+**Library of Neuron Interface Atlas**
+
+AI-Powered Personal Knowledge Management System
 
 LibraNia is a local-first knowledge management system that visualizes information as an interconnected neural network. Ask questions, research topics with AI (Claude, GPT, DeepSeek), and store verified answers with rich context in your personal library. Knowledge nodes auto-link based on semantic relationships and display as an interactive 3D graph.
 
