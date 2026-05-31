@@ -17,6 +17,13 @@ export interface Backlink {
   linkCount: number;
 }
 
+export interface RelatedNote {
+  id: string;
+  title: string;
+  relationship: 'linked' | 'semantic' | 'missing';
+  similarity?: number;
+}
+
 /**
  * Parse wiki-style links from text
  * Extracts [[title]] and [[title|alias]] patterns
@@ -64,8 +71,11 @@ export async function updateNoteLinks(
   const wikiLinks = parseWikiLinks(body);
   console.log(`[Links] Found ${wikiLinks.length} wiki-links in note ${noteId}:`, wikiLinks.map(l => l.title));
 
-  // For each wiki-link, find target note by title (case-insensitive)
-  for (const link of wikiLinks) {
+  // For each unique wiki-link, find target note by title (case-insensitive)
+  const uniqueWikiLinks = [...new Map(
+    wikiLinks.map(link => [link.title.toLocaleLowerCase(), link])
+  ).values()];
+  for (const link of uniqueWikiLinks) {
     const [targetNote] = await db
       .select({ id: notes.id })
       .from(notes)
@@ -115,6 +125,83 @@ export async function getBacklinks(
     title: row.title,
     linkCount: Number(row.linkCount),
   }));
+}
+
+/**
+ * Get notes connected in either direction. Manual wiki-links and backlinks are
+ * presented as linked notes; semantic links include their similarity score.
+ */
+export async function getRelatedNotes(
+  noteId: string,
+  db: BetterSQLite3Database<typeof schema>
+): Promise<RelatedNote[]> {
+  const rows = await db
+    .select({
+      sourceId: links.source_note_id,
+      targetId: links.target_note_id,
+      linkType: links.link_type,
+      similarity: links.similarity_score,
+    })
+    .from(links)
+    .where(sql`${links.source_note_id} = ${noteId} OR ${links.target_note_id} = ${noteId}`);
+  const relatedById = new Map<string, RelatedNote>();
+  const addRelated = (candidate: RelatedNote) => {
+    const existing = relatedById.get(candidate.id);
+    if (!existing || (existing.relationship !== 'linked' && candidate.relationship === 'linked')) {
+      relatedById.set(candidate.id, candidate);
+    }
+  };
+
+  for (const row of rows) {
+    const relatedId = row.sourceId === noteId ? row.targetId : row.sourceId;
+    const [related] = await db
+      .select({ id: notes.id, title: notes.title })
+      .from(notes)
+      .where(and(eq(notes.id, relatedId), isNull(notes.deleted_at)))
+      .limit(1);
+    if (!related) continue;
+
+    const candidate: RelatedNote = row.linkType === 'semantic'
+      ? { ...related, relationship: 'semantic', similarity: row.similarity || 0 }
+      : { ...related, relationship: 'linked' };
+    addRelated(candidate);
+  }
+
+  // Some notes are imported or created outside the normal note service. Resolve
+  // their live wiki-links too so Graph and the reader rail report the same links.
+  const activeNotes = await db
+    .select({ id: notes.id, title: notes.title, body: notes.body })
+    .from(notes)
+    .where(isNull(notes.deleted_at));
+  const currentNote = activeNotes.find(note => note.id === noteId);
+
+  if (currentNote) {
+    const notesByTitle = new Map(activeNotes.map(note => [note.title.toLocaleLowerCase(), note]));
+
+    for (const wikiLink of parseWikiLinks(currentNote.body)) {
+      const related = notesByTitle.get(wikiLink.title.toLocaleLowerCase());
+      if (related && related.id !== noteId) {
+        addRelated({ id: related.id, title: related.title, relationship: 'linked' });
+      } else if (!related) {
+        addRelated({
+          id: `missing:${wikiLink.title.toLocaleLowerCase()}`,
+          title: wikiLink.title,
+          relationship: 'missing',
+        });
+      }
+    }
+
+    for (const candidate of activeNotes) {
+      if (candidate.id === noteId) continue;
+      const linksToCurrent = parseWikiLinks(candidate.body)
+        .some(link => link.title.toLocaleLowerCase() === currentNote.title.toLocaleLowerCase());
+      if (linksToCurrent) {
+        addRelated({ id: candidate.id, title: candidate.title, relationship: 'linked' });
+      }
+    }
+  }
+
+  return [...relatedById.values()].sort((a, b) => a.title.localeCompare(b.title));
 }
 
 /**

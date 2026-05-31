@@ -6,7 +6,7 @@ import * as d3 from 'd3-force-3d';
 import { useGraph } from '../../hooks/useGraph';
 import { GraphSidePanel } from './GraphSidePanel';
 import { GraphControls } from './GraphControls';
-import { GraphMinimap } from './GraphMinimap';
+import { Network, MousePointer2 } from 'lucide-react';
 
 // Helper function to generate consistent color from tag name
 function getColorForTag(tag: string | undefined): string {
@@ -156,13 +156,6 @@ export function GraphView() {
     }
   }, [location.pathname, refetch]);
 
-  // Handle minimap click - jump camera to location
-  const handleMinimapClick = (x: number, y: number) => {
-    if (fgRef.current) {
-      fgRef.current.cameraPosition({ x, y, z: 200 }, { x, y, z: 0 }, 1000);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -184,7 +177,11 @@ export function GraphView() {
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      <GraphControls onSearchResults={handleSearchResults} />
+      <GraphControls
+        onSearchResults={handleSearchResults}
+        nodeCount={graphData.nodes.length}
+        linkCount={graphData.links.length}
+      />
       <ForceGraph3D
         ref={fgRef}
         graphData={graphData}
@@ -241,8 +238,17 @@ export function GraphView() {
           onClose={handlePanelClose}
         />
       )}
-      {/* Minimap temporarily disabled due to ForceGraph2D ref issue */}
-      {/* <GraphMinimap graphData={graphData} onLocationClick={handleMinimapClick} /> */}
+      <div className="pointer-events-none absolute bottom-4 left-4 z-10 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-background/90 p-3 shadow-lg backdrop-blur">
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-foreground">
+          <Network size={14} className="text-primary" />
+          Node colors follow the first tag
+        </div>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-secondary">
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#fbbf24]" />Search match</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-white ring-1 ring-border" />Selected neighborhood</span>
+          <span className="flex items-center gap-1.5"><MousePointer2 size={12} />Drag to orbit · scroll to zoom</span>
+        </div>
+      </div>
     </div>
   );
 }

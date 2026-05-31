@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { closeDatabase, getDatabase, getORM, initDatabase } from '../database/connection';
-import { importRemoteImagesToNote } from './remote-image.service';
+import { importRemoteImagesToNote, insertImageReferenceIntoBody } from './remote-image.service';
 
 describe('importRemoteImagesToNote', () => {
   afterEach(() => {
@@ -55,5 +55,28 @@ describe('importRemoteImagesToNote', () => {
       body: `Existing body\n\n![diagram.png](${image.file_path})\n`,
     });
     await import('fs/promises').then(fs => fs.unlink(image.file_path));
+  });
+
+  it('places an image beneath the matching note section', () => {
+    const body = '# Guide\n\nIntro text.\n\n## Runtime\n\nRuntime details.\n\n## Memory\n\nMemory details.';
+
+    expect(insertImageReferenceIntoBody(
+      body,
+      '![Runtime diagram](content/runtime.png)',
+      0,
+      1,
+      'Runtime'
+    )).toBe(
+      '# Guide\n\nIntro text.\n\n## Runtime\n\nRuntime details.\n\n![Runtime diagram](content/runtime.png)\n\n## Memory\n\nMemory details.'
+    );
+  });
+
+  it('distributes images through note content when section hints are unavailable', () => {
+    const body = '# Guide\n\nIntro text.\n\n## Runtime\n\nRuntime details.\n\n## Memory\n\nMemory details.\n\n## Related Notes\n- [[Other]]';
+    const first = insertImageReferenceIntoBody(body, '![First](content/first.png)', 0, 2);
+    const second = insertImageReferenceIntoBody(first, '![Second](content/second.png)', 1, 2);
+
+    expect(first.indexOf('![First]')).toBeLessThan(first.indexOf('## Runtime'));
+    expect(second.indexOf('![Second]')).toBeLessThan(second.indexOf('## Related Notes'));
   });
 });

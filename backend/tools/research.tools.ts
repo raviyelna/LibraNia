@@ -9,7 +9,10 @@ import { getBacklinks } from '../services/links.service.js';
 import { getNoteTags, setNoteTags } from '../services/tags.service.js';
 import { logger } from '../logger.js';
 import { randomUUID } from 'crypto';
-import { importRemoteImagesToNote } from '../services/remote-image.service.js';
+import {
+  importRemoteImagesToNote,
+  type RemoteNoteImage,
+} from '../services/remote-image.service.js';
 
 export interface Tool {
   name: string;
@@ -22,10 +25,10 @@ export interface Tool {
 }
 
 export interface ResearchToolContext {
-  pendingImageUrls: string[];
+  pendingImageUrls: RemoteNoteImage[];
 }
 
-function collectImageUrls(searchResult: any): string[] {
+function collectImages(searchResult: any): RemoteNoteImage[] {
   const candidates = [
     ...(Array.isArray(searchResult?.images) ? searchResult.images : []),
     ...(Array.isArray(searchResult?.results)
@@ -34,8 +37,14 @@ function collectImageUrls(searchResult: any): string[] {
   ];
 
   return candidates
-    .map((image: any) => typeof image === 'string' ? image : image?.url)
-    .filter((url: unknown): url is string => typeof url === 'string' && url.trim().length > 0);
+    .map((image: any) => typeof image === 'string'
+      ? { url: image }
+      : { url: image?.url, alt: image?.description })
+    .filter((image: RemoteNoteImage) => typeof image.url === 'string' && image.url.trim().length > 0);
+}
+
+function mergeImages(images: RemoteNoteImage[]): RemoteNoteImage[] {
+  return [...new Map(images.map(image => [image.url, image])).values()];
 }
 
 export const RESEARCH_TOOLS: Tool[] = [
@@ -128,6 +137,19 @@ export const RESEARCH_TOOLS: Tool[] = [
           items: { type: 'string' },
           description: 'Optional public HTTP(S) image URLs from web research to import locally into the note. Use up to 3 relevant images.',
         },
+        images: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              url: { type: 'string', description: 'Public HTTP(S) image URL from web research' },
+              section: { type: 'string', description: 'Markdown heading this image should illustrate' },
+              alt: { type: 'string', description: 'Concise accessible description of the image' },
+            },
+            required: ['url'],
+          },
+          description: 'Preferred image import format. Use up to 3 relevant images and identify the note section each image illustrates.',
+        },
       },
       required: ['title', 'body'],
     },
@@ -212,16 +234,18 @@ export async function executeToolCall(
       }
       const result = await webSearchFn(toolInput.query);
       if (context) {
-        context.pendingImageUrls = [
-          ...new Set([...context.pendingImageUrls, ...collectImageUrls(result)]),
-        ];
+        context.pendingImageUrls = mergeImages([
+          ...context.pendingImageUrls,
+          ...collectImages(result),
+        ]);
       }
       return result;
     }
 
     case 'create_note': {
       const noteId = randomUUID();
-      const now = Date.now();
+      // Drizzle's SQLite timestamp mode stores Unix seconds, even for raw SQL writes.
+      const now = Math.floor(Date.now() / 1000);
 
       // Extract keywords from title for better matching
       // Remove common words and use significant terms
@@ -267,7 +291,9 @@ export async function executeToolCall(
       // Create link records from wiki-links
       const orm = getORM();
       await updateNoteLinks(noteId, bodyWithLinks, orm);
-      const imageUrls = Array.isArray(toolInput.imageUrls) && toolInput.imageUrls.length > 0
+      const imageUrls = Array.isArray(toolInput.images) && toolInput.images.length > 0
+        ? toolInput.images
+        : Array.isArray(toolInput.imageUrls) && toolInput.imageUrls.length > 0
         ? toolInput.imageUrls
         : context?.pendingImageUrls || [];
       const importedImages = imageUrls.length > 0

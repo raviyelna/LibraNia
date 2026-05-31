@@ -20,6 +20,8 @@ export interface ChatRequest {
   providerId?: string;
   model?: string;
   researchMode?: boolean;
+  systemContext?: string;
+  readOnlyResearch?: boolean;
 }
 
 const MAX_TOOL_ITERATIONS = 10;
@@ -650,10 +652,18 @@ export async function handleAIChat(request: ChatRequest): Promise<{ success: boo
       // Add research system prompt
       messagesToSend = [
         { role: 'system', content: RESEARCH_SYSTEM_PROMPT },
+        ...(request.systemContext ? [{ role: 'system' as const, content: request.systemContext }] : []),
         ...request.messages.filter(m => m.role !== 'system')
       ];
-      tools = RESEARCH_TOOLS;
+      tools = request.readOnlyResearch
+        ? RESEARCH_TOOLS.filter(tool => tool.name !== 'create_note' && tool.name !== 'add_tags')
+        : RESEARCH_TOOLS;
       logger.info('Tools configured:', { toolCount: tools.length, toolNames: tools.map(t => t.name) });
+    } else if (request.systemContext) {
+      messagesToSend = [
+        { role: 'system', content: request.systemContext },
+        ...request.messages.filter(m => m.role !== 'system'),
+      ];
     }
 
     // Call appropriate API

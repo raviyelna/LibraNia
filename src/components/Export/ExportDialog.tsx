@@ -7,6 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../ui/Dialog';
+import { exportAPI, notesAPI, tagsAPI } from '../../api';
 
 interface ExportDialogProps {
   open: boolean;
@@ -48,7 +49,7 @@ export function ExportDialog({ open, onOpenChange, currentNoteId }: ExportDialog
 
   const loadTags = async () => {
     try {
-      const allTags = await window.api.tags.getAll();
+      const allTags = await tagsAPI.getAll();
       setTags(allTags);
     } catch (error) {
       console.error('Failed to load tags:', error);
@@ -57,7 +58,7 @@ export function ExportDialog({ open, onOpenChange, currentNoteId }: ExportDialog
 
   const loadNotes = async () => {
     try {
-      const allNotes = await window.api.notes.getAll();
+      const allNotes = await notesAPI.getAll();
       setNotes(allNotes);
     } catch (error) {
       console.error('Failed to load notes:', error);
@@ -75,10 +76,10 @@ export function ExportDialog({ open, onOpenChange, currentNoteId }: ExportDialog
       if (scope === 'current' && currentNoteId) {
         noteIds = [currentNoteId];
       } else if (scope === 'all') {
-        const allNotes = await window.api.notes.getAll();
+        const allNotes = await notesAPI.getAll();
         noteIds = allNotes.map((n) => n.id);
       } else if (scope === 'tag' && selectedTag) {
-        const tagNotes = await window.api.tags.getNotesByTag(selectedTag);
+        const tagNotes = await tagsAPI.getNotesByTag(selectedTag);
         noteIds = tagNotes.map((n) => n.id);
       } else if (scope === 'selected') {
         noteIds = selectedNotes;
@@ -89,26 +90,8 @@ export function ExportDialog({ open, onOpenChange, currentNoteId }: ExportDialog
         return;
       }
 
-      // Export based on format
-      if (format === 'markdown') {
-        const directory = await window.api.export.selectDirectory();
-        if (!directory) {
-          setResult('Export cancelled');
-          return;
-        }
-
-        const { count } = await window.api.export.markdown(noteIds, directory);
-        setResult(`Successfully exported ${count} note${count !== 1 ? 's' : ''} to ${directory}`);
-      } else {
-        const filePath = await window.api.export.selectFile('notes-export.json');
-        if (!filePath) {
-          setResult('Export cancelled');
-          return;
-        }
-
-        await window.api.export.json(noteIds, filePath);
-        setResult(`Successfully exported ${noteIds.length} note${noteIds.length !== 1 ? 's' : ''} to ${filePath}`);
-      }
+      const count = await exportAPI.download(format, noteIds);
+      setResult(`Downloaded ${count} note${count !== 1 ? 's' : ''} as ${format === 'markdown' ? 'Markdown' : 'JSON'}`);
     } catch (error: any) {
       setResult(`Export failed: ${error.message}`);
     } finally {
@@ -138,7 +121,7 @@ export function ExportDialog({ open, onOpenChange, currentNoteId }: ExportDialog
               onChange={(e) => setFormat(e.target.value as ExportFormat)}
               className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
             >
-              <option value="markdown">Markdown (.md files)</option>
+              <option value="markdown">Markdown (.md file)</option>
               <option value="json">JSON (single file)</option>
             </select>
           </div>

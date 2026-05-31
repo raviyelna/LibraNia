@@ -35,7 +35,7 @@ export function MessageList({ messages, isGenerating = false, generationStatus }
 
   if (messages.length === 0 && !isGenerating) {
     return (
-      <div className="message-list flex-1 overflow-y-auto scrollable p-4 flex items-center justify-center">
+      <div className="message-list chat-scrollbar flex min-h-0 flex-1 items-center justify-center overflow-y-auto p-4">
         <div className="text-center text-secondary">
           Start a conversation by asking a question below
         </div>
@@ -44,7 +44,7 @@ export function MessageList({ messages, isGenerating = false, generationStatus }
   }
 
   return (
-    <div className="message-list flex-1 overflow-y-auto scrollable p-4 space-y-4">
+    <div className="message-list chat-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-4 md:p-6">
       {messages.map((message) => (
         <MessageBubble
           key={message.id}

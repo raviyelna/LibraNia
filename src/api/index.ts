@@ -12,3 +12,5 @@ export * from './config';
 export * from './ai';
 export * from './conversations';
 export * from './graph';
+export * from './export';
+export * from './library-assistant';

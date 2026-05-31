@@ -1,22 +1,25 @@
 import { useState } from 'react';
 import { NotesList } from '../components/Notes/NotesList';
 import { NoteEditor } from '../components/Notes/NoteEditor';
-import { BacklinksPanel } from '../components/Notes/BacklinksPanel';
+import { LibraryContextPanel } from '../components/Notes/LibraryContextPanel';
+import { LibrarianAskPanel } from '../components/Notes/LibrarianAskPanel';
 import { TagsInput } from '../components/Notes/TagsInput';
+import { TagManagement } from '../components/Notes/TagManagement';
 import { QuickNav } from '../components/Notes/QuickNav';
 import { ExportDialog } from '../components/Export/ExportDialog';
 import { ContentUpload } from '../components/ContentUpload';
 import { ContentList } from '../components/ContentList';
 import { useContent, useDeleteContent } from '../hooks/useContent';
-import { Download, RefreshCw, Menu, X, Brain } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Menu, X, Brain, Tags, SlidersHorizontal } from 'lucide-react';
 
 export function LibraryPage() {
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'notes' | 'content'>('notes');
-  const [syncing, setSyncing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'notes' | 'content' | 'tags'>('notes');
+  const [managementOpen, setManagementOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
+  const [librarianOpen, setLibrarianOpen] = useState(false);
 
   const { content, loading: contentLoading, refetch: refetchContent } = useContent(selectedNoteId);
   const { deleteContent } = useDeleteContent();
@@ -28,18 +31,6 @@ export function LibraryPage() {
   const handleDeleteContent = async (id: string) => {
     await deleteContent(id);
     await refetchContent();
-  };
-
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      // TODO: implement sync endpoint in HTTP API
-      alert('Sync not available in web mode yet');
-    } catch (error) {
-      alert(`Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setSyncing(false);
-    }
   };
 
   return (
@@ -56,15 +47,7 @@ export function LibraryPage() {
       <aside className={`notes-sidebar w-64 border-r border-border overflow-y-auto scrollable bg-background
         fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-4 border-b border-border space-y-2">
-          <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? 'Syncing...' : 'Sync Notes'}
-          </button>
+        <div className="border-b border-border p-4">
           <button
             onClick={() => setExportDialogOpen(true)}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md transition-colors duration-200"
@@ -91,9 +74,30 @@ export function LibraryPage() {
       )}
 
       <main className="notes-main flex-1 flex flex-col overflow-hidden pt-16 lg:pt-0">
-        {/* Tab Navigation */}
-        <div className="tabs border-b border-border">
-          <div className="flex">
+        <div className="flex items-center justify-between border-b border-border bg-background px-4 py-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-secondary">Library</p>
+            <p className="text-sm text-foreground">{managementOpen ? 'Management tools' : 'Reading mode'}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setManagementOpen(open => {
+              if (open) setActiveTab('notes');
+              return !open;
+            })}
+            aria-expanded={managementOpen}
+            className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <SlidersHorizontal size={15} />
+            {managementOpen ? 'Hide tools' : 'Manage note'}
+            {managementOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          </button>
+        </div>
+
+        {/* Management tools stay out of the reading surface until requested. */}
+        {managementOpen && (
+          <div className="tabs border-b border-border bg-background">
+            <div className="flex">
             <button
               onClick={() => setActiveTab('notes')}
               className={`px-4 md:px-6 py-3 text-sm font-medium transition-colors ${
@@ -114,15 +118,27 @@ export function LibraryPage() {
             >
               Content
             </button>
+            <button
+              onClick={() => setActiveTab('tags')}
+              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition-colors md:px-6 ${
+                activeTab === 'tags'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-secondary hover:text-foreground'
+              }`}
+            >
+              <Tags size={15} />
+              Tags
+            </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Tab Content */}
         {activeTab === 'notes' ? (
           <>
             {selectedNoteId ? (
               <>
-                <TagsInput noteId={selectedNoteId} />
+                {managementOpen && <TagsInput noteId={selectedNoteId} />}
                 <div className="flex-1 overflow-y-auto scrollable">
                   <NoteEditor noteId={selectedNoteId} />
                 </div>
@@ -144,7 +160,7 @@ export function LibraryPage() {
               </div>
             )}
           </>
-        ) : (
+        ) : activeTab === 'content' ? (
           <div className="content-tab flex-1 overflow-y-auto scrollable">
             {selectedNoteId ? (
               <>
@@ -161,28 +177,32 @@ export function LibraryPage() {
               </div>
             )}
           </div>
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <TagManagement selectedNoteId={selectedNoteId} />
+          </div>
         )}
       </main>
 
-      {/* Right sidebar - backlinks (hidden on mobile/tablet, shown on desktop) */}
-      <aside className={`backlinks-sidebar w-64 border-l border-border overflow-y-auto scrollable bg-background
+      {/* Right sidebar - reading context */}
+      <aside className={`context-sidebar w-72 border-l border-border overflow-y-auto scrollable bg-background
         fixed xl:static inset-y-0 right-0 z-40 transform transition-transform duration-200
-        ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'}
-        hidden xl:block`}>
+        ${rightSidebarOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'}`}>
         {selectedNoteId && (
-          <BacklinksPanel
+          <LibraryContextPanel
             noteId={selectedNoteId}
             onNavigate={setSelectedNoteId}
+            onAsk={() => setLibrarianOpen(true)}
           />
         )}
       </aside>
 
-      {/* Mobile backlinks toggle button */}
+      {/* Mobile reading context toggle button */}
       {selectedNoteId && (
         <button
           onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
           className="xl:hidden fixed bottom-4 right-4 z-50 p-3 bg-primary text-primary-foreground rounded-full shadow-lg"
-          title="Toggle backlinks"
+          title="Toggle reading context"
         >
           <Menu size={20} />
         </button>
@@ -202,6 +222,14 @@ export function LibraryPage() {
         onOpenChange={setExportDialogOpen}
         currentNoteId={selectedNoteId || undefined}
       />
+      {selectedNoteId && (
+        <LibrarianAskPanel
+          open={librarianOpen}
+          noteId={selectedNoteId}
+          onClose={() => setLibrarianOpen(false)}
+          onNavigate={setSelectedNoteId}
+        />
+      )}
     </div>
   );
 }

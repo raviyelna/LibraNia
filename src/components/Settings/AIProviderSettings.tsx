@@ -3,6 +3,7 @@ import { useAIProviders, useProviderValidation } from '../../hooks/useAIProvider
 import { Button } from '../ui/Button';
 import { Eye, EyeOff, Check, AlertCircle } from 'lucide-react';
 import { configAPI, aiAPI } from '../../api';
+import toast from 'react-hot-toast';
 
 type ProviderId = 'claude' | 'openai' | 'deepseek';
 
@@ -224,10 +225,10 @@ export function AIProviderSettings() {
         tavilyApiKey ? `${tavilyApiKey.slice(0, 5)}...${tavilyApiKey.slice(-5)}` : ''
       );
       setTavilyApiKey('');
-      alert('Tavily API key saved successfully!');
+      toast.success('Tavily API key saved successfully.');
     } catch (error) {
       console.error('Failed to save Tavily key:', error);
-      alert('Failed to save Tavily key. Check console for details.');
+      toast.error('Failed to save Tavily key. Check console for details.');
     }
   };
 

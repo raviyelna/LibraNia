@@ -4,12 +4,14 @@ import { ChatInterface } from '../components/Chat/ChatInterface';
 import { Button } from '../components/ui/Button';
 import { Plus, Pencil, Trash2, Check, X, Menu } from 'lucide-react';
 import { conversationsAPI } from '../api/conversations';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 
 export function Chat() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const { conversations, loading, error, refetch } = useConversations();
 
   const handleNewConversation = async () => {
@@ -54,14 +56,19 @@ export function Chat() {
     setEditTitle('');
   };
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Delete this conversation?')) return;
+    setPendingDeleteId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) return;
     try {
-      await conversationsAPI.delete(id);
-      if (selectedConversationId === id) {
+      await conversationsAPI.delete(pendingDeleteId);
+      if (selectedConversationId === pendingDeleteId) {
         setSelectedConversationId(null);
       }
+      setPendingDeleteId(null);
       refetch();
     } catch (err) {
       console.error('Failed to delete conversation:', err);
@@ -69,7 +76,7 @@ export function Chat() {
   };
 
   return (
-    <div className="chat-layout flex h-screen relative">
+    <div className="chat-layout relative flex h-full min-h-0 overflow-hidden">
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -79,7 +86,7 @@ export function Chat() {
       </button>
 
       {/* Conversation list sidebar (left) */}
-      <aside className={`conversation-sidebar w-80 border-r border-border overflow-y-auto scrollable bg-background
+      <aside className={`conversation-sidebar flex h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-r border-border bg-background
         fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-4 border-b border-border sticky top-0 bg-background z-10">
@@ -96,7 +103,7 @@ export function Chat() {
           </Button>
         </div>
 
-        <div className="conversation-list">
+        <div className="conversation-list chat-scrollbar min-h-0 flex-1 overflow-y-auto">
           {loading && (
             <div className="p-4 text-center text-secondary">
               Loading conversations...
@@ -205,9 +212,19 @@ export function Chat() {
       )}
 
       {/* Main chat area (center) */}
-      <main className="chat-main flex-1 flex flex-col overflow-hidden pt-16 lg:pt-0">
+      <main className="chat-main flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pt-16 lg:pt-0">
         <ChatInterface conversationId={selectedConversationId || undefined} />
       </main>
+      <ConfirmDialog
+        open={!!pendingDeleteId}
+        title="Delete conversation?"
+        description="Delete this conversation and its messages? This action cannot be undone."
+        confirmLabel="Delete conversation"
+        onOpenChange={open => {
+          if (!open) setPendingDeleteId(null);
+        }}
+        onConfirm={() => void handleConfirmDelete()}
+      />
     </div>
   );
 }
