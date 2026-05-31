@@ -14,7 +14,7 @@ import {
   getAllNotes,
   getDeletedNotes,
 } from '../services/notes.service.js';
-import { getBacklinks } from '../services/links.service.js';
+import { getBacklinks, getRelatedNotes } from '../services/links.service.js';
 
 const router = Router();
 
@@ -132,14 +132,15 @@ router.get('/api/notes/:id/backlinks', async (req, res) => {
 });
 
 /**
- * GET /api/notes/:id/related - Get related notes (semantic links)
+ * GET /api/notes/:id/related - Get related notes (bidirectional graph links)
  * Returns: 200 with array of related notes
  */
 router.get('/api/notes/:id/related', async (req, res) => {
   try {
     const { id } = req.params;
-    // TODO: implement semantic links when sqlite-vec available
-    res.json({ success: true, data: [] });
+    const db = getORM();
+    const related = await getRelatedNotes(id, db);
+    res.json({ success: true, data: related });
   } catch (error: any) {
     console.error('[Notes API] Get related failed:', error);
     res.status(500).json({ success: false, error: error.message });

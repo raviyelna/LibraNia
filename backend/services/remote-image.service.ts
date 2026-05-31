@@ -7,18 +7,25 @@ import crypto from 'crypto';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../database/schema.js';
 import {
-  appendContentReferenceToNote,
   createContent,
   deleteContent,
+  getContentMarkdownReference,
   updateContent,
   type Content,
 } from './content.service.js';
+import { getNoteById, updateNote } from './notes.service.js';
 import { logger } from '../logger.js';
 
 const MAX_REMOTE_IMAGES = 3;
 const MAX_REMOTE_IMAGE_SIZE = 5 * 1024 * 1024;
 const MAX_REDIRECTS = 3;
 const DOWNLOAD_TIMEOUT_MS = 10_000;
+
+export interface RemoteNoteImage {
+  url: string;
+  section?: string;
+  alt?: string;
+}
 
 function isPublicIpAddress(address: string): boolean {
   if (net.isIPv4(address)) {
@@ -127,16 +134,96 @@ async function downloadRemoteImage(rawUrl: string): Promise<{ tempPath: string; 
   throw new Error('Image download failed');
 }
 
+function normalizeHeading(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function findIllustrationPoints(body: string): Array<{ offset: number; heading?: string }> {
+  const relatedNotesOffset = body.search(/^## Related Notes\s*$/m);
+  const searchableBody = relatedNotesOffset >= 0 ? body.slice(0, relatedNotesOffset) : body;
+  const lines = searchableBody.match(/.*(?:\r?\n|$)/g)?.filter(Boolean) || [];
+  const points: Array<{ offset: number; heading?: string }> = [];
+  let offset = 0;
+  let activeHeading: string | undefined;
+  let inFence = false;
+  let blockEnd: number | undefined;
+
+  const flushBlock = () => {
+    if (blockEnd !== undefined) {
+      points.push({ offset: blockEnd, heading: activeHeading });
+      blockEnd = undefined;
+    }
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const lineEnd = offset + line.length;
+
+    if (trimmed.startsWith('```')) {
+      flushBlock();
+      inFence = !inFence;
+    } else if (!inFence && /^#{1,6}\s+/.test(trimmed)) {
+      flushBlock();
+      activeHeading = trimmed.replace(/^#{1,6}\s+/, '');
+    } else if (!inFence && trimmed === '') {
+      flushBlock();
+    } else if (
+      !inFence &&
+      !trimmed.startsWith('![') &&
+      !trimmed.startsWith('|') &&
+      !trimmed.startsWith('---')
+    ) {
+      blockEnd = lineEnd;
+    }
+
+    offset = lineEnd;
+  }
+
+  flushBlock();
+  return points;
+}
+
+export function insertImageReferenceIntoBody(
+  body: string,
+  reference: string,
+  imageIndex: number,
+  imageCount: number,
+  section?: string
+): string {
+  if (body.includes(reference)) return body;
+
+  const points = findIllustrationPoints(body);
+  const normalizedSection = section ? normalizeHeading(section) : '';
+  const sectionPoint = normalizedSection
+    ? points.find(point => point.heading && (
+      normalizeHeading(point.heading).includes(normalizedSection) ||
+      normalizedSection.includes(normalizeHeading(point.heading))
+    ))
+    : undefined;
+  const distributedIndex = points.length > 0
+    ? Math.min(points.length - 1, Math.floor((imageIndex * points.length) / Math.max(imageCount, 1)))
+    : -1;
+  const insertionOffset = sectionPoint?.offset ?? points[distributedIndex]?.offset ?? body.length;
+  const before = body.slice(0, insertionOffset).replace(/\s+$/, '');
+  const after = body.slice(insertionOffset).replace(/^\s+/, '');
+
+  return `${before}${before ? '\n\n' : ''}${reference}${after ? `\n\n${after}` : '\n'}`;
+}
+
 export async function importRemoteImagesToNote(
-  imageUrls: string[],
+  images: Array<string | RemoteNoteImage>,
   noteId: string,
   db: BetterSQLite3Database<typeof schema>
 ): Promise<Content[]> {
   const imported: Content[] = [];
-  const uniqueUrls = [...new Set(imageUrls.filter(url => typeof url === 'string' && url.trim()))]
+  const uniqueImages = [...new Map(images
+    .map(image => typeof image === 'string' ? { url: image } : image)
+    .filter(image => typeof image?.url === 'string' && image.url.trim())
+    .map(image => [image.url, image])).values()]
     .slice(0, MAX_REMOTE_IMAGES);
 
-  for (const imageUrl of uniqueUrls) {
+  for (const [imageIndex, image] of uniqueImages.entries()) {
+    const imageUrl = image.url;
     let tempPath: string | undefined;
     let contentId: string | undefined;
 
@@ -151,9 +238,22 @@ export async function importRemoteImagesToNote(
       }, db);
       contentId = record.id;
       const updated = await updateContent(record.id, {
-        metadata: JSON.stringify({ sourceUrl: imageUrl }),
+        metadata: JSON.stringify({ sourceUrl: imageUrl, section: image.section, alt: image.alt }),
       }, db);
-      await appendContentReferenceToNote(updated, db);
+      const note = await getNoteById(noteId, db);
+      if (!note) throw new Error(`Note with id ${noteId} not found or is deleted`);
+      const reference = image.alt
+        ? `![${image.alt}](${updated.file_path})`
+        : getContentMarkdownReference(updated);
+      await updateNote(noteId, {
+        body: insertImageReferenceIntoBody(
+          note.body,
+          reference,
+          imageIndex,
+          uniqueImages.length,
+          image.section
+        ),
+      }, db);
       imported.push(updated);
     } catch (error) {
       logger.warn('Skipping remote note image', { imageUrl, error });

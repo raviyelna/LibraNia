@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 
 describe('RelatedPanel', () => {
-  it('should render "Related Concepts" heading', () => {
+  it('should render "Related notes" heading', () => {
     (useSemanticLinks as any).mockReturnValue({
       links: [],
       loading: false,
@@ -25,7 +25,7 @@ describe('RelatedPanel', () => {
     const onNavigate = vi.fn();
     render(<RelatedPanel noteId="note-123" onNavigate={onNavigate} />);
 
-    expect(screen.getByText('Related Concepts')).toBeInTheDocument();
+    expect(screen.getByText('Related notes')).toBeInTheDocument();
   });
 
   it('should show loading state while fetching semantic links', () => {
@@ -39,7 +39,7 @@ describe('RelatedPanel', () => {
     const onNavigate = vi.fn();
     render(<RelatedPanel noteId="note-123" onNavigate={onNavigate} />);
 
-    expect(screen.getByText('Related Concepts')).toBeInTheDocument();
+    expect(screen.getByText('Related notes')).toBeInTheDocument();
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
@@ -139,5 +139,21 @@ describe('RelatedPanel', () => {
     expect(linkElement.className).toMatch(/hover:text-primary/);
     expect(linkElement.className).toMatch(/hover:underline/);
     expect(linkElement.className).toMatch(/cursor-pointer/);
+  });
+
+  it('shows unresolved wiki-links without navigating', () => {
+    (useSemanticLinks as any).mockReturnValue({
+      links: [{ id: 'missing:future-note', title: 'Future Note', relationship: 'missing' }],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+
+    const onNavigate = vi.fn();
+    render(<RelatedPanel noteId="note-123" onNavigate={onNavigate} />);
+
+    fireEvent.click(screen.getByText('Future Note'));
+    expect(screen.getByText(/linked note not found/i)).toBeInTheDocument();
+    expect(onNavigate).not.toHaveBeenCalled();
   });
 });

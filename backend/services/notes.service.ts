@@ -118,7 +118,8 @@ export async function updateNote(
     data.title ?? existing.title,
     data.body ?? existing.body,
     data.metadata ?? existing.metadata,
-    now.getTime(),
+    // Drizzle's SQLite timestamp mode stores Unix seconds, even for raw SQL writes.
+    Math.floor(now.getTime() / 1000),
     id
   );
 

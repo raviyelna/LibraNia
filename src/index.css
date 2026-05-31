@@ -93,6 +93,48 @@ code {
   display: none; /* Chrome/Safari/Opera */
 }
 
+/* Chat keeps a visible, low-contrast scrollbar so long threads feel anchored. */
+.chat-scrollbar {
+  scrollbar-color: rgb(var(--color-primary) / 0.45) transparent;
+  scrollbar-width: thin;
+}
+
+.chat-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgb(var(--color-primary) / 0.4);
+  background-clip: padding-box;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-primary) / 0.65);
+  background-clip: padding-box;
+}
+
+/* Keep the note tag popover fully opaque above long-form reading content. */
+.tag-picker-menu {
+  background-color: rgb(var(--color-background));
+  box-shadow:
+    0 18px 36px rgb(15 23 42 / 0.2),
+    0 4px 10px rgb(15 23 42 / 0.12);
+}
+
+/* Opaque floating assistant window. Native resize keeps the panel lightweight. */
+.librarian-window {
+  background-color: rgb(var(--color-background));
+  box-shadow:
+    0 24px 64px rgb(15 23 42 / 0.34),
+    0 8px 20px rgb(15 23 42 / 0.2);
+}
+
 #root {
   width: 100%;
   height: 100vh;
@@ -105,6 +147,113 @@ body {
 
 html {
   overflow: hidden;
+}
+
+/* Calm long-form surface shared by Library preview and Graph reader panel. */
+.note-reading-surface {
+  color: rgb(var(--color-foreground));
+  font-size: 0.975rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.note-reading-surface > :first-child {
+  margin-top: 0;
+}
+
+.note-reading-surface > :last-child {
+  margin-bottom: 0;
+}
+
+.note-reading-surface h1,
+.note-reading-surface h2,
+.note-reading-surface h3 {
+  color: rgb(var(--color-foreground));
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.note-reading-surface h1 {
+  margin: 0 0 1.5rem;
+  font-size: 2rem;
+}
+
+.note-reading-surface h2 {
+  margin: 2rem 0 0.75rem;
+  border-bottom: 1px solid rgb(var(--color-border));
+  padding-bottom: 0.5rem;
+  font-size: 1.4rem;
+}
+
+.note-reading-surface h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.note-reading-surface p,
+.note-reading-surface ul,
+.note-reading-surface ol,
+.note-reading-surface blockquote,
+.note-reading-surface pre,
+.note-reading-surface table {
+  margin: 0.8rem 0;
+}
+
+.note-reading-surface ul,
+.note-reading-surface ol {
+  padding-left: 1.4rem;
+}
+
+.note-reading-surface ul {
+  list-style: disc;
+}
+
+.note-reading-surface ol {
+  list-style: decimal;
+}
+
+.note-reading-surface a {
+  color: rgb(var(--color-primary));
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.note-reading-surface blockquote {
+  border-left: 3px solid rgb(var(--color-primary));
+  background: rgb(var(--color-muted) / 0.55);
+  padding: 0.65rem 1rem;
+}
+
+.note-reading-surface pre {
+  overflow-x: auto;
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 0.65rem;
+  background: rgb(var(--color-muted) / 0.65);
+  padding: 0.9rem;
+}
+
+.note-reading-surface table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.note-reading-surface th,
+.note-reading-surface td {
+  border: 1px solid rgb(var(--color-border));
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+}
+
+.note-reading-surface th {
+  background: rgb(var(--color-muted) / 0.65);
+}
+
+.note-reading-surface img {
+  margin: 1.5rem auto;
 }
 
 /* Reduced motion support for accessibility */

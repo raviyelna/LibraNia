@@ -3,7 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import { initDatabase, closeDatabase, getORM } from '../database/connection';
 import tagsRoutes from './tags.routes';
-import { tags } from '../database/schema';
+import { noteTags, notes, tags } from '../database/schema';
 
 const app = express();
 app.use(express.json());
@@ -20,6 +20,8 @@ describe('Tags Routes', () => {
 
   beforeEach(async () => {
     const db = getORM();
+    await db.delete(noteTags);
+    await db.delete(notes);
     await db.delete(tags);
   });
 
@@ -60,5 +62,47 @@ describe('Tags Routes', () => {
       .expect(200);
 
     expect(response.body.success).toBe(true);
+  });
+
+  it('PUT /api/tags/:id renames a tag and returns the updated tag', async () => {
+    const db = getORM();
+    const now = new Date();
+    await db.insert(tags).values({ id: 'rename-id', name: 'before', created_at: now });
+
+    const response = await request(app)
+      .put('/api/tags/rename-id')
+      .send({ name: 'after' })
+      .expect(200);
+
+    expect(response.body.data).toMatchObject({ id: 'rename-id', name: 'after' });
+  });
+
+  it('DELETE /api/tags/:id returns 404 when tag does not exist', async () => {
+    const response = await request(app)
+      .delete('/api/tags/missing-id')
+      .expect(404);
+
+    expect(response.body.success).toBe(false);
+  });
+
+  it('GET /api/tags/:id/notes returns notes linked to a tag', async () => {
+    const db = getORM();
+    const now = new Date();
+    await db.insert(tags).values({ id: 'tag-id', name: 'research', created_at: now });
+    await db.insert(notes).values({
+      id: 'note-id',
+      title: 'Research Note',
+      body: '',
+      created_at: now,
+      updated_at: now,
+    });
+    await db.insert(noteTags).values({ note_id: 'note-id', tag_id: 'tag-id' });
+
+    const response = await request(app)
+      .get('/api/tags/tag-id/notes')
+      .expect(200);
+
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.data[0]).toMatchObject({ id: 'note-id', title: 'Research Note' });
   });
 });

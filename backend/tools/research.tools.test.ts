@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { closeDatabase, initDatabase } from '../database/connection';
+import { closeDatabase, getDatabase, initDatabase } from '../database/connection';
 import { executeToolCall, type ResearchToolContext } from './research.tools';
 
 const { mockImportRemoteImagesToNote } = vi.hoisted(() => ({
@@ -41,9 +41,42 @@ describe('executeToolCall research image fallback', () => {
 
     expect(mockImportRemoteImagesToNote).toHaveBeenCalledWith(
       [
-        'https://images.example.com/diagram.png',
-        'https://images.example.com/screenshot.png',
+        { url: 'https://images.example.com/diagram.png', alt: 'Diagram' },
+        { url: 'https://images.example.com/screenshot.png', alt: 'Screenshot' },
       ],
+      expect.any(String),
+      expect.anything()
+    );
+  });
+
+  it('stores AI-created note timestamps as Unix seconds', async () => {
+    await initDatabase(':memory:');
+
+    const created = await executeToolCall(
+      'create_note',
+      { title: 'Timestamp Units', body: 'Research notes' }
+    );
+    const note = getDatabase()
+      .prepare('SELECT created_at, updated_at FROM notes WHERE id = ?')
+      .get(created.id) as { created_at: number; updated_at: number };
+
+    expect(note.created_at).toBeLessThan(100000000000);
+    expect(note.updated_at).toBeLessThan(100000000000);
+  });
+
+  it('passes section-aware image hints to the importer', async () => {
+    await initDatabase(':memory:');
+    const images = [
+      { url: 'https://images.example.com/runtime.png', section: 'Runtime', alt: 'Runtime diagram' },
+    ];
+
+    await executeToolCall(
+      'create_note',
+      { title: 'AgentCore', body: '## Runtime\n\nRuntime details.', images }
+    );
+
+    expect(mockImportRemoteImagesToNote).toHaveBeenCalledWith(
+      images,
       expect.any(String),
       expect.anything()
     );

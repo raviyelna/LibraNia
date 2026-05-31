@@ -7,6 +7,7 @@ import { deleteProviderFromEnv, getProviderConfigStatus, loadProviderFromEnv, lo
 import { createConversation, getAllConversations, getConversation, deleteConversation } from '../services/conversation.service.js';
 import { createMessage, getMessagesByConversation } from '../services/message.service.js';
 import { getORM } from '../database/connection.js';
+import { buildLibraryAssistantContext } from '../services/library-assistant.service.js';
 import graphRoutes from './graph.routes.js';
 
 // IPC-to-HTTP converted routes (Plan 03) - non-streaming operations
@@ -216,6 +217,47 @@ router.post('/api/chat', async (req, res) => {
       res.status(500).json({ success: false, error: result.error });
     }
 
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.post('/api/library/ask', async (req, res) => {
+  try {
+    const { noteId, question, conversationId, messages = [], providerId, model } = req.body;
+    if (!noteId || !question?.trim()) {
+      return res.status(400).json({ success: false, error: 'Missing required fields: noteId, question' });
+    }
+
+    const db = getORM();
+    const context = await buildLibraryAssistantContext(noteId);
+    const conversation = conversationId
+      ? await getConversation(conversationId, db)
+      : await createConversation({ title: `LibraRian Ask: ${question.trim().slice(0, 60)}` }, db);
+    if (!conversation) {
+      return res.status(404).json({ success: false, error: 'Conversation not found' });
+    }
+
+    const { handleAIChat } = await import('../services/ai/ai-chat.service.js');
+    const result = await handleAIChat({
+      conversationId: conversation.id,
+      messages: [...messages, { role: 'user', content: question.trim() }],
+      providerId,
+      model,
+      researchMode: true,
+      systemContext: context,
+      readOnlyResearch: true,
+    });
+
+    if (!result.success) {
+      return res.status(500).json({ success: false, error: result.error });
+    }
+
+    res.json({
+      success: true,
+      conversationId: conversation.id,
+      content: result.content,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

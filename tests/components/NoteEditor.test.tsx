@@ -29,9 +29,6 @@ beforeEach(() => {
   mockUseNote.mockReturnValue({ note: mockNote, loading: false });
   mockUpdateNote.mockImplementation(async (data) => ({ ...mockNote, ...data }));
   mockDeleteNote.mockResolvedValue(undefined);
-  if (typeof window !== 'undefined') {
-    (window as any).confirm = vi.fn();
-  }
 });
 
 describe('NoteEditor', () => {
@@ -89,8 +86,6 @@ describe('NoteEditor', () => {
   });
 
   it('should show delete confirmation dialog', async () => {
-    (window.confirm as any).mockReturnValue(false);
-
     render(<NoteEditor noteId="1" />);
 
     await waitFor(() => {
@@ -100,13 +95,11 @@ describe('NoteEditor', () => {
     const deleteButton = screen.getByText(/delete/i);
     fireEvent.click(deleteButton);
 
-    expect(window.confirm).toHaveBeenCalled();
+    expect(screen.getByText('Delete note?')).toBeInTheDocument();
     expect(mockDeleteNote).not.toHaveBeenCalled();
   }, 10000);
 
   it('should delete note when confirmed', async () => {
-    (window.confirm as any).mockReturnValue(true);
-
     render(<NoteEditor noteId="1" />);
 
     await waitFor(() => {
@@ -115,6 +108,7 @@ describe('NoteEditor', () => {
 
     const deleteButton = screen.getByText(/delete/i);
     fireEvent.click(deleteButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Delete note' }));
 
     await waitFor(() => {
       expect(mockDeleteNote).toHaveBeenCalledWith('1');

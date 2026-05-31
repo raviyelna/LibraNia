@@ -9,6 +9,7 @@ import {
 } from '../ui/Dialog';
 import { Button } from '../ui/Button';
 import { configAPI } from '../../api';
+import toast from 'react-hot-toast';
 
 type AppMode = 'desktop' | 'web';
 
@@ -52,7 +53,7 @@ export function ModeSettings() {
     try {
       await configAPI.update({ mode: selectedMode });
       // TODO: implement app restart in web mode
-      alert('Mode updated. Please restart the app manually.');
+      toast.success('Mode updated. Please restart the app manually.');
       setShowRestartDialog(false);
     } catch (error) {
       console.error('Failed to switch mode:', error);

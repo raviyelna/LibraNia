@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { notesAPI, Note } from '../api';
 import { handleAPIError } from '../utils/toast';
 import { useSocket } from '../contexts/SocketContext';
+import { DATA_EVENTS, emitDataUpdated, subscribeDataUpdated } from '../utils/data-events';
 
 export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -25,6 +26,8 @@ export function useNotes() {
   useEffect(() => {
     fetchNotes();
   }, [fetchNotes]);
+
+  useEffect(() => subscribeDataUpdated(DATA_EVENTS.notes, fetchNotes), [fetchNotes]);
 
   return { notes, loading, error, refetch: fetchNotes };
 }
@@ -80,6 +83,7 @@ export function useCreateNote() {
     setLoading(true);
     try {
       const note = await notesAPI.create(data);
+      emitDataUpdated(DATA_EVENTS.notes);
       return note;
     } catch (err) {
       handleAPIError(err);
@@ -100,6 +104,7 @@ export function useUpdateNote() {
     try {
       const { id, ...updateData } = data;
       const note = await notesAPI.update(id, updateData);
+      emitDataUpdated(DATA_EVENTS.notes);
       return note;
     } catch (err) {
       handleAPIError(err);
@@ -119,6 +124,7 @@ export function useDeleteNote() {
     setLoading(true);
     try {
       await notesAPI.delete(id);
+      emitDataUpdated(DATA_EVENTS.notes);
     } catch (err) {
       handleAPIError(err);
       throw err;

@@ -4,6 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { GraphView } from './GraphView';
 import * as THREE from 'three';
 
+vi.mock('react-router-dom', () => ({
+  useLocation: () => ({ pathname: '/graph' }),
+}));
+
 // Mock d3-force-3d
 vi.mock('d3-force-3d', () => ({
   forceCollide: vi.fn((radius?: number) => {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../lib/api-client';
+import { DATA_EVENTS, subscribeDataUpdated } from '../utils/data-events';
 
 interface Backlink {
   id: string;
@@ -10,7 +11,8 @@ interface Backlink {
 interface SemanticLink {
   id: string;
   title: string;
-  similarity: number;
+  relationship: 'linked' | 'semantic' | 'missing';
+  similarity?: number;
 }
 
 export function useSemanticLinks(noteId: string) {
@@ -22,7 +24,6 @@ export function useSemanticLinks(noteId: string) {
     try {
       setLoading(true);
       const data = await apiClient.links.getRelated(noteId);
-      // API returns empty array for now (semantic links not implemented)
       setLinks(data);
       setError(null);
     } catch (err) {
@@ -36,6 +37,11 @@ export function useSemanticLinks(noteId: string) {
   useEffect(() => {
     fetchSemanticLinks();
   }, [fetchSemanticLinks]);
+
+  useEffect(
+    () => subscribeDataUpdated(DATA_EVENTS.notes, fetchSemanticLinks),
+    [fetchSemanticLinks]
+  );
 
   return { links, loading, error, refetch: fetchSemanticLinks };
 }

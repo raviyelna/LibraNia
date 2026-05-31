@@ -213,7 +213,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
 
   if (!conversationId) {
     return (
-      <div className="chat-interface flex flex-col h-full bg-background text-foreground">
+      <div className="chat-interface flex h-full min-h-0 flex-col bg-background text-foreground">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-secondary">
             <p>Select a conversation or start a new one</p>
@@ -224,9 +224,9 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   }
 
   return (
-    <div className="chat-interface flex flex-col h-full bg-background text-foreground">
+    <div className="chat-interface flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
       {/* Provider and model selector */}
-      <div className="border-b border-border p-3">
+      <div className="shrink-0 border-b border-border p-3">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <label className="text-sm text-secondary">Provider:</label>

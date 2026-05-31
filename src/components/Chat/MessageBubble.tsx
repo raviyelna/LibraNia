@@ -38,14 +38,14 @@ export function MessageBubble({
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`} data-testid="message-bubble-container">
       <div
-        className={`max-w-[80%] rounded-lg p-4 shadow-sm ${
+        className={`min-w-0 max-w-[92%] overflow-hidden rounded-lg p-4 shadow-sm sm:max-w-[80%] ${
           isUser
             ? 'bg-primary text-white'
             : 'bg-muted text-foreground border border-border'
         }`}
       >
         {isAssistant ? (
-          <div className="message-content prose prose-sm dark:prose-invert max-w-none">
+          <div className="message-content prose prose-sm dark:prose-invert max-w-none break-words">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeSanitize]}
@@ -71,7 +71,7 @@ export function MessageBubble({
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="message-content whitespace-pre-wrap">{content}</div>
+          <div className="message-content whitespace-pre-wrap break-words">{content}</div>
         )}
 
         {citations.length > 0 && <CitationList citations={citations} />}

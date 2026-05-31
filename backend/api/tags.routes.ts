@@ -9,9 +9,11 @@ import {
   getAllTags,
   createTag,
   deleteTag,
+  renameTag,
   getNoteTags,
   addTagsToNote,
   removeTagFromNote,
+  getNotesByTag,
 } from '../services/tags.service.js';
 
 const router = Router();
@@ -77,8 +79,12 @@ router.put('/api/tags/:id', async (req, res) => {
       });
     }
 
-    // TODO: Implement renameTag in tags.service.ts
-    res.json({ success: true, data: { id, name } });
+    const tag = await renameTag(id, name);
+    if (!tag) {
+      return res.status(404).json({ success: false, error: `Tag with id ${id} not found` });
+    }
+
+    res.json({ success: true, data: tag });
   } catch (error: any) {
     console.error('[Tags API] Update failed:', error);
     res.status(500).json({ success: false, error: error.message });
@@ -92,7 +98,11 @@ router.put('/api/tags/:id', async (req, res) => {
 router.delete('/api/tags/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await deleteTag(id);
+    const deleted = await deleteTag(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: `Tag with id ${id} not found` });
+    }
+
     res.json({ success: true });
   } catch (error: any) {
     console.error('[Tags API] Delete failed:', error);
@@ -111,6 +121,20 @@ router.get('/api/tags/note/:noteId', async (req, res) => {
     res.json({ success: true, data: tags });
   } catch (error: any) {
     console.error('[Tags API] Get note tags failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/tags/:id/notes - Get notes linked to a tag
+ * Returns: 200 with array of notes
+ */
+router.get('/api/tags/:id/notes', async (req, res) => {
+  try {
+    const notes = await getNotesByTag(req.params.id);
+    res.json({ success: true, data: notes });
+  } catch (error: any) {
+    console.error('[Tags API] Get notes by tag failed:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

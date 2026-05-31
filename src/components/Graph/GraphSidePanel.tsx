@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NoteEditor } from '../Notes/NoteEditor';
+import { BookOpen, X } from 'lucide-react';
 
 interface GraphSidePanelProps {
   noteId: string;
@@ -57,7 +58,7 @@ export function GraphSidePanel({ noteId, onClose }: GraphSidePanelProps) {
   return (
     <div
       ref={panelRef}
-      className={`fixed right-0 top-0 h-full bg-background border-l border-border shadow-lg z-50 overflow-y-auto ${
+      className={`fixed right-0 top-0 z-50 flex h-full max-w-full flex-col overflow-hidden border-l border-border bg-background shadow-lg ${
         isResizing ? 'transition-none' : 'transition-all duration-150'
       }`}
       style={{ width: `${width}px` }}
@@ -71,31 +72,26 @@ export function GraphSidePanel({ noteId, onClose }: GraphSidePanelProps) {
         aria-orientation="vertical"
       />
 
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="text-lg font-semibold">Note</h2>
+      <div className="flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-primary/10 p-2 text-primary">
+            <BookOpen size={16} />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold tracking-tight">Note</h2>
+            <p className="text-xs text-secondary">Reader panel · explore without leaving the graph</p>
+          </div>
+        </div>
         <button
           onClick={onClose}
           aria-label="Close panel"
-          className="p-2 hover:bg-secondary rounded-md transition-colors"
+          className="cursor-pointer rounded-md p-2 text-secondary transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <X size={18} />
         </button>
       </div>
-      <div className="p-4">
-        <NoteEditor noteId={noteId} />
+      <div className="min-h-0 flex-1">
+        <NoteEditor noteId={noteId} defaultViewMode="preview" compact />
       </div>
     </div>
   );

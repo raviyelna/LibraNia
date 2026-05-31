@@ -199,6 +199,23 @@ export async function initDatabase(dbPath?: string): Promise<void> {
     -- );
   `);
 
+  // Older raw SQL note writers stored JavaScript milliseconds while Drizzle's
+  // SQLite timestamp mode expects Unix seconds. Repair each column separately
+  // because edited notes can contain a mix of both units.
+  db.exec(`
+    UPDATE notes
+    SET created_at = CAST(created_at / 1000 AS INTEGER)
+    WHERE typeof(created_at) = 'integer' AND created_at > 100000000000;
+
+    UPDATE notes
+    SET updated_at = CAST(updated_at / 1000 AS INTEGER)
+    WHERE typeof(updated_at) = 'integer' AND updated_at > 100000000000;
+
+    UPDATE notes
+    SET deleted_at = CAST(deleted_at / 1000 AS INTEGER)
+    WHERE typeof(deleted_at) = 'integer' AND deleted_at > 100000000000;
+  `);
+
   // Setup FTS5 virtual tables and triggers
   // DISABLED: FTS5 triggers may cause SQLITE_CORRUPT_VTAB on Windows
   // setupFTS5(db);
