@@ -17,6 +17,7 @@ const CLAUDE_CONFIG_PATH = path.join(
 );
 
 const MCP_SERVER_PATH = path.join(__dirname, 'dist', 'index.js');
+const DATA_DIR = process.env.LIBRANIA_DATA_DIR || path.join(__dirname, '..', 'data');
 
 function log(msg) {
   console.log(`[Setup] ${msg}`);
@@ -67,7 +68,10 @@ function main() {
 
   const serverConfig = {
     command: 'node',
-    args: [MCP_SERVER_PATH.replace(/\\/g, '\\\\')]
+    args: [MCP_SERVER_PATH],
+    env: {
+      LIBRANIA_DATA_DIR: DATA_DIR
+    }
   };
 
   if (config.mcpServers.librania) {
