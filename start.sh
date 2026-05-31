@@ -50,7 +50,7 @@ node bin/librania.js start --port 3001 &
 SERVER_PID=$!
 
 cd mcp-server
-node dist/index.js &
+LIBRANIA_DATA_DIR="$OLDPWD/data" node dist/index.js &
 MCP_PID=$!
 cd ..
 

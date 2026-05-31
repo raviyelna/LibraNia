@@ -22,7 +22,7 @@ cd ..
 
 echo Starting LibraNia server and MCP server...
 start "LibraNia Server" node bin/librania.js start --port 3001
-start "LibraNia MCP Server" cmd /k "cd mcp-server && node dist/index.js"
+start "LibraNia MCP Server" cmd /k "set "LIBRANIA_DATA_DIR=%CD%\data" && cd mcp-server && node dist/index.js"
 
 echo Both servers started in separate windows
 echo Close the windows to stop the servers

@@ -12,7 +12,8 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "setup": "node setup.cjs",
-    "setup-cli": "node setup-cli.cjs"
+    "setup-cli": "node setup-cli.cjs",
+    "setup-codex": "node setup-codex.cjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",

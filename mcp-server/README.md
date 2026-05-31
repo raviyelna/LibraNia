@@ -54,8 +54,8 @@ npm run setup-cli -- --global
 ```
 
 **Difference:**
-- **Project**: Auto-connects in current directory only
-- **Global**: Available everywhere, enable per-project via `/mcp`
+- **Project**: Registers locally for this LibraNia repository
+- **Global**: Registers at Claude Code user scope for all projects
 
 ### Codex / Other MCP Clients
 
@@ -63,18 +63,49 @@ npm run setup-cli -- --global
 cd mcp-server
 npm install
 npm run build
-# Use stdio: node dist/index.js
+npm run setup-codex
 ```
 
 **Auto-setup scripts:**
 - `npm run setup` - Claude Desktop
 - `npm run setup-cli` - Claude Code CLI
+- `npm run setup-codex` - Codex CLI
 
-Both scripts:
+The setup scripts:
 1. Build MCP server
-2. Find config file
-3. Add LibraNia to mcpServers
+2. Register the stdio server for the selected client
+3. Pass `LIBRANIA_DATA_DIR` so every client uses the same database
 4. Show next steps
+
+Claude Code and Codex each launch their own stdio MCP process when they connect.
+The MCP server implementation is shared; only the client registration command differs.
+
+For manual Codex setup, register the stdio server and its data directory:
+
+```bash
+codex mcp add librania \
+  --env LIBRANIA_DATA_DIR=D:\sourcecode\vibe\LibraNia_v2\LibraNia\data \
+  -- node D:\sourcecode\vibe\LibraNia_v2\LibraNia\mcp-server\dist\index.js
+```
+
+Verify the registration with:
+
+```bash
+codex mcp get librania
+```
+
+For manual Claude Code CLI setup:
+
+```bash
+claude mcp add -e LIBRANIA_DATA_DIR=D:\sourcecode\vibe\LibraNia_v2\LibraNia\data \
+  librania -- node D:\sourcecode\vibe\LibraNia_v2\LibraNia\mcp-server\dist\index.js
+```
+
+Verify the Claude Code registration with:
+
+```bash
+claude mcp get librania
+```
 
 **Manual setup** (if needed):
 
@@ -87,7 +118,10 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json`:
       "command": "node",
       "args": [
         "D:\\sourcecode\\vibe\\LibraNia_v2\\LibraNia\\mcp-server\\dist\\index.js"
-      ]
+      ],
+      "env": {
+        "LIBRANIA_DATA_DIR": "D:\\sourcecode\\vibe\\LibraNia_v2\\LibraNia\\data"
+      }
     }
   }
 }
@@ -143,9 +177,9 @@ Agent automatically:
 
 ## Database
 
-Reads from: `%APPDATA%\Roaming\LibraNia\librania.db`
+Reads from: `LIBRANIA_DB_PATH`, then `LIBRANIA_DATA_DIR\librania.db`, then `.\data\librania.db`
 
-Notes stored: `%APPDATA%\Roaming\LibraNia\notes\`
+Notes stored beside the selected database in: `notes\`
 
 ## Development
 
