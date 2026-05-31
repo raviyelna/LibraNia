@@ -428,49 +428,191 @@ cp -r ./data/notes ./backup/notes-$(date +%Y%m%d)
 
 ### 8. MCP Server Setup
 
+LibraNia MCP server exposes your knowledge base to any MCP-compatible client via stdio protocol.
+
 #### Configure Claude Desktop
 
-1. Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
-2. Add LibraNia MCP server:
+**macOS:**
+```bash
+# Edit config
+nano ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
 
+**Windows:**
+```bash
+# Edit config
+notepad %APPDATA%\Claude\claude_desktop_config.json
+```
+
+**Linux:**
+```bash
+# Edit config
+nano ~/.config/Claude/claude_desktop_config.json
+```
+
+**Add LibraNia server:**
 ```json
 {
   "mcpServers": {
     "librania": {
       "command": "node",
-      "args": ["/path/to/LibraNia/mcp-server/dist/index.js"],
+      "args": ["/absolute/path/to/LibraNia/mcp-server/dist/index.js"],
       "env": {
-        "LIBRANIA_DB_PATH": "/path/to/LibraNia/data/librania.db"
+        "LIBRANIA_DB_PATH": "/absolute/path/to/LibraNia/data/librania.db"
       }
     }
   }
 }
 ```
 
-3. Restart Claude Desktop
-4. LibraNia tools now available in Claude
+**Important:**
+- Use **absolute paths** (not relative)
+- Ensure `mcp-server/dist/index.js` exists (run `npm run build` first)
+- Restart Claude Desktop after config changes
+
+#### Configure Claude Code CLI
+
+**Add to Claude Code settings:**
+```bash
+# Open settings
+code ~/.claude/settings.json
+```
+
+**Add MCP server:**
+```json
+{
+  "mcpServers": {
+    "librania": {
+      "command": "node",
+      "args": ["/absolute/path/to/LibraNia/mcp-server/dist/index.js"],
+      "env": {
+        "LIBRANIA_DB_PATH": "/absolute/path/to/LibraNia/data/librania.db"
+      }
+    }
+  }
+}
+```
+
+**Verify connection:**
+```bash
+# Claude Code will show available MCP tools
+# Look for: mcp__librania__search_notes, mcp__librania__create_note, etc.
+```
+
+#### Configure Codex CLI
+
+**Add to Codex config:**
+```bash
+# Open Codex settings
+nano ~/.codex/config.json
+```
+
+**Add MCP server:**
+```json
+{
+  "mcp": {
+    "servers": {
+      "librania": {
+        "command": "node",
+        "args": ["/absolute/path/to/LibraNia/mcp-server/dist/index.js"],
+        "env": {
+          "LIBRANIA_DB_PATH": "/absolute/path/to/LibraNia/data/librania.db"
+        }
+      }
+    }
+  }
+}
+```
+
+**Test connection:**
+```bash
+# Codex will auto-discover MCP tools
+# Use in prompts: "search my LibraNia notes about Docker"
+```
+
+#### Configure Other MCP Clients
+
+**Generic MCP client setup:**
+
+1. **Build MCP server:**
+   ```bash
+   cd mcp-server
+   npm run build
+   ```
+
+2. **Get absolute paths:**
+   ```bash
+   # Server script
+   realpath mcp-server/dist/index.js
+   
+   # Database
+   realpath data/librania.db
+   ```
+
+3. **Add to client config** (format varies by client):
+   ```json
+   {
+     "command": "node",
+     "args": ["<absolute-path>/mcp-server/dist/index.js"],
+     "env": {
+       "LIBRANIA_DB_PATH": "<absolute-path>/data/librania.db"
+     }
+   }
+   ```
+
+4. **Restart client** to load MCP server
 
 #### MCP Tools Available
 
-- `search_notes(query, limit)` - Search knowledge base
-- `get_note(noteId)` - Get full note content
-- `create_note(title, body, tags)` - Create new note
-- `update_note(noteId, title, body, appendBody)` - Update note
-- `add_tags(noteId, tags)` - Add tags to note
-- `list_tags()` - List all tags
+All MCP clients get access to these tools:
 
-#### Example MCP Usage in Claude
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `search_notes` | Search knowledge base | `query` (string), `limit` (number, default: 10) |
+| `get_note` | Get full note content | `noteId` (string) |
+| `create_note` | Create new note with auto-linking | `title` (string), `body` (string), `tags` (string[]) |
+| `update_note` | Update existing note | `noteId` (string), `title?` (string), `body?` (string), `appendBody?` (string) |
+| `add_tags` | Add tags to note | `noteId` (string), `tags` (string[]) |
+| `list_tags` | List all tags with counts | None |
+
+#### Example Usage in Claude Desktop
 
 ```
 User: "Search my notes about Docker"
-Claude: [Uses search_notes tool]
+Claude: [Uses mcp__librania__search_notes]
 → Found 5 notes about Docker
 
 User: "Create a note summarizing Docker networking"
-Claude: [Uses create_note tool]
+Claude: [Uses mcp__librania__create_note]
 → Created note "Docker Networking Overview"
 → Linked to [[Docker Basics]]
 ```
+
+#### Example Usage in Claude Code CLI
+
+```bash
+# In Claude Code session
+> Search my LibraNia notes about React hooks
+
+# Claude Code automatically:
+# 1. Calls mcp__librania__search_notes("React hooks")
+# 2. Returns matching notes
+# 3. Can reference in code suggestions
+```
+
+#### Example Usage in Codex CLI
+
+```bash
+# In Codex session
+> What do I know about Kubernetes security?
+
+# Codex automatically:
+# 1. Searches LibraNia via MCP
+# 2. Finds related notes
+# 3. Synthesizes answer from your knowledge base
+```
+
+#### Troubleshooting MCP Connection
 
 ---
 
@@ -1128,14 +1270,67 @@ npm start
 
 ### MCP Server Not Connecting
 
-**Error**: Claude Desktop can't find MCP server
+**Error: "MCP server not found"**
 
-**Solution**:
-1. Check `claude_desktop_config.json` path
-2. Verify `LIBRANIA_DB_PATH` is absolute
-3. Ensure database file exists
-4. Restart Claude Desktop
-5. Check logs: `~/Library/Logs/Claude/mcp*.log`
+**Solution:**
+1. Check paths are absolute (not relative)
+2. Verify `mcp-server/dist/index.js` exists
+3. Run `cd mcp-server && npm run build`
+4. Restart MCP client
+
+**Error: "Database not found"**
+
+**Solution:**
+1. Check `LIBRANIA_DB_PATH` is absolute
+2. Verify database file exists: `ls data/librania.db`
+3. Run LibraNia once to create database: `npm start`
+
+**Error: "Permission denied"**
+
+**Solution:**
+```bash
+# Make script executable (macOS/Linux)
+chmod +x mcp-server/dist/index.js
+
+# Check Node.js is in PATH
+which node
+```
+
+**Check MCP logs:**
+
+**Claude Desktop:**
+```bash
+# macOS
+tail -f ~/Library/Logs/Claude/mcp*.log
+
+# Windows
+type %APPDATA%\Claude\Logs\mcp*.log
+
+# Linux
+tail -f ~/.config/Claude/logs/mcp*.log
+```
+
+**Claude Code CLI:**
+```bash
+# Check MCP server status
+# Tools will show as mcp__librania__* if connected
+```
+
+**Codex CLI:**
+```bash
+# Check Codex logs
+tail -f ~/.codex/logs/mcp.log
+```
+
+**Test MCP server manually:**
+```bash
+# Run server directly
+cd mcp-server
+LIBRANIA_DB_PATH=../data/librania.db node dist/index.js
+
+# Should output: "LibraNia MCP server running on stdio"
+# Press Ctrl+C to stop
+```
 
 ---
 
