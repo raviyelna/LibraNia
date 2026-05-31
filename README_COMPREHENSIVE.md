@@ -176,6 +176,31 @@ npm start
 
 Web interface available at `http://localhost:3001`
 
+### Alternative: Unified Start Scripts
+
+LibraNia provides platform-specific scripts that build and launch both the main server and MCP server together:
+
+**Windows:**
+```bash
+start.bat
+```
+
+**macOS/Linux:**
+```bash
+./start.sh
+```
+
+These scripts:
+1. Build frontend and backend (`npm run build:package`)
+2. Fix ESM imports for Node.js compatibility
+3. Build MCP server
+4. Launch both servers concurrently
+5. Handle graceful shutdown on Ctrl+C
+
+**What runs:**
+- **Main Server** (port 3001): Web UI + REST API + WebSocket
+- **MCP Server** (stdio): Exposes knowledge base to Claude Desktop
+
 ### Development Mode
 
 ```bash
@@ -517,7 +542,405 @@ note_versions      -- Note edit history
 
 ---
 
-## 🏗️ Project Structure
+## 🏛️ Architecture
+
+LibraNia follows a **local-first, client-server architecture** with real-time streaming and vector search capabilities.
+
+### System Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        User Layer                            │
+├─────────────────────────────────────────────────────────────┤
+│  Web Browser (React 19)  │  Claude Desktop (MCP Client)     │
+└────────────┬──────────────┴──────────────┬──────────────────┘
+             │                              │
+             │ HTTP/WebSocket               │ stdio (MCP)
+             │                              │
+┌────────────▼──────────────┐  ┌───────────▼──────────────────┐
+│   Main Server (Express)   │  │   MCP Server (stdio)         │
+│   - REST API              │  │   - search_notes             │
+│   - WebSocket (Socket.IO) │  │   - create_note              │
+│   - Static file serving   │  │   - update_note              │
+└────────────┬──────────────┘  └───────────┬──────────────────┘
+             │                              │
+             │                              │
+┌────────────▼──────────────────────────────▼──────────────────┐
+│                    Service Layer                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ AI Service   │  │ Graph Service│  │ Search Service│       │
+│  │ - Claude     │  │ - Wiki-links │  │ - Full-text   │       │
+│  │ - GPT        │  │ - Force graph│  │ - Semantic    │       │
+│  │ - DeepSeek   │  │ - 3D layout  │  │ - Vector      │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ Notes Service│  │ Embeddings   │  │ Links Service│       │
+│  │ - CRUD       │  │ - MiniLM-L6  │  │ - Backlinks  │       │
+│  │ - Versions   │  │ - 384-dim    │  │ - Resolution │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+└───────────────────────────────┬───────────────────────────────┘
+                                │
+┌───────────────────────────────▼───────────────────────────────┐
+│                    Data Layer                                  │
+│  ┌──────────────────────────────────────────────────────────┐ │
+│  │  SQLite Database (better-sqlite3)                        │ │
+│  │  - notes, tags, links, embeddings                        │ │
+│  │  - conversations, messages, citations                    │ │
+│  │  - content, note_versions                                │ │
+│  │  - sqlite-vec extension for vector search                │ │
+│  └──────────────────────────────────────────────────────────┘ │
+│  ┌──────────────────────────────────────────────────────────┐ │
+│  │  Filesystem                                               │ │
+│  │  - data/notes/*.md (Markdown with frontmatter)           │ │
+│  │  - content/* (uploaded images, PDFs, DOCX)               │ │
+│  │  - data/models/* (cached transformer models)             │ │
+│  └──────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### Core Components
+
+#### 1. Frontend (React 19 + Vite)
+
+**Technology:**
+- React 19 with concurrent rendering
+- TypeScript for type safety
+- Vite 6 for fast HMR and builds
+- Tailwind CSS 4 for styling
+- Three.js + react-force-graph-3d for 3D visualization
+
+**Key Features:**
+- **Concurrent Rendering**: React 19's automatic batching and transitions
+- **Optimistic Updates**: TanStack Query for cache management
+- **Real-time Streaming**: Socket.IO client for AI responses
+- **3D Graph**: WebGL-based force-directed layout with instanced rendering
+- **Offline Support**: Service worker + local state persistence
+
+**Component Architecture:**
+```
+src/
+├── routes/          # Page-level components (Library, Chat, Graph)
+├── components/      # Reusable UI components
+│   ├── Chat/        # AI chat interface with streaming
+│   ├── Graph/       # 3D graph visualization
+│   ├── Notes/       # Note editor with Markdown preview
+│   └── ui/          # Base UI primitives (Button, Dialog)
+├── hooks/           # Custom React hooks (useNotes, useGraph)
+├── api/             # API client functions
+└── contexts/        # React contexts (Theme, Socket)
+```
+
+#### 2. Backend (Node.js + Express)
+
+**Technology:**
+- Express 5 for HTTP server
+- Socket.IO 4 for WebSocket streaming
+- better-sqlite3 for synchronous SQLite access
+- Drizzle ORM for type-safe queries
+
+**API Architecture:**
+```
+backend/
+├── api/
+│   ├── routes.ts           # Main router
+│   ├── notes.routes.ts     # CRUD for notes
+│   ├── ai.routes.ts        # AI chat endpoints
+│   ├── graph.routes.ts     # Graph data
+│   ├── search.routes.ts    # Full-text + semantic search
+│   └── content.routes.ts   # File uploads
+├── services/
+│   ├── ai/
+│   │   ├── ai-chat.service.ts      # Multi-provider chat
+│   │   ├── providers/              # Claude, GPT, DeepSeek
+│   │   └── websearch.service.ts    # DuckDuckGo integration
+│   ├── graph.service.ts            # Wiki-link parsing
+│   ├── embeddings.service.ts       # Vector generation
+│   ├── search.service.ts           # Hybrid search
+│   └── links.service.ts            # Backlink resolution
+├── websocket/
+│   └── socket.handlers.ts          # WebSocket events
+└── database/
+    ├── connection.ts               # SQLite setup
+    ├── schema.ts                   # Drizzle schema
+    └── vec.ts                      # sqlite-vec extension
+```
+
+**Request Flow:**
+1. **HTTP Request** → Express middleware → Route handler → Service layer → Database
+2. **WebSocket** → Socket.IO event → Service layer → Stream response chunks
+3. **MCP Request** → stdio transport → Direct database access → JSON response
+
+#### 3. AI Integration Layer
+
+**Multi-Provider Architecture:**
+
+```typescript
+// Provider abstraction
+interface AIProvider {
+  id: string;
+  name: string;
+  models: string[];
+  chat(messages: Message[], options: ChatOptions): AsyncGenerator<string>;
+}
+
+// Implementations
+- ClaudeProvider    → @anthropic-ai/sdk
+- OpenAIProvider    → openai SDK (GPT + DeepSeek)
+- DeepSeekProvider  → openai SDK with custom base URL
+```
+
+**Research Mode (Tool Use):**
+
+```
+User Query
+    ↓
+AI Agent (Claude/GPT/DeepSeek)
+    ↓
+Tool Selection:
+    ├─ search_notes(query)      → Search knowledge base
+    ├─ create_note(title, body) → Save findings
+    ├─ update_note(id, body)    → Append to existing
+    ├─ add_tags(id, tags)       → Tag management
+    └─ web_search(query)        → DuckDuckGo search
+    ↓
+Tool Execution (max 10 iterations, max 3 web searches)
+    ↓
+Final Answer with Citations
+```
+
+**Streaming Architecture:**
+```
+AI Provider API
+    ↓ (SSE/streaming)
+Backend Service
+    ↓ (chunk processing)
+Socket.IO Server
+    ↓ (WebSocket)
+React Client
+    ↓ (state updates)
+UI Render
+```
+
+#### 4. Knowledge Graph Engine
+
+**Graph Construction:**
+
+```typescript
+// 1. Parse wiki-links from note bodies
+const wikiLinks = extractWikiLinks(note.body); // [[Note Title]]
+
+// 2. Resolve titles to note IDs
+const targetId = titleToId.get(linkTitle.toLowerCase());
+
+// 3. Create bidirectional edges
+graphLinks.push({
+  source: note.id,
+  target: targetId,
+  type: 'manual' // or 'semantic' for auto-discovered
+});
+
+// 4. Build force-directed layout
+d3.forceSimulation(nodes)
+  .force('charge', d3.forceManyBody().strength(-40))
+  .force('link', d3.forceLink(links).distance(40))
+  .force('center', d3.forceCenter().strength(0.8))
+  .force('collision', d3.forceCollide(10));
+```
+
+**3D Visualization:**
+- **Renderer**: Three.js WebGL
+- **Layout**: d3-force-3d physics simulation
+- **Optimization**: Instanced geometry (shared mesh for all nodes)
+- **Interaction**: Raycasting for node selection, orbit controls
+
+#### 5. Search Architecture
+
+**Hybrid Search Strategy:**
+
+```
+Query Input
+    ↓
+┌───────────────┬───────────────┐
+│  Full-Text    │   Semantic    │
+│  (SQLite FTS) │   (Vector)    │
+└───────┬───────┴───────┬───────┘
+        │               │
+        │  Merge by     │
+        │  relevance    │
+        ↓               ↓
+    Combined Results
+```
+
+**Full-Text Search:**
+- SQLite `LIKE` queries on title + body
+- Fuzzy matching with lowercase normalization
+- Fast for exact keyword matches
+
+**Semantic Search:**
+- Generate query embedding (384-dim)
+- Cosine similarity via sqlite-vec
+- Finds conceptually related notes
+- Example: "container isolation" → matches "Docker security"
+
+**Vector Pipeline:**
+```
+Text Input
+    ↓
+all-MiniLM-L6-v2 (Xenova/transformers)
+    ↓
+384-dimensional Float32Array
+    ↓
+L2 Normalization
+    ↓
+SQLite BLOB storage
+    ↓
+sqlite-vec cosine similarity
+```
+
+#### 6. MCP Server
+
+**Protocol:**
+- **Transport**: stdio (stdin/stdout)
+- **Format**: JSON-RPC 2.0
+- **SDK**: @modelcontextprotocol/sdk
+
+**Architecture:**
+```
+Claude Desktop
+    ↓ (stdio)
+MCP Server (Node.js)
+    ↓ (better-sqlite3)
+SQLite Database (direct access)
+    ↓
+Notes + Tags + Links
+```
+
+**Tool Execution:**
+```typescript
+// 1. Claude Desktop sends tool request
+{
+  "method": "tools/call",
+  "params": {
+    "name": "search_notes",
+    "arguments": { "query": "Docker" }
+  }
+}
+
+// 2. MCP server executes
+const results = db.prepare(`
+  SELECT * FROM notes 
+  WHERE title LIKE ? OR body LIKE ?
+`).all(`%${query}%`, `%${query}%`);
+
+// 3. Return results
+{
+  "content": [{
+    "type": "text",
+    "text": JSON.stringify(results)
+  }]
+}
+```
+
+#### 7. Data Persistence
+
+**Dual Storage Strategy:**
+
+**SQLite (Structured Data):**
+- Notes metadata (id, title, timestamps)
+- Relationships (tags, links, embeddings)
+- Conversations and messages
+- Content metadata
+- Fast queries with indexes
+
+**Filesystem (Content):**
+- `data/notes/*.md` - Markdown files with YAML frontmatter
+- `content/*` - Uploaded images, PDFs, DOCX
+- `data/models/*` - Cached transformer models
+- Human-readable, git-friendly
+
+**Sync Strategy:**
+```
+Write Operation:
+1. Update SQLite (source of truth)
+2. Write Markdown file (backup + portability)
+3. Generate embedding (async)
+4. Update graph links (async)
+
+Read Operation:
+1. Query SQLite (fast)
+2. Fallback to filesystem if DB missing
+```
+
+#### 8. Real-time Communication
+
+**WebSocket Events:**
+
+```typescript
+// Client → Server
+socket.emit('ai:chat', {
+  conversationId: string,
+  messages: Message[],
+  providerId: string,
+  researchMode: boolean
+});
+
+// Server → Client (streaming)
+socket.emit('ai:token', { token: string });
+socket.emit('ai:tool', { tool: string, args: any });
+socket.emit('ai:complete', { messageId: string });
+socket.emit('ai:error', { error: string });
+```
+
+**Streaming Flow:**
+```
+1. User sends message
+2. Backend calls AI provider API
+3. Provider streams tokens via SSE
+4. Backend forwards via WebSocket
+5. React updates UI incrementally
+6. Final message saved to DB
+```
+
+### Performance Optimizations
+
+**Frontend:**
+- React 19 concurrent rendering
+- Instanced Three.js geometry (1 mesh for all nodes)
+- Virtual scrolling for large note lists
+- Debounced search (300ms)
+- Optimistic updates with TanStack Query
+
+**Backend:**
+- Synchronous SQLite (better-sqlite3) - no async overhead
+- Prepared statements with caching
+- Lazy-loaded transformer models
+- Streaming responses (no buffering)
+- Connection pooling for concurrent requests
+
+**Database:**
+- Indexes on frequently queried columns
+- sqlite-vec for fast vector similarity
+- Soft deletes (no cascade overhead)
+- Batch inserts for embeddings
+
+### Security Model
+
+**API Keys:**
+- Stored in `data/.env` (gitignored)
+- Never sent to frontend
+- Loaded on-demand per request
+
+**Data Isolation:**
+- All data local (no cloud sync)
+- No telemetry or analytics
+- CORS restricted in production
+
+**Input Validation:**
+- Zod schemas for API requests
+- SQL injection prevention (parameterized queries)
+- File upload restrictions (type + size)
+
+---
 
 ```
 LibraNia/
