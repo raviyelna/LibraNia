@@ -1,6 +1,6 @@
 # LibraNia MCP Server
 
-MCP server exposing LibraNia knowledge base to Claude Desktop, Codex, and other MCP clients.
+MCP server exposing LibraNia knowledge base to Claude Desktop, Claude Code CLI, Codex, and other MCP clients.
 
 ## Features
 
@@ -12,10 +12,16 @@ MCP server exposing LibraNia knowledge base to Claude Desktop, Codex, and other 
 - `add_tags` - Tag notes
 - `list_tags` - List all tags
 
+**Agent Integration:**
+- MCP server provides instructions to Agent subagents
+- Agents auto-search LibraNia before web search
+- Save findings back to knowledge base
+- Build knowledge over time
+
 **Workflow:**
-1. Check library (search_notes)
-2. Not enough info → web_search (external)
-3. Create note with findings
+1. Agent searches LibraNia first
+2. If insufficient → web search
+3. Create note with findings + [[backlinks]]
 4. Return answer with sources
 
 ## Installation
@@ -25,6 +31,7 @@ MCP server exposing LibraNia knowledge base to Claude Desktop, Codex, and other 
 ```bash
 cd mcp-server
 npm install
+npm run build
 npm run setup
 ```
 
@@ -34,6 +41,7 @@ npm run setup
 ```bash
 cd mcp-server
 npm install
+npm run build
 npm run setup-cli
 ```
 
@@ -41,6 +49,7 @@ npm run setup-cli
 ```bash
 cd mcp-server
 npm install
+npm run build
 npm run setup-cli -- --global
 ```
 
@@ -84,15 +93,9 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json`:
 }
 ```
 
-### Codex / Other Clients
-
-Use stdio transport:
-
-```bash
-node dist/index.js
-```
-
 ## Usage
+
+### Direct Tool Calls
 
 **In Claude Desktop:**
 
@@ -115,6 +118,28 @@ Add this to my notes: [content]
 ```
 Update note abc123 with new information about [topic]
 ```
+
+### Agent Research (Automatic)
+
+**In Claude Code CLI with librania-research skill:**
+
+```
+What are Docker security best practices?
+```
+
+Agent automatically:
+1. Searches LibraNia for "Docker security"
+2. Finds partial info
+3. Searches web for gaps
+4. Creates note with findings + [[backlinks]]
+5. Returns consolidated answer
+
+**Trigger phrases:**
+- "What is X?"
+- "Research Y"
+- "Find info about Z"
+- "Look up A"
+- "Explain B"
 
 ## Database
 
@@ -140,9 +165,15 @@ npx @modelcontextprotocol/inspector node dist/index.js
 ## Architecture
 
 ```
-Claude Desktop
+Claude Desktop / Claude Code CLI / Codex
     ↓ (MCP stdio)
 LibraNia MCP Server
+    ↓ (provides instructions to Agent subagents)
+Agent (research)
+    ↓ (uses MCP tools)
+    1. search_notes (LibraNia)
+    2. WebSearch (if needed)
+    3. create_note (save findings)
     ↓ (SQLite)
 librania.db
     ↓ (filesystem)
@@ -207,6 +238,18 @@ Returns: `{ success, noteId, tags }`
 ```
 
 Returns: `{ tags: [{ id, name, count }] }`
+
+## MCP Instructions
+
+Agent subagents receive these instructions automatically:
+
+1. **Search LibraNia first** - check existing knowledge before web
+2. **Evaluate sufficiency** - use LibraNia as primary source if sufficient
+3. **Web search fallback** - only search web for gaps
+4. **Save findings** - create notes with sources, tags, [[backlinks]]
+5. **Return consolidated answer** - cite both LibraNia and web sources
+
+This ensures knowledge accumulates in LibraNia over time.
 
 ## License
 
