@@ -15,6 +15,7 @@ import {
   deleteContent,
 } from '../services/content.service.js';
 import { getNoteById } from '../services/notes.service.js';
+import { importContentAsNote } from '../services/note-import.service.js';
 
 const router = Router();
 
@@ -104,6 +105,62 @@ router.post('/api/content/upload', (req, res, next) => {
     }
 
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/content/import-note - Import a document as a new note
+ * Markdown is preserved. Other readable documents are normalized by the configured LLM.
+ */
+router.post('/api/content/import-note', (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+    next();
+  });
+}, async (req: MulterRequest, res) => {
+  let createdContentId: string | undefined;
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'No file uploaded. Please provide a file in the "file" field.',
+      });
+    }
+
+    const db = getORM();
+    const contentRecord = await createContent({
+      filePath: req.file.path,
+      source: 'manual',
+      originalFilename: req.file.originalname,
+    }, db);
+    createdContentId = contentRecord.id;
+    const result = await importContentAsNote(contentRecord, db, {
+      providerId: req.body.provider_id || undefined,
+      model: req.body.model || undefined,
+    });
+
+    await fs.unlink(req.file.path).catch(() => {});
+    res.status(201).json({ success: true, data: result });
+  } catch (error: any) {
+    console.error('[Content API] Import note failed:', error);
+    if (createdContentId) {
+      await deleteContent(createdContentId, getORM()).catch(() => {});
+    }
+    if (req.file) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+
+    const message = error.message || 'Import failed';
+    const status = message.includes('requires a configured AI provider') ||
+      message.includes('No readable text') ||
+      message.includes('not allowed') ||
+      message.includes('too large')
+      ? 400
+      : 500;
+    res.status(status).json({ success: false, error: message });
   }
 });
 

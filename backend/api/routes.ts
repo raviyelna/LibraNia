@@ -48,7 +48,7 @@ router.use(aiRoutes);
 router.get('/api/providers', async (req, res) => {
   try {
     const providers = loadAllProvidersFromEnv();
-    res.json({ success: true, providers: providers.map(getProviderConfigStatus) });
+    res.json({ success: true, data: providers.map(getProviderConfigStatus), providers: providers.map(getProviderConfigStatus) });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -68,11 +68,26 @@ router.get('/api/providers/:id', async (req, res) => {
 
 router.post('/api/providers', async (req, res) => {
   try {
-    const { id, apiKey, model, baseURL } = req.body;
-    if (!id || !apiKey || !model) {
+    const { id, apiKey, apiKeys, model, baseURL, customHeaders } = req.body;
+    const keys = Array.isArray(apiKeys)
+      ? apiKeys.map((key: unknown) => String(key).trim()).filter(Boolean)
+      : [];
+    const firstKey = String(apiKey || keys[0] || '').trim();
+    if (!id || !firstKey || !model) {
       return res.status(400).json({ success: false, error: 'Missing required fields: id, apiKey, model' });
     }
-    saveProviderToEnv({ id, apiKey, model, baseURL });
+    saveProviderToEnv({
+      id,
+      apiKey: firstKey,
+      apiKeys: keys.length > 0 ? keys : [firstKey],
+      model,
+      baseURL,
+      customHeaders: Array.isArray(customHeaders)
+        ? customHeaders
+            .map((header: any) => ({ name: String(header.name || '').trim(), value: String(header.value || '').trim() }))
+            .filter((header: any) => header.name && header.value)
+        : undefined,
+    });
     res.json({ success: true });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });

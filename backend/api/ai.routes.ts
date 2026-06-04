@@ -63,7 +63,16 @@ router.get('/api/ai/providers', async (req, res) => {
   try {
     const providers = loadAllProvidersFromEnv();
 
-    const providerStatus = providers.map(getProviderConfigStatus);
+    const providerStatus = providers.map((provider) => ({
+      ...getProviderConfigStatus(provider),
+      name: provider.id === 'custom'
+        ? 'Custom Provider'
+        : provider.id === 'claude'
+          ? 'Claude'
+          : provider.id === 'openai'
+            ? 'OpenAI'
+            : 'DeepSeek',
+    }));
 
     res.json({ success: true, data: providerStatus });
   } catch (error: any) {

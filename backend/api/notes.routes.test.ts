@@ -1,9 +1,30 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import { initDatabase, closeDatabase, getORM } from '../database/connection';
 import notesRoutes from './notes.routes';
-import { notes } from '../database/schema';
+import { links, notes } from '../database/schema';
+
+const autoLinkResponse = vi.hoisted(() => ({
+  text: JSON.stringify({ links: ['Related Topic', 'Invented Topic'] }),
+}));
+
+vi.mock('../store/env.store', () => ({
+  loadAllProvidersFromEnv: () => [{
+    id: 'deepseek',
+    apiKey: 'test-key',
+    model: 'deepseek-chat',
+  }],
+  loadProviderFromEnv: () => null,
+}));
+
+vi.mock('../services/ai/providers/deepseek.provider', () => ({
+  DeepSeekProvider: class {
+    async generateResponse() {
+      return autoLinkResponse.text;
+    }
+  },
+}));
 
 const app = express();
 app.use(express.json());
@@ -20,8 +41,10 @@ describe('Notes Routes', () => {
   });
 
   beforeEach(async () => {
+    autoLinkResponse.text = JSON.stringify({ links: ['Related Topic', 'Invented Topic'] });
     // Clear notes table before each test
     const db = getORM();
+    await db.delete(links);
     await db.delete(notes);
   });
 
@@ -166,5 +189,75 @@ describe('Notes Routes', () => {
     expect(response.body.success).toBe(false);
     expect(response.body.error).toBeDefined();
     expect(response.body.error).toContain('title');
+  });
+
+  it('POST /api/notes/:id/auto-link appends only valid new wiki-links', async () => {
+    const db = getORM();
+    const now = new Date();
+    await db.insert(notes).values([
+      {
+        id: 'source-id',
+        title: 'Source Topic',
+        body: 'This note discusses related architecture.',
+        metadata: null,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      },
+      {
+        id: 'related-id',
+        title: 'Related Topic',
+        body: 'Architecture details and related background.',
+        metadata: null,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      },
+    ]);
+
+    const response = await request(app)
+      .post('/api/notes/source-id/auto-link')
+      .send({})
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.addedLinks).toEqual(['Related Topic']);
+    expect(response.body.data.note.body).toContain('[[Related Topic]]');
+    expect(response.body.data.note.body).not.toContain('Invented Topic');
+    expect(await db.select().from(links)).toHaveLength(1);
+  });
+
+  it('POST /api/notes/:id/auto-link accepts non-JSON exact title suggestions', async () => {
+    autoLinkResponse.text = 'Useful neighbors:\n- "Related Topic"';
+    const db = getORM();
+    const now = new Date();
+    await db.insert(notes).values([
+      {
+        id: 'source-id',
+        title: 'Source Topic',
+        body: 'This note discusses related architecture.',
+        metadata: null,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      },
+      {
+        id: 'related-id',
+        title: 'Related Topic',
+        body: 'Architecture details and related background.',
+        metadata: null,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      },
+    ]);
+
+    const response = await request(app)
+      .post('/api/notes/source-id/auto-link')
+      .send({})
+      .expect(200);
+
+    expect(response.body.data.addedLinks).toEqual(['Related Topic']);
+    expect(response.body.data.note.body).toContain('[[Related Topic]]');
   });
 });

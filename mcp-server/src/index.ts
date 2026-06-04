@@ -31,9 +31,19 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 
-// Database path
-const DB_PATH = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'librania.db');
-const NOTES_DIR = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'notes');
+// Database path - match backend priority: LIBRANIA_DB_PATH > LIBRANIA_DATA_DIR/librania.db > ./data/librania.db
+function getDatabasePath(): string {
+  if (process.env.LIBRANIA_DB_PATH) {
+    return process.env.LIBRANIA_DB_PATH;
+  }
+  if (process.env.LIBRANIA_DATA_DIR) {
+    return path.join(process.env.LIBRANIA_DATA_DIR, 'librania.db');
+  }
+  return path.join(process.cwd(), 'data', 'librania.db');
+}
+
+const DB_PATH = getDatabasePath();
+const NOTES_DIR = path.join(path.dirname(DB_PATH), 'notes');
 
 interface Note {
   id: string;

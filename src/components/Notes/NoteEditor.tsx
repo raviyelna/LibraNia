@@ -8,10 +8,12 @@ import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { keymap } from '@codemirror/view';
 import { useNote, useUpdateNote, useDeleteNote } from '../../hooks/useNotes';
-import { Eye, Edit, Columns, Save, Trash2 } from 'lucide-react';
+import { Eye, Edit, Columns, Save, Trash2, Link2 } from 'lucide-react';
 import { contentAPI } from '../../api/content';
+import { notesAPI } from '../../api/notes';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { DATA_EVENTS, emitDataUpdated } from '../../utils/data-events';
 
 interface NoteEditorProps {
   noteId: string;
@@ -30,6 +32,7 @@ export function NoteEditor({ noteId, defaultViewMode = 'split', compact = false 
   const [savedContent, setSavedContent] = useState({ title: '', body: '' });
   const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [autoLinking, setAutoLinking] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const editorViewRef = useRef<EditorView | null>(null);
 
@@ -168,6 +171,20 @@ export function NoteEditor({ noteId, defaultViewMode = 'split', compact = false 
 
   const hasPendingChanges = title !== savedContent.title || body !== savedContent.body;
 
+  const replaceEditorBody = (nextBody: string) => {
+    const view = editorViewRef.current;
+    if (!view) return;
+    const currentDoc = view.state.doc.toString();
+    if (currentDoc === nextBody) return;
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: currentDoc.length,
+        insert: nextBody,
+      },
+    });
+  };
+
   const handleSave = async () => {
     if (!hasPendingChanges || saving) return;
 
@@ -176,6 +193,32 @@ export function NoteEditor({ noteId, defaultViewMode = 'split', compact = false 
       setSavedContent({ title: updatedNote.title, body: updatedNote.body });
     } catch {
       // useUpdateNote already reports API errors to the user.
+    }
+  };
+
+  const handleAutoLink = async () => {
+    if (autoLinking || saving) return;
+
+    setAutoLinking(true);
+    try {
+      if (hasPendingChanges) {
+        await handleSave();
+      }
+
+      const result = await notesAPI.autoLink(noteId);
+      setTitle(result.note.title);
+      setBody(result.note.body);
+      setSavedContent({ title: result.note.title, body: result.note.body });
+      replaceEditorBody(result.note.body);
+      emitDataUpdated(DATA_EVENTS.notes);
+      toast.success(result.addedLinks.length > 0
+        ? `Added ${result.addedLinks.length} link${result.addedLinks.length === 1 ? '' : 's'}`
+        : 'No new neighboring notes found');
+    } catch (error) {
+      console.error('Auto Link failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Auto Link failed');
+    } finally {
+      setAutoLinking(false);
     }
   };
 
@@ -266,6 +309,15 @@ export function NoteEditor({ noteId, defaultViewMode = 'split', compact = false 
             >
               <Save size={14} />
               {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={() => void handleAutoLink()}
+              disabled={autoLinking || saving}
+              className="flex cursor-pointer items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+              title="Auto Link"
+            >
+              <Link2 size={14} />
+              {autoLinking ? 'Linking...' : 'Auto Link'}
             </button>
             <button
               onClick={() => setDeleteDialogOpen(true)}

@@ -15,6 +15,7 @@ import {
   getDeletedNotes,
 } from '../services/notes.service.js';
 import { getBacklinks, getRelatedNotes } from '../services/links.service.js';
+import { autoLinkNote } from '../services/auto-link.service.js';
 
 const router = Router();
 
@@ -143,6 +144,35 @@ router.get('/api/notes/:id/related', async (req, res) => {
     res.json({ success: true, data: related });
   } catch (error: any) {
     console.error('[Notes API] Get related failed:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/notes/:id/auto-link - Append AI-suggested wiki-links to a note
+ * Body: { provider_id?: string, model?: string }
+ */
+router.post('/api/notes/:id/auto-link', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getORM();
+    const result = await autoLinkNote(id, db, {
+      providerId: req.body.provider_id || undefined,
+      model: req.body.model || undefined,
+    });
+
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    console.error('[Notes API] Auto Link failed:', error);
+
+    if (error.message.includes('not found') || error.message.includes('deleted')) {
+      return res.status(404).json({ success: false, error: error.message });
+    }
+
+    if (error.message.includes('requires a configured AI provider')) {
+      return res.status(400).json({ success: false, error: error.message });
+    }
+
     res.status(500).json({ success: false, error: error.message });
   }
 });

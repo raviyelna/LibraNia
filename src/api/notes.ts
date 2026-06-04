@@ -14,6 +14,11 @@ export interface Note {
   deleted_at?: string | null;
 }
 
+export interface AutoLinkResult {
+  note: Note;
+  addedLinks: string[];
+}
+
 export const notesAPI = {
   async getAll(): Promise<Note[]> {
     const response = await apiRequest<{ success: boolean; data: Note[] }>('/api/notes');
@@ -41,6 +46,15 @@ export const notesAPI = {
       body: JSON.stringify(data),
     });
     if (!response.data) throw new Error('Failed to update note');
+    return response.data;
+  },
+
+  async autoLink(id: string): Promise<AutoLinkResult> {
+    const response = await apiRequest<{ success: boolean; data: AutoLinkResult }>(`/api/notes/${id}/auto-link`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    if (!response.data) throw new Error('Failed to auto-link note');
     return response.data;
   },
 

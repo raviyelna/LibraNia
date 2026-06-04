@@ -128,6 +128,17 @@ export function setupSocketHandlers(io: Server): void {
           case 'openai':
             response = await callOpenAI(messagesToSend, config.apiKey, model, config.baseURL, tools, onProgress);
             break;
+          case 'custom':
+            response = await callOpenAI(
+              messagesToSend,
+              config.apiKey,
+              model,
+              config.baseURL,
+              tools,
+              onProgress,
+              Object.fromEntries((config.customHeaders || []).map(header => [header.name, header.value]))
+            );
+            break;
           default:
             socket.emit('ai:error', {
               conversationId: data.conversationId,

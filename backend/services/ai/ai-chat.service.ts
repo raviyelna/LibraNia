@@ -464,7 +464,8 @@ export async function callOpenAI(
   model: string,
   baseURL?: string,
   tools?: any[],
-  onProgress?: (status: string) => void
+  onProgress?: (status: string) => void,
+  customHeaders?: Record<string, string>
 ): Promise<string> {
   // Create web search function
   const env = readEnv();
@@ -498,6 +499,7 @@ export async function callOpenAI(
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
+      ...customHeaders,
     },
     body: JSON.stringify(requestBody),
   });
@@ -575,6 +577,7 @@ export async function callOpenAI(
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
+        ...customHeaders,
       },
       body: JSON.stringify({
         model,
@@ -677,6 +680,17 @@ export async function handleAIChat(request: ChatRequest): Promise<{ success: boo
         break;
       case 'openai':
         response = await callOpenAI(messagesToSend, config.apiKey, model, config.baseURL, tools);
+        break;
+      case 'custom':
+        response = await callOpenAI(
+          messagesToSend,
+          config.apiKey,
+          model,
+          config.baseURL,
+          tools,
+          undefined,
+          Object.fromEntries((config.customHeaders || []).map(header => [header.name, header.value]))
+        );
         break;
       default:
         throw new Error(`Unsupported provider: ${config.id}`);

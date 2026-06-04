@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
+  publicDir: 'resources',
   plugins: [
     react()
   ],
@@ -12,7 +13,15 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5173
+    port: 5173,
+    proxy: {
+      '/api': 'http://localhost:3001',
+      '/socket.io': {
+        target: 'http://localhost:3001',
+        ws: true,
+      },
+      '/content': 'http://localhost:3001',
+    },
   },
   build: {
     outDir: 'dist'

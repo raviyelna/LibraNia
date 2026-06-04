@@ -1,5 +1,4 @@
-import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SocketProvider } from './contexts/SocketContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -12,40 +11,6 @@ import { SettingsPage } from './routes/Settings';
 import { GraphView } from './components/Graph/GraphView';
 import { Toaster } from 'react-hot-toast';
 import './styles/editor.css';
-
-/**
- * Debug component to log route changes and clicks
- */
-function DebugLogger() {
-  const location = useLocation();
-
-  useEffect(() => {
-    console.log('=== [DEBUG] Route changed ===');
-    console.log('Path:', location.pathname);
-    console.log('Full location:', location);
-    console.log('=============================');
-  }, [location]);
-
-  useEffect(() => {
-    console.log('[DEBUG] DebugLogger mounted - click tracking active');
-
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      console.log('=== [DEBUG] CLICK ===');
-      console.log('Tag:', target.tagName);
-      console.log('ID:', target.id);
-      console.log('Class:', target.className);
-      console.log('Text:', target.textContent?.substring(0, 50));
-      console.log('Current path:', location.pathname);
-      console.log('====================');
-    };
-
-    document.addEventListener('click', handleClick, true); // Use capture phase
-    return () => document.removeEventListener('click', handleClick, true);
-  }, [location]);
-
-  return null;
-}
 
 /**
  * LibraNia Application Root
@@ -64,7 +29,6 @@ function App() {
           <Toaster />
           <OfflineIndicator />
           <HashRouter>
-            <DebugLogger />
             <Routes>
               <Route path="/" element={<Layout />}>
                 <Route index element={<Home />} />

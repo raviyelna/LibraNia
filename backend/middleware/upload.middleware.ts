@@ -28,10 +28,10 @@ const storage = multer.diskStorage({
 // File filter for allowed types
 const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
   // Allowed file extensions
-  const allowedExtensions = /jpeg|jpg|png|gif|pdf|doc|docx|txt|md/;
+  const allowedExtensions = /^\.(jpeg|jpg|png|gif|webp|pdf|docx|txt|md|csv|html|htm|json|rtf)$/;
 
   // Allowed MIME types
-  const allowedMimeTypes = /image\/jpeg|image\/jpg|image\/png|image\/gif|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain|text\/markdown/;
+  const allowedMimeTypes = /^(image\/jpeg|image\/jpg|image\/png|image\/gif|image\/webp|application\/pdf|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|application\/json|application\/rtf|text\/plain|text\/markdown|text\/csv|text\/html|text\/rtf)$/;
 
   // Check extension
   const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
@@ -42,7 +42,7 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallb
   if (extname && mimetype) {
     cb(null, true);
   } else {
-    cb(new Error(`File type not allowed. Allowed types: jpeg, jpg, png, gif, pdf, doc, docx, txt, md`));
+    cb(new Error(`File type not allowed. Allowed types: jpeg, jpg, png, gif, webp, pdf, docx, txt, md, csv, html, htm, json, rtf`));
   }
 };
 

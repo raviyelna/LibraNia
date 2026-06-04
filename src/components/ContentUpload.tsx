@@ -12,38 +12,48 @@ export const ContentUpload: React.FC<ContentUploadProps> = ({ noteId, onUploadCo
   const { upload, uploading, progress, error } = useUploadContent();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [batchCount, setBatchCount] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleFile = async (file: File) => {
+  const handleFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+
+    setBatchCount(files.length);
+    let uploadedCount = 0;
     try {
-      const content = await upload(file, 'manual', { note_id: noteId });
-      toast.success(`Uploaded ${file.name}`);
-      if (onUploadComplete) {
-        onUploadComplete(content);
+      for (const [index, file] of files.entries()) {
+        setCurrentIndex(index + 1);
+        try {
+          const content = await upload(file, 'manual', { note_id: noteId });
+          uploadedCount += 1;
+          if (onUploadComplete) {
+            onUploadComplete(content);
+          }
+        } catch (err) {
+          console.error(`Upload failed for ${file.name}:`, err);
+        }
       }
-      // Reset file input
+
+      if (uploadedCount > 0) {
+        toast.success(`Uploaded ${uploadedCount} file${uploadedCount === 1 ? '' : 's'}`);
+      }
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (err) {
-      // Error is already handled by handleAPIError in the hook
-      console.error('Upload failed:', err);
+    } finally {
+      setBatchCount(0);
+      setCurrentIndex(0);
     }
   };
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      await handleFile(file);
-    }
+    await handleFiles(Array.from(event.target.files || []));
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragActive(false);
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      handleFile(file);
-    }
+    void handleFiles(Array.from(e.dataTransfer.files));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -72,6 +82,7 @@ export const ContentUpload: React.FC<ContentUploadProps> = ({ noteId, onUploadCo
       <input
         ref={fileInputRef}
         type="file"
+        multiple
         onChange={handleFileSelect}
         className="hidden"
         disabled={uploading}
@@ -80,7 +91,9 @@ export const ContentUpload: React.FC<ContentUploadProps> = ({ noteId, onUploadCo
       <div className="flex flex-col items-center gap-3 text-center">
         <Upload size={32} className="text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          {uploading ? `Uploading... ${progress.toFixed(0)}%` : 'Click or drag file to upload'}
+          {uploading
+            ? `Uploading ${batchCount > 1 ? `${currentIndex}/${batchCount} ` : ''}${progress.toFixed(0)}%`
+            : 'Click or drag files to upload'}
         </p>
 
         {uploading && (

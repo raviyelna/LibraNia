@@ -1,8 +1,10 @@
 @echo off
+setlocal
+set "ROOT=%CD%"
 echo Building...
 call npm run build:package
 if %errorlevel% neq 0 (
-    echo Backend build failed!
+    echo Package build failed!
     pause
     exit /b %errorlevel%
 )
@@ -21,8 +23,9 @@ if %errorlevel% neq 0 (
 cd ..
 
 echo Starting LibraNia server and MCP server...
-start "LibraNia Server" node bin/librania.js start --port 3001
-start "LibraNia MCP Server" cmd /k "set "LIBRANIA_DATA_DIR=%CD%\data" && cd mcp-server && node dist/index.js"
+if not exist "%ROOT%\test-logs" mkdir "%ROOT%\test-logs"
+start /B "LibraNia MCP Server" cmd /c "set LIBRANIA_DATA_DIR=%ROOT%\data&& cd /d "%ROOT%\mcp-server" && node dist/index.js > "%ROOT%\test-logs\mcp-server.log" 2>&1"
 
-echo Both servers started in separate windows
-echo Close the windows to stop the servers
+echo MCP server started in the background. Logs: test-logs\mcp-server.log
+echo Starting LibraNia server in this window. Press Ctrl+C to stop it.
+node bin/librania.js start --port 3001

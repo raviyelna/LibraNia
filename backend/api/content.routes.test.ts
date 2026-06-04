@@ -3,7 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import { initDatabase, closeDatabase, getORM } from '../database/connection';
 import contentRoutes from './content.routes';
-import { content, notes } from '../database/schema';
+import { content, links, notes } from '../database/schema';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -30,6 +30,7 @@ describe('Content Routes', () => {
   beforeEach(async () => {
     // Clear content table before each test
     const db = getORM();
+    await db.delete(links);
     await db.delete(content);
     await db.delete(notes);
   });
@@ -189,6 +190,37 @@ describe('Content Routes', () => {
     expect(response.body.data.note_id).toBe('note-upload');
     expect(note.body).toContain(`[associated.txt](${response.body.data.file_path})`);
     await fs.unlink(response.body.data.file_path).catch(() => {});
+    await fs.unlink(testFilePath).catch(() => {});
+  });
+
+  it('POST /api/content/import-note creates a linked note from Markdown and attaches the source file', async () => {
+    const db = getORM();
+    const now = new Date();
+    await db.insert(notes).values({
+      id: 'existing-note',
+      title: 'Existing Topic',
+      body: 'Reference note',
+      created_at: now,
+      updated_at: now,
+    });
+    const testFilePath = path.join('data', 'uploads', 'import-me.md');
+    await fs.writeFile(testFilePath, '# Imported Guide\n\nThis expands on Existing Topic.');
+
+    const response = await request(app)
+      .post('/api/content/import-note')
+      .attach('file', testFilePath)
+      .expect(201);
+
+    expect(response.body.data.normalizedByAI).toBe(false);
+    expect(response.body.data.note.title).toBe('Imported Guide');
+    expect(response.body.data.note.body).toContain('[[Existing Topic]]');
+    expect(response.body.data.content.note_id).toBe(response.body.data.note.id);
+
+    const importedLinks = await db.select().from(links);
+    expect(importedLinks).toHaveLength(1);
+    expect(importedLinks[0].target_note_id).toBe('existing-note');
+
+    await fs.unlink(response.body.data.content.file_path).catch(() => {});
     await fs.unlink(testFilePath).catch(() => {});
   });
 
