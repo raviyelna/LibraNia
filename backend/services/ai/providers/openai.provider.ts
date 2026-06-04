@@ -16,11 +16,12 @@ export class OpenAIProvider implements AIProvider {
    * @param apiKey - OpenAI API key
    * @param baseURL - Optional custom base URL (per D-03)
    */
-  constructor(apiKey: string, baseURL?: string) {
+  constructor(apiKey: string, baseURL?: string, defaultHeaders?: Record<string, string>) {
     this.baseURL = baseURL;
     this.client = new OpenAI({
       apiKey,
       baseURL,
+      defaultHeaders,
     });
   }
 

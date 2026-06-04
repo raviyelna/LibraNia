@@ -15,15 +15,19 @@ export interface AIProvider {
   name: string;
   configured?: boolean;
   apiKeyPreview?: string;
+  apiKeyPreviews?: string[];
   model?: string;
   baseURL?: string;
+  customHeaders?: Array<{ name: string; valuePreview: string }>;
 }
 
 export interface ProviderConfig {
-  id: 'claude' | 'openai' | 'deepseek';
+  id: 'claude' | 'openai' | 'deepseek' | 'custom';
   apiKey: string;
+  apiKeys?: string[];
   baseURL?: string;
   model: string;
+  customHeaders?: Array<{ name: string; value: string }>;
 }
 
 export interface ValidationResult {

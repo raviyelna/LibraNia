@@ -29,6 +29,7 @@ export interface UpdateContentInput {
   extracted_text?: string;
   thumbnail_path?: string;
   metadata?: string;
+  note_id?: string;
 }
 
 /**
@@ -93,8 +94,14 @@ const ALLOWED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
   'text/markdown',
+  'text/csv',
+  'text/html',
+  'text/rtf',
+  'application/json',
+  'application/rtf',
   'image/png',
   'image/jpeg',
+  'image/gif',
   'image/webp',
 ];
 
@@ -134,6 +141,11 @@ export async function validateFileType(buffer: Buffer, filePath: string): Promis
   const extensionToMime: Record<string, { mime: string; ext: string }> = {
     '.txt': { mime: 'text/plain', ext: 'txt' },
     '.md': { mime: 'text/markdown', ext: 'md' },
+    '.csv': { mime: 'text/csv', ext: 'csv' },
+    '.html': { mime: 'text/html', ext: 'html' },
+    '.htm': { mime: 'text/html', ext: 'html' },
+    '.json': { mime: 'application/json', ext: 'json' },
+    '.rtf': { mime: 'application/rtf', ext: 'rtf' },
   };
 
   const mappedType = extensionToMime[extension];
@@ -197,7 +209,15 @@ export async function extractText(filePath: string, mimeType: string): Promise<s
     // Extract text from DOCX using mammoth
     const result = await mammoth.extractRawText({ path: filePath });
     text = result.value;
-  } else if (mimeType === 'text/plain' || mimeType === 'text/markdown') {
+  } else if (
+    mimeType === 'text/plain' ||
+    mimeType === 'text/markdown' ||
+    mimeType === 'text/csv' ||
+    mimeType === 'text/html' ||
+    mimeType === 'text/rtf' ||
+    mimeType === 'application/json' ||
+    mimeType === 'application/rtf'
+  ) {
     // Read plain text files directly
     text = await fs.readFile(filePath, 'utf-8');
   } else {

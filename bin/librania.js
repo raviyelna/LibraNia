@@ -171,9 +171,12 @@ Module: ${moduleName}
 
 ${buildInstructions}
 
-After installing build tools, reinstall LibraNia:
-  npm uninstall -g librania
-  npm install -g librania
+After installing build tools, reinstall this local project's dependencies:
+  rm -rf node_modules
+  npm install
+
+If you use both Windows Node.js and WSL Node.js, keep separate checkouts.
+Native node_modules binaries cannot be shared between operating systems.
 
 Original error: ${errorMsg}
           `.trim());

@@ -31,14 +31,14 @@
     "npm": ">=7.0.0"
   },
   "scripts": {
-    "dev": "vite",
-    "build:frontend": "vite build",
-    "build:backend": "tsc -p tsconfig.backend.json --noEmitOnError false",
+    "dev": "node node_modules/vite/bin/vite.js",
+    "build:frontend": "node node_modules/vite/bin/vite.js build",
+    "build:backend": "tsc -p tsconfig.backend.json --noEmitOnError false && node scripts/fix-esm-imports.js",
     "build:package": "npm run build:frontend && npm run build:backend",
-    "preview": "vite preview",
+    "preview": "node node_modules/vite/bin/vite.js preview",
     "prepublishOnly": "npm run build:package",
     "postinstall": "npm rebuild better-sqlite3 sharp",
-    "test": "vitest",
+    "test": "node node_modules/vitest/vitest.mjs",
     "test:api": "tsx test-api.ts",
     "start:cli": "tsx bin/librania.js start",
     "start": "node start.js"

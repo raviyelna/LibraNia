@@ -6,19 +6,28 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-interface ProviderConfig {
-  id: 'claude' | 'openai' | 'deepseek';
+export interface CustomHeader {
+  name: string;
+  value: string;
+}
+
+export interface ProviderConfig {
+  id: 'claude' | 'openai' | 'deepseek' | 'custom';
   apiKey: string;
+  apiKeys?: string[];
   baseURL?: string;
   model: string;
+  customHeaders?: CustomHeader[];
 }
 
 export interface ProviderConfigStatus {
   id: ProviderConfig['id'];
   configured: boolean;
   apiKeyPreview: string;
+  apiKeyPreviews?: string[];
   baseURL?: string;
   model: string;
+  customHeaders?: Array<{ name: string; valuePreview: string }>;
 }
 
 // Get .env file path in data directory
@@ -117,8 +126,13 @@ export function getProviderConfigStatus(config: ProviderConfig): ProviderConfigS
     id: config.id,
     configured: !!config.apiKey,
     apiKeyPreview: getApiKeyPreview(config.apiKey),
+    apiKeyPreviews: config.apiKeys?.map(getApiKeyPreview),
     model: config.model,
     baseURL: config.baseURL,
+    customHeaders: config.customHeaders?.map(header => ({
+      name: header.name,
+      valuePreview: getApiKeyPreview(header.value),
+    })),
   };
 }
 
@@ -129,9 +143,22 @@ export function saveProviderToEnv(config: ProviderConfig): void {
   const prefix = config.id.toUpperCase();
   env[`${prefix}_API_KEY`] = config.apiKey;
   env[`${prefix}_MODEL`] = config.model;
+  if (config.apiKeys?.length) {
+    env[`${prefix}_API_KEYS`] = JSON.stringify(config.apiKeys);
+  } else {
+    delete env[`${prefix}_API_KEYS`];
+  }
 
   if (config.baseURL) {
     env[`${prefix}_BASE_URL`] = config.baseURL;
+  } else {
+    delete env[`${prefix}_BASE_URL`];
+  }
+
+  if (config.customHeaders?.length) {
+    env[`${prefix}_CUSTOM_HEADERS`] = JSON.stringify(config.customHeaders);
+  } else {
+    delete env[`${prefix}_CUSTOM_HEADERS`];
   }
 
   writeEnv(env);
@@ -152,6 +179,13 @@ export function loadProviderFromEnv(providerId: string): ProviderConfig | null {
   console.log('[ENV] Found apiKey:', !!apiKey);
   console.log('[ENV] Found model:', !!model);
 
+  const apiKeys = env[`${prefix}_API_KEYS`]
+    ? JSON.parse(env[`${prefix}_API_KEYS`])
+    : undefined;
+  const customHeaders = env[`${prefix}_CUSTOM_HEADERS`]
+    ? JSON.parse(env[`${prefix}_CUSTOM_HEADERS`])
+    : undefined;
+
   if (!apiKey || !model) {
     return null;
   }
@@ -159,8 +193,10 @@ export function loadProviderFromEnv(providerId: string): ProviderConfig | null {
   return {
     id: providerId as any,
     apiKey,
+    apiKeys: Array.isArray(apiKeys) ? apiKeys : undefined,
     model,
     baseURL: env[`${prefix}_BASE_URL`],
+    customHeaders: Array.isArray(customHeaders) ? customHeaders : undefined,
   };
 }
 
@@ -168,7 +204,7 @@ export function loadProviderFromEnv(providerId: string): ProviderConfig | null {
 export function loadAllProvidersFromEnv(): ProviderConfig[] {
   const providers: ProviderConfig[] = [];
 
-  for (const id of ['claude', 'openai', 'deepseek']) {
+  for (const id of ['claude', 'openai', 'deepseek', 'custom']) {
     const config = loadProviderFromEnv(id);
     if (config) {
       providers.push(config);
@@ -184,8 +220,10 @@ export function deleteProviderFromEnv(providerId: string): void {
   const prefix = providerId.toUpperCase();
 
   delete env[`${prefix}_API_KEY`];
+  delete env[`${prefix}_API_KEYS`];
   delete env[`${prefix}_MODEL`];
   delete env[`${prefix}_BASE_URL`];
+  delete env[`${prefix}_CUSTOM_HEADERS`];
 
   writeEnv(env);
 }

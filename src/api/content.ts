@@ -3,6 +3,7 @@
  */
 
 import { apiRequest } from './client';
+import type { Note } from './notes';
 
 export interface Content {
   id: string;
@@ -19,6 +20,12 @@ export interface Content {
   message_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface ImportedNote {
+  note: Note;
+  content: Content;
+  normalizedByAI: boolean;
 }
 
 export const contentAPI = {
@@ -38,6 +45,24 @@ export const contentAPI = {
     await apiRequest<{ success: boolean }>(`/api/content/${id}`, {
       method: 'DELETE',
     });
+  },
+
+  async importNote(file: File): Promise<ImportedNote> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/content/import-note`, {
+      method: 'POST',
+      body: formData,
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || `Import failed with status ${response.status}`);
+    }
+
+    return result.data;
   },
 
   async saveImage(params: {
