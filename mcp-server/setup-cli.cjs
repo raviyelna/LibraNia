@@ -85,6 +85,7 @@ function main() {
 
   log('\nSetup complete.');
   log('Restart Claude Code, then ask: "Search my LibraNia notes about [topic]"');
+  log('Research policy is in CLAUDE.md: search LibraNia first, then write useful web findings back before answering.');
   log(`MCP server: ${MCP_SERVER_PATH}`);
   log(`Data directory: ${DATA_DIR}`);
 }
