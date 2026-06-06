@@ -6,15 +6,20 @@ out
 .DS_Store
 .vscode
 .idea
+.claude/
+.codex/
 *.local
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+# Personal/local LibraNia data
 content/
 data/
 archive/
 test-logs/
 test-storage/
+mcp-server/test-research.md
 .env
 .env.development
 .env.production

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Library, MessageSquare, Settings, ChevronLeft, ChevronRight, Sun, Moon, Network, Menu, X } from 'lucide-react';
+import { Home, Library, MessageSquare, Settings, ChevronLeft, ChevronRight, Sun, Moon, Network, Menu, X, ClipboardList } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -8,6 +8,7 @@ const navigationItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Library, label: 'Library', path: '/library' },
   { icon: MessageSquare, label: 'Chat', path: '/chat' },
+  { icon: ClipboardList, label: 'Blackboard', path: '/blackboard' },
   { icon: Network, label: 'Graph', path: '/graph' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];

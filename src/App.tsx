@@ -7,6 +7,7 @@ import { Layout } from './components/Layout/Layout';
 import { Home } from './routes/Home';
 import { LibraryPage } from './routes/Library';
 import { Chat } from './routes/Chat';
+import { BlackboardPage } from './routes/Blackboard';
 import { SettingsPage } from './routes/Settings';
 import { GraphView } from './components/Graph/GraphView';
 import { Toaster } from 'react-hot-toast';
@@ -34,6 +35,7 @@ function App() {
                 <Route index element={<Home />} />
                 <Route path="library" element={<LibraryPage />} />
                 <Route path="chat" element={<Chat />} />
+                <Route path="blackboard" element={<BlackboardPage />} />
                 <Route path="graph" element={<GraphView />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>

@@ -16,6 +16,7 @@ import {
 } from '../services/notes.service.js';
 import { getBacklinks, getRelatedNotes } from '../services/links.service.js';
 import { autoLinkNote } from '../services/auto-link.service.js';
+import { addTagsToNote } from '../services/tags.service.js';
 
 const router = Router();
 
@@ -27,12 +28,12 @@ router.use((req, res, next) => {
 
 /**
  * POST /api/notes - Create a new note
- * Body: { title: string, body: string, metadata?: string }
+ * Body: { title: string, body: string, metadata?: string, tags?: string[] | string }
  * Returns: 201 with created note or 400 for validation errors
  */
 router.post('/api/notes', async (req, res) => {
   try {
-    const { title, body, metadata } = req.body;
+    const { title, body, metadata, tags } = req.body;
 
     // Validate required fields
     if (!title || typeof title !== 'string') {
@@ -51,6 +52,17 @@ router.post('/api/notes', async (req, res) => {
 
     const db = getORM();
     const note = await createNote({ title, body, metadata }, db);
+    const tagNames = Array.isArray(tags)
+      ? tags
+      : typeof tags === 'string'
+        ? tags.split(',')
+        : [];
+    const normalizedTags = [...new Set(tagNames
+      .map(tag => String(tag).trim())
+      .filter(Boolean))];
+    if (normalizedTags.length > 0) {
+      await addTagsToNote(note.id, normalizedTags);
+    }
 
     res.status(201).json({ success: true, data: note });
   } catch (error: any) {
