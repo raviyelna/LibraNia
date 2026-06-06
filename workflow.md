@@ -1,112 +1,159 @@
 # LibraNia Workflow and Infrastructure
 
-![LibraNia workflow and infrastructure](docs/images/librania-workflow.png)
+This document explains how LibraNia works across UI, backend services, MCP clients, agents, tools, and local storage.
 
-## System Shape
+## Product Map
 
-LibraNia is a local-first application with three connected entry points:
+![LibraNia feature index](docs/images/librania-product-map.png)
 
-1. Browser UI for direct note, graph, Blackboard, and tool work.
-2. MCP clients such as Codex and Claude Code for external agent access.
-3. Backend agent services for Blackboard collaboration and research write-back.
+LibraNia has six main surfaces:
 
-The local library is the center of the system. Notes, tags, links, sessions, uploaded files, and exports live on disk or in SQLite.
+- Home dashboard
+- Library
+- Chat
+- Blackboard
+- Graph
+- Settings
 
-## Infrastructure Layers
+All of them ultimately read from or write to the local library core.
 
-### User Interfaces
+## Runtime Architecture
 
-- Browser UI
-- Codex CLI
-- Claude Code CLI
-- Claude Desktop or other MCP clients
+![Runtime architecture](docs/images/librania-runtime-architecture.png)
 
-These clients either call the backend API or launch the MCP stdio server.
+Runtime flow:
 
-### Application Runtime
+1. Browser UI calls the Express API and listens to Socket.IO.
+2. Backend routes call service-layer modules.
+3. Services read/write SQLite, Markdown note files, content files, and export files.
+4. Chat and Blackboard can call AI providers and web search.
+5. MCP clients launch the MCP server over stdio and use local library tools.
 
-- Express REST API
-- Socket.IO streaming
-- Blackboard service
-- AI provider adapters
-- Research tools
-- Export tools
-- Content import and remote image handling
+## Library-First Research
 
-The runtime coordinates user actions, agent turns, tool calls, and library writes.
+![Library-first research workflow](docs/images/librania-research-workflow.png)
 
-### Knowledge Store
+Detailed workflow:
 
-- SQLite database: notes, tags, links, content metadata, Blackboard sessions
-- Markdown files: portable note copies
-- Content directory: uploads and imported images
-- Export directory: generated Blackboard reports
+1. User asks a question or assigns a research task.
+2. Agent calls `search_notes`.
+3. Agent reads relevant notes with `get_note`.
+4. Agent checks whether local context is enough.
+5. If not enough, agent uses web search or provider reasoning.
+6. Useful durable findings are saved with `create_note` or `update_note`.
+7. Tags are added with `add_tags`.
+8. Related notes are linked with `[[Exact Note Title]]`.
+9. Final answer references the library notes used, created, or updated.
 
-## Research Workflow
+## Blackboard Collaboration
 
-The intended research workflow is strict:
+![Blackboard collaboration workflow](docs/images/librania-blackboard-workflow.png)
 
-1. Receive research task.
-2. Search LibraNia with `search_notes`.
-3. Read matching notes with `get_note`.
-4. Decide whether existing notes are enough.
-5. If not enough, use web search or AI provider research.
-6. Save useful durable findings with `create_note` or `update_note`.
-7. Add tags with `add_tags`.
-8. Link related notes using `[[Exact Note Title]]`.
-9. Answer the user using saved library knowledge and cited sources.
+Blackboard workflow:
 
-This prevents knowledge from being trapped in chat transcripts.
+1. User creates a session by assigning a task.
+2. Blackboard records the task and selected active agents.
+3. The service builds a compact observation with relevant note titles and active/inactive agent lists.
+4. Agents respond in visible turns.
+5. Agents can call built-in or custom tools.
+6. Agents can mention another agent to bring that role into the session.
+7. User can join the room with normal messages or `@agent` mentions.
+8. Export Agent can summarize the whole session into a library note, Markdown file, or both.
 
-## Blackboard Workflow
+## Tool Workflow
 
-1. User opens a Blackboard session.
-2. User assigns a task.
-3. Blackboard builds a compact shared observation.
-4. Active agents respond according to their role.
-5. Agents can call tools.
-6. Agents can mention inactive agents to bring them into the session.
-7. The session records visible messages and detailed debug information.
-8. Export Agent summarizes the complete session when requested.
+Tool Builder supports:
 
-Blackboard is intended to feel like a team room, not a linear hidden chain.
+- Static template tools
+- HTTP tools
+- Built-in LibraNia tools
+
+HTTP tool behavior:
+
+- Relative URLs such as `/api/notes/{{noteId}}` call the local LibraNia server.
+- `GET` and `DELETE` do not send a body.
+- `POST`, `PUT`, and `PATCH` send the HTTP body template if provided.
+- Headers support templated fields.
+- Playground can test tools before agents use them.
+
+Built-in tools:
+
+- `search_notes`
+- `get_note`
+- `get_backlinks`
+- `get_note_tags`
+- `web_search`
+- `create_note`
+- `add_tags`
+- `export_blackboard`
+
+## Data Persistence
+
+Local data paths:
+
+```text
+data/librania.db
+data/notes/
+data/blackboard-exports/
+content/
+data/.env
+```
+
+Database stores:
+
+- notes
+- tags
+- note/tag relationships
+- note links
+- note versions
+- conversations
+- messages
+- citations
+- content metadata
+- embeddings
+- Blackboard sessions, agents, tools, and artifacts
+
+Markdown note files provide portability and readable backups.
 
 ## MCP Workflow
 
-1. Codex or Claude starts.
-2. The client loads project instructions from `AGENTS.md` or `CLAUDE.md`.
-3. The client connects to `librania` MCP.
-4. Research starts with local library search.
-5. If web research is needed, durable findings are written back through MCP tools.
-6. The final answer names the notes used, created, or updated.
+1. Codex or Claude Code starts.
+2. The client reads `AGENTS.md` or `CLAUDE.md`.
+3. The client connects to the `librania` MCP server.
+4. MCP server exposes local library tools over stdio.
+5. Research begins with `search_notes`.
+6. External findings are saved back with `create_note` or `update_note`.
 
-## Data Flow
+## Operational Workflow
 
-```text
-User task
-  -> UI or MCP client
-  -> Blackboard/API/MCP tool
-  -> search local SQLite notes
-  -> optional AI provider or web search
-  -> create/update Markdown note and SQLite row
-  -> update tags and links
-  -> graph and future agents can reuse the knowledge
+Build app:
+
+```bash
+npm run build:package
 ```
 
-## Export Flow
+Build MCP:
 
-```text
-Blackboard session
-  -> Export Agent
-  -> summarize all useful session content
-  -> include user clarifications as questionnaire/extra context
-  -> write library note, Markdown file, or both
+```bash
+cd mcp-server
+npm run build
 ```
 
-## Operational Notes
+Register MCP:
 
-- `data/` and `content/` are personal runtime folders and should stay out of git.
-- MCP uses stdio, so there is no separate MCP HTTP port.
-- The backend web server serves the browser app and API.
-- External AI providers are optional, but required for model-backed agent responses.
-- Build verification is `npm run build:package` plus `cd mcp-server && npm run build`.
+```bash
+npm run setup-codex
+npm run setup-cli
+```
+
+Run app:
+
+```bash
+npm start
+```
+
+Windows:
+
+```bash
+start.bat
+```
