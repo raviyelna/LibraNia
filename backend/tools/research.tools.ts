@@ -185,6 +185,7 @@ export async function executeToolCall(
   context?: ResearchToolContext
 ): Promise<any> {
   const db = getDatabase();
+  const noteId = toolInput.noteId || toolInput.id;
 
   switch (toolName) {
     case 'search_notes': {
@@ -210,10 +211,10 @@ export async function executeToolCall(
         SELECT id, title, body, created_at, updated_at
         FROM notes
         WHERE id = ? AND deleted_at IS NULL
-      `).get(toolInput.noteId);
+      `).get(noteId);
 
       if (!note) {
-        throw new Error(`Note not found: ${toolInput.noteId}`);
+        throw new Error(`Note not found: ${noteId}`);
       }
       return note;
     }
@@ -224,7 +225,7 @@ export async function executeToolCall(
     }
 
     case 'get_note_tags': {
-      const tags = await getNoteTags(toolInput.noteId);
+      const tags = await getNoteTags(noteId);
       return tags.map(tag => ({ id: tag.id, name: tag.name }));
     }
 
@@ -317,9 +318,9 @@ export async function executeToolCall(
     }
 
     case 'add_tags': {
-      logger.info(`Adding tags to note ${toolInput.noteId}:`, toolInput.tags);
-      await setNoteTags(toolInput.noteId, toolInput.tags);
-      logger.info(`Tags added successfully to note ${toolInput.noteId}`);
+      logger.info(`Adding tags to note ${noteId}:`, toolInput.tags);
+      await setNoteTags(noteId, toolInput.tags);
+      logger.info(`Tags added successfully to note ${noteId}`);
       return { success: true };
     }
 

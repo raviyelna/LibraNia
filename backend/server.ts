@@ -5,7 +5,7 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import { fileURLToPath } from 'url';
 import { config } from 'dotenv';
-import { initDatabase } from './database/connection.js';
+import { closeDatabase, initDatabase } from './database/connection.js';
 import { initFileStorage } from './services/file-storage.service.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -187,7 +187,21 @@ export async function startServer(
 
 export function stopServer(instance: ServerInstance): Promise<void> {
   return new Promise((resolve, reject) => {
+    instance.io.close();
+
+    if ('closeIdleConnections' in instance.server) {
+      instance.server.closeIdleConnections();
+    }
+
+    const forceCloseTimer = setTimeout(() => {
+      if ('closeAllConnections' in instance.server) {
+        instance.server.closeAllConnections();
+      }
+    }, 250);
+
     instance.server.close((err) => {
+      clearTimeout(forceCloseTimer);
+      closeDatabase();
       if (err) {
         reject(err);
       } else {

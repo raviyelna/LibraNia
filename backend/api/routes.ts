@@ -19,14 +19,21 @@ import exportRoutes from './export.routes.js';
 import configRoutes from './config.routes.js';
 import appRoutes from './app.routes.js';
 import aiRoutes from './ai.routes.js';
+import blackboardRoutes from './blackboard.routes.js';
 
 const router = Router();
 
 // Middleware
 router.use((req, res, next) => {
-  console.log(`[API] ${req.method} ${req.path}`);
+  const isBlackboardPoll = req.method === 'GET' && req.path === '/api/blackboard/sessions';
+  if (!isBlackboardPoll) {
+    console.log(`[API] ${req.method} ${req.path}`);
+  }
   next();
 });
+
+// Register high-frequency routes before per-router logging middleware below.
+router.use(blackboardRoutes);
 
 // Register graph routes
 router.use(graphRoutes);
