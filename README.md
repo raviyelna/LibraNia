@@ -1,67 +1,97 @@
 # LibraNia
 
-LibraNia is a local-first AI knowledge workspace. It stores notes, files, links, agent sessions, and exports on your machine, then lets browser UI, Codex, Claude Code, and Blackboard agents work against the same library.
+LibraNia is a local-first AI knowledge workspace with notes, graph navigation, AI chat, collaborative Blackboard agents, custom agent tools, and MCP access for Codex and Claude Code.
 
-![LibraNia workflow and infrastructure](docs/images/librania-workflow.png)
+![LibraNia feature index](docs/images/librania-product-map.png)
 
-## What It Does
+## Core Idea
 
-- **Library**: Markdown notes, tags, backlinks, uploaded content, and full-text search.
-- **Graph**: Visual navigation through `[[wiki-links]]` and note relationships.
-- **Blackboard**: A collaborative agent workspace where agents can research, review, plan, link, and export session knowledge.
-- **Tool Builder**: Custom HTTP/static tools for agents, with a Playground for manual tool checks.
-- **MCP Server**: Exposes the local LibraNia library to Codex, Claude Code, Claude Desktop, and other MCP clients.
-- **Research Write-Back**: Research agents must search the library first. If they use web research, useful durable findings should be saved back to LibraNia before being used as final knowledge.
+LibraNia treats the local library as the source of truth. Agents and chat can research, but durable knowledge should be written back into notes, tagged, and linked with `[[Exact Note Title]]` wiki-links so future work can reuse it.
 
-## Quick Start
+## Features
 
-Requirements:
+### Home Dashboard
 
-- Node.js 18+
-- npm 7+
-- Native build tools for `better-sqlite3` and `sharp`
+- Workspace metrics for notes, links, tags, and research threads
+- Recent notes and recent AI conversations
+- Graph health widget
+- Tag vocabulary widget
+- Customizable dashboard widgets
 
-Install and run:
+### Library
 
-```bash
-npm install
-npm run build:package
-npm start
-```
+- Markdown note editor
+- Note list and quick navigation
+- Note create, edit, soft-delete, restore, and trash view
+- Tags on notes
+- Tag management: create, rename, delete, assign, remove, browse notes by tag
+- `[[wiki-links]]` with backlinks and related-note panels
+- AI auto-link button that appends suggested links without deleting existing links
+- Librarian Ask panel for note-scoped AI questions
+- Content upload and attachment to notes
+- Import readable documents as notes
+- Export notes as Markdown or JSON
 
-Windows shortcut:
+### Chat
 
-```bash
-start.bat
-```
+- Conversation list, rename, and delete
+- Message history per conversation
+- Provider and model selection
+- Streaming AI responses through Socket.IO
+- Research mode with tools
+- Conversation context support
+- Citation-aware responses where available
 
-The app starts the local web server and opens the browser. If port `3001` is unavailable, the backend retries nearby ports.
+### Graph
 
-## Data Model
+- 2D/3D force-directed knowledge graph
+- Graph nodes from notes
+- Graph links from wiki-links and related-note relationships
+- Node search and highlight
+- Neighbor highlighting
+- Minimap
+- Side panel navigation back into notes
 
-LibraNia is local-first by default:
+### Blackboard
 
-- `data/librania.db`: SQLite database
-- `data/notes/`: Markdown note files with frontmatter
-- `content/`: uploaded files and imported images
-- `data/blackboard-exports/`: exported Blackboard session summaries
-- `.env` / `data/.env`: local provider configuration and API keys
+- Collaborative multi-agent sessions
+- Task assignment into a visible agent room
+- Session rename/delete
+- Collapsible session/task context
+- User can join the conversation
+- `@agent` mentions can activate available agents
+- Agent response details for debugging prompts, tool calls, and intermediate output
+- Built-in agents: Librarian, Research Agent, Reviewer, Link Curator, Architecture Planner, Ideal Agent, Export Agent
+- Agent Management: create/edit agents, system prompts, tool permissions, custom tool text, max response budget
+- Tool Builder: static tools and HTTP tools
+- Built-in tool reference shown in the Tool Builder
+- Playground for testing built-in and custom tools
+- Export Agent can summarize the whole Blackboard session to a library note, Markdown file, or both
 
-These paths are ignored by git so personal notes, uploaded files, and API keys do not get committed.
+### Settings
 
-## Research Policy
+- Built-in provider configuration
+- Delete stored API keys per provider
+- Custom Provider section
+- Multiple API keys
+- Custom base URL
+- Multiple custom headers
+- App mode/server settings
 
-The repository includes both `AGENTS.md` and `CLAUDE.md` so Codex and Claude Code follow the same library workflow:
+### MCP Integration
 
-1. Search LibraNia first.
-2. Read relevant notes.
-3. Use web search only when the library is missing, shallow, outdated, or the task asks for current information.
-4. If web search produces useful durable knowledge, create or update a LibraNia note before using that knowledge in the final answer.
-5. Add tags and `[[Exact Note Title]]` links so the graph stays connected.
+The `mcp-server/` package exposes LibraNia to MCP clients over stdio.
 
-## MCP Setup
+Available MCP tools:
 
-Build and register the MCP server:
+- `search_notes`
+- `get_note`
+- `create_note`
+- `update_note`
+- `add_tags`
+- `list_tags`
+
+Codex and Claude Code setup:
 
 ```bash
 cd mcp-server
@@ -78,52 +108,84 @@ codex mcp get librania
 claude mcp get librania
 ```
 
-MCP tools:
+Research protocol lives in `AGENTS.md`, `CLAUDE.md`, and the MCP server instructions:
 
-- `search_notes`
-- `get_note`
-- `create_note`
-- `update_note`
-- `add_tags`
-- `list_tags`
-
-## Blackboard
-
-The Blackboard tab is a collaborative agent workspace, not a simple chatbot.
-
-- A session has a task, active agents, inactive agents, visible agent turns, and detailed response/tool traces.
-- Agents are selected by task fit and can mention inactive agents to bring them into the room.
-- Built-in agents include Librarian, Research Agent, Reviewer, Link Curator, Architecture Planner, Ideal Agent, and Export Agent.
-- Export Agent can summarize a complete Blackboard session to a library note, Markdown file, or both.
+1. Search LibraNia first.
+2. Read relevant notes.
+3. Use web search only when the library is missing, shallow, outdated, or the task asks for current information.
+4. Save useful durable web findings back to LibraNia before using them as final knowledge.
+5. Add tags and wiki-links.
 
 ## Architecture
 
-See [workflow.md](workflow.md) for the system workflow, infrastructure layout, MCP behavior, Blackboard behavior, and data flow.
+![LibraNia runtime architecture](docs/images/librania-runtime-architecture.png)
 
-## Build Commands
+Main layers:
+
+- React/Vite browser UI
+- Express REST API
+- Socket.IO streaming
+- Blackboard service and tool executor
+- AI provider adapters
+- MCP stdio server
+- SQLite database and Markdown note files
+- Local content and export folders
+
+See [workflow.md](workflow.md) for the full workflow and infrastructure diagrams.
+
+## Install
+
+Requirements:
+
+- Node.js 18+
+- npm 7+
+- Native build tools for `better-sqlite3` and `sharp`
+
+```bash
+npm install
+cd mcp-server
+npm install
+cd ..
+npm run build:package
+npm start
+```
+
+Windows shortcut:
+
+```bash
+start.bat
+```
+
+## Build
 
 ```bash
 npm run build:frontend
 npm run build:backend
 npm run build:package
-npm start
+cd mcp-server
+npm run build
 ```
+
+## Local Data
+
+Gitignored runtime data:
+
+- `data/librania.db`
+- `data/notes/`
+- `data/blackboard-exports/`
+- `content/`
+- `.env`
+- `data/.env`
 
 ## Project Layout
 
 ```text
-backend/       Express API, services, tools, Blackboard engine
-src/           React UI, routes, API clients, components
-mcp-server/    Stdio MCP server for Codex and Claude clients
-scripts/       startup and build helper scripts
-bin/           CLI entry point
-docs/images/   documentation image assets
-data/          local database and generated library data, gitignored
-content/       uploaded/imported content, gitignored
+backend/       Express routes, services, AI, Blackboard, tools
+src/           React UI, routes, hooks, API clients, components
+mcp-server/    Stdio MCP server for external agent clients
+scripts/       startup, build, sync helpers
+bin/           CLI launcher
+docs/images/   documentation diagrams
+data/          local runtime data, gitignored
+content/       local uploaded/imported files, gitignored
 ```
-
-## Notes
-
-- API keys and personal data are intentionally local.
-- MCP is registered as a stdio server; clients start it when needed.
-- The app can use external AI providers, but the knowledge base remains local unless you explicitly export or sync it.

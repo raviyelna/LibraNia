@@ -1,111 +1,272 @@
 # LibraNia Comprehensive Guide
 
-LibraNia is a local-first AI knowledge system built around three ideas:
+LibraNia is a local-first AI knowledge workspace. It combines a Markdown library, graph navigation, AI chat, a collaborative Blackboard agent room, custom tools, and MCP access for Codex and Claude Code.
 
-1. The library is the source of truth.
-2. Agents collaborate through a visible Blackboard workspace.
-3. External research should be written back into the library before it becomes durable knowledge.
+![LibraNia feature index](docs/images/librania-product-map.png)
 
-![LibraNia workflow and infrastructure](docs/images/librania-workflow.png)
+## 1. Product Surfaces
 
-## Product Surfaces
+### Home
+
+The Home route is a dashboard for workspace state.
+
+- Note count
+- Graph connection count
+- Tag count
+- Research thread count
+- Recent notes
+- Recent conversations
+- Graph health
+- Tag vocabulary
+- User-configurable widgets stored in local storage
 
 ### Library
 
-The Library is where persistent knowledge lives.
+The Library is the primary note workspace.
 
-- Markdown notes with frontmatter
-- Tags
-- `[[Note Title]]` wiki-links
-- Backlinks and graph neighborhoods
-- Uploaded content and imported images
-- Full-text search
+Capabilities:
+
+- Browse notes in a left sidebar
+- Create notes from the note list
+- Edit Markdown notes
+- Read rendered Markdown
+- Attach tags to selected notes
+- Manage all tags
+- Upload content to the selected note
+- List and delete attached content
+- Import readable files as notes
+- Export selected notes or the library
+- Open QuickNav with keyboard navigation
+- Open the right context panel for backlinks, related notes, and Librarian Ask
+
+Note operations implemented by backend routes:
+
+- `GET /api/notes`
+- `POST /api/notes`
+- `GET /api/notes/:id`
+- `PUT /api/notes/:id`
+- `DELETE /api/notes/:id`
+- `GET /api/notes/deleted`
+- `POST /api/notes/:id/restore`
+- `GET /api/notes/:id/backlinks`
+- `GET /api/notes/:id/related`
+- `POST /api/notes/:id/auto-link`
+
+Content operations:
+
+- `POST /api/content/upload`
+- `POST /api/content/import-note`
+- `GET /api/content`
+- `GET /api/content/:id`
+- `DELETE /api/content/:id`
+
+### Chat
+
+Chat is a conversation workspace for provider-backed AI.
+
+Capabilities:
+
+- Create conversations
+- Rename conversations
+- Delete conversations
+- Read message history
+- Send chat messages
+- Select provider/model
+- Enable research mode
+- Stream responses with Socket.IO
+- Use library context when Research Mode is active
+
+Conversation/API routes:
+
+- `GET /api/conversations`
+- `POST /api/conversations`
+- `GET /api/conversations/:id`
+- `PATCH /api/conversations/:id`
+- `DELETE /api/conversations/:id`
+- `GET /api/conversations/:id/messages`
+- `POST /api/chat`
+- `POST /api/library/ask`
 
 ### Graph
 
-The Graph renders note relationships so the user can inspect neighborhoods instead of reading notes in isolation.
+Graph visualizes the note network.
 
-Connections come from:
+Capabilities:
 
-- Explicit wiki-links
-- Backlinks generated from note content
-- Semantic or agent-suggested relationships where supported by the app
+- Force-directed graph visualization
+- Graph node search
+- Neighbor highlighting
+- Side panel for note details
+- Minimap
+- Navigation from graph back to library context
+
+Graph APIs:
+
+- `GET /api/graph`
+- graph node and edge route support through `src/api/graph.ts`
 
 ### Blackboard
 
-Blackboard is the multi-agent workspace.
+Blackboard is the collaborative multi-agent room.
 
-A Blackboard session contains:
+![Blackboard collaboration workflow](docs/images/librania-blackboard-workflow.png)
 
-- A user-assigned task
-- Active agents
-- Inactive agents that can be activated by `@mention`
-- Agent messages shown like a collaborative room
-- Agent response details for debugging prompts, tools, and intermediate reasoning
-- Shared artifacts such as relevant note lists, reviews, ideas, plans, and exports
+Capabilities:
 
-The goal is team collaboration. Agents should build on each other rather than dumping isolated transcripts.
+- Assign a task to selected agents
+- Create sessions
+- Rename/delete sessions
+- Collapse session/task context
+- Read visible agent turns
+- Inspect agent response details
+- Send user messages into an existing session
+- Mention agents with `@Name`
+- Activate inactive agents by mention
+- Store artifacts and session status
+- Use tools inside agent turns
+- Export a complete session through Export Agent
 
-### Agent Management
+Blackboard APIs:
 
-Agent Management lets the user define the agent team:
+- `GET /api/blackboard/agents`
+- `POST /api/blackboard/agents`
+- `PUT /api/blackboard/agents/:id`
+- `DELETE /api/blackboard/agents/:id`
+- `GET /api/blackboard/tools`
+- `POST /api/blackboard/tools`
+- `PUT /api/blackboard/tools/:id`
+- `DELETE /api/blackboard/tools/:id`
+- `POST /api/blackboard/tools/:id/execute`
+- `GET /api/blackboard/sessions`
+- `GET /api/blackboard/sessions/:id`
+- `PATCH /api/blackboard/sessions/:id`
+- `DELETE /api/blackboard/sessions/:id`
+- `POST /api/blackboard/sessions/:id/messages`
+- `POST /api/blackboard/assign`
 
-- Name
-- Description
-- System prompt
-- Tool access
-- Response budget
-- Enabled/disabled state
+Default built-in agents:
 
-Agents should be selected by task fit. For example, Architecture Planner should focus on architecture, workflows, implementation plans, diagrams, and risks. Research Agent should focus on library-first research and note creation. Export Agent should summarize and export the whole session.
+- LibraNia Librarian
+- Research Agent
+- Reviewer
+- Link Curator
+- Architecture Planner
+- Ideal Agent
+- Export Agent
 
-### Tool Builder and Playground
+Built-in research/Blackboard tools:
 
-Tool Builder lets the user create custom tools for agents.
+- `search_notes`
+- `get_note`
+- `get_backlinks`
+- `get_note_tags`
+- `web_search`
+- `create_note`
+- `add_tags`
+- `export_blackboard`
 
-Supported tool styles include:
+Custom tool types:
 
-- Built-in LibraNia tools
-- HTTP tools
-- Static/template tools
+- `static`: deterministic template response with `{{field}}` placeholders
+- `http`: HTTP request with method, relative or absolute URL, headers, body template, timeout
 
-The Playground is used to test both built-in tools and custom tools before assigning them to agents.
+### Settings
 
-## Research Protocol
+Settings manages runtime and AI configuration.
 
-LibraNia is designed to accumulate knowledge instead of treating research as throwaway chat.
+Capabilities:
 
-Required flow:
+- Built-in provider keys
+- Provider key deletion
+- Model selection
+- Custom provider base URL
+- Multiple API keys
+- Multiple custom headers
+- Server/mode configuration
 
-1. Search local notes first.
+Provider APIs:
+
+- `GET /api/providers`
+- `GET /api/providers/:id`
+- `POST /api/providers`
+- `DELETE /api/providers/:id`
+
+## 2. Research Workflow
+
+![Library-first research workflow](docs/images/librania-research-workflow.png)
+
+Research policy:
+
+1. Search LibraNia first.
 2. Read relevant notes.
-3. Decide whether the local library is enough.
-4. If needed, search the web or external sources.
-5. Save useful durable findings back into LibraNia.
-6. Add tags.
-7. Link related notes using `[[Exact Note Title]]`.
-8. Answer the user with references to notes used, created, or updated.
+3. Use web search only when local knowledge is insufficient, stale, or the task asks for latest/current information.
+4. Save useful web findings before treating them as durable knowledge.
+5. Add tags.
+6. Add `[[Exact Note Title]]` links.
+7. Answer with the notes used, created, or updated.
 
-This policy is encoded in:
+This policy is represented in:
 
-- `AGENTS.md` for Codex
-- `CLAUDE.md` for Claude Code
-- `mcp-server/src/index.ts` MCP server instructions and tool descriptions
+- `AGENTS.md`
+- `CLAUDE.md`
+- `backend/prompts/research.system.ts`
+- `backend/tools/research.tools.ts`
+- `mcp-server/src/index.ts`
 
-## MCP Integration
+## 3. Runtime Architecture
 
-The MCP server exposes the local library to agent clients over stdio.
+![Runtime architecture](docs/images/librania-runtime-architecture.png)
 
-Available tools:
+Main runtime components:
 
-| Tool | Purpose |
-| --- | --- |
-| `search_notes` | Search note titles and bodies |
-| `get_note` | Read a full note |
-| `create_note` | Create a Markdown note |
-| `update_note` | Replace or append note content |
-| `add_tags` | Add tags to a note |
-| `list_tags` | List tags with counts |
+- React 19 frontend
+- Vite build pipeline
+- Express API backend
+- Socket.IO streaming
+- SQLite database through `better-sqlite3`
+- Drizzle schema definitions
+- AI provider adapters
+- DuckDuckGo web search service
+- Content extraction and remote image import
+- Blackboard service
+- MCP stdio server
+
+## 4. Data Model
+
+Core tables from `backend/database/schema.ts`:
+
+- `notes`
+- `tags`
+- `note_tags`
+- `links`
+- `note_versions`
+- `conversations`
+- `messages`
+- `citations`
+- `content`
+- `content_tags`
+- `embeddings`
+
+Local files:
+
+- `data/librania.db`
+- `data/notes/*.md`
+- `content/*`
+- `data/blackboard-exports/*`
+- `data/.env`
+
+## 5. MCP Server
+
+The MCP server lives in `mcp-server/` and uses stdio.
+
+Available MCP tools:
+
+- `search_notes`
+- `get_note`
+- `create_note`
+- `update_note`
+- `add_tags`
+- `list_tags`
 
 Setup:
 
@@ -124,106 +285,54 @@ codex mcp get librania
 claude mcp get librania
 ```
 
-Runtime behavior:
+MCP data selection priority:
 
-- Codex and Claude Code launch the MCP process when needed.
-- `LIBRANIA_DATA_DIR` points the MCP server at the local `data/` directory.
-- The MCP server reads and writes `data/librania.db` and `data/notes/`.
+1. `LIBRANIA_DB_PATH`
+2. `LIBRANIA_DATA_DIR/librania.db`
+3. `./data/librania.db`
 
-## Infrastructure
+## 6. AI Providers
 
-LibraNia has four main layers.
+Supported provider architecture:
 
-### 1. Browser UI
+- Anthropic Claude through `@anthropic-ai/sdk`
+- OpenAI-compatible APIs through `openai`
+- DeepSeek through OpenAI-compatible base URL
+- Custom providers with API keys, base URL, model, and headers
 
-Implemented in `src/` with React and Vite.
+Provider keys are stored locally and should not be committed.
 
-Main routes include:
+## 7. Search and Discovery
 
-- Home
-- Library
-- Graph
-- Blackboard
-- Settings
+Search APIs:
 
-The UI calls the backend through REST APIs and receives streaming updates through Socket.IO.
+- `POST /api/search`
+- `POST /api/search/semantic`
 
-### 2. Backend Runtime
+Search modes:
 
-Implemented in `backend/`.
+- `fullText`
+- `quickNav`
+- `fuzzy`
+- semantic endpoint placeholder for embedding-backed search
 
-Responsibilities:
+Embedding table support exists in the schema with 384 dimensions for `all-MiniLM-L6-v2`.
 
-- Express HTTP API
-- Socket.IO streaming
-- Note CRUD
-- Content import
-- Graph/link parsing
-- Search
-- AI provider calls
-- Blackboard session orchestration
-- Built-in and custom tool execution
-- Export generation
+## 8. Export
 
-### 3. MCP Server
+Library export:
 
-Implemented in `mcp-server/`.
+- `POST /api/export/notes`
+- `POST /api/export/library`
+- formats: `json`, `markdown`
 
-Responsibilities:
+Blackboard export:
 
-- Provide external agent clients with controlled access to the local library
-- Enforce the research-first instructions through server instructions and tool descriptions
-- Read/write the same SQLite database as the app
+- through `export_blackboard`
+- targets: `library_note`, `markdown_file`, `both`
+- output folder: `data/blackboard-exports/`
 
-### 4. Local Storage
-
-Default storage:
-
-```text
-data/librania.db
-data/notes/
-data/blackboard-exports/
-content/
-```
-
-These directories are gitignored because they contain personal library data.
-
-## Blackboard Workflow
-
-1. User creates or opens a Blackboard session.
-2. User assigns a task.
-3. The Blackboard service builds a compact observation:
-   - task
-   - active agents
-   - inactive agents available by mention
-   - relevant note titles
-   - current shared state
-4. Agents respond in the session room.
-5. Agents may call tools.
-6. Agents may mention another agent when that role is needed.
-7. The session accumulates visible outputs and hidden debug details.
-8. Export Agent can summarize the whole session to a library note, Markdown file, or both.
-
-## Export Workflow
-
-Export Agent should not copy only the last message. It should summarize the whole session:
-
-- Original task
-- User clarifications
-- Relevant notes
-- Agent contributions
-- Decisions
-- Plans
-- Open questions
-- Links and sources
-
-Export targets:
-
-- Library note
-- Markdown file
-- Both
-
-## Startup
+## 9. Startup and Build
 
 Install:
 
@@ -255,25 +364,48 @@ Windows:
 start.bat
 ```
 
-## Configuration
+CLI:
 
-Common environment variables:
-
-```env
-PORT=3001
-HOST=localhost
-LIBRANIA_DATA_DIR=./data
-LIBRANIA_DB_PATH=./data/librania.db
-ANTHROPIC_API_KEY=
-OPENAI_API_KEY=
-DEEPSEEK_API_KEY=
+```bash
+librania start
 ```
 
-Provider keys can also be managed from the Settings UI.
+## 10. Project Layout
 
-## Build Verification
+```text
+backend/api/          REST routes
+backend/services/     notes, graph, AI, search, content, Blackboard
+backend/tools/        research tool definitions and execution
+backend/database/     Drizzle schema and SQLite connection
+backend/websocket/    Socket.IO handlers
+src/routes/           Home, Library, Chat, Blackboard, Settings
+src/components/       UI, notes, graph, chat, content, settings
+src/api/              browser API clients
+src/hooks/            UI data hooks
+mcp-server/           MCP stdio server and setup scripts
+scripts/              startup/build/sync helpers
+docs/images/          documentation diagrams
+```
 
-This repository no longer includes the old tracked test suite. Use build verification for this trimmed repo:
+## 11. Privacy and Git Hygiene
+
+Ignored local data:
+
+- `.env`
+- `config.json`
+- `.claude/`
+- `.codex/`
+- `data/`
+- `content/`
+- `archive/`
+- `test-logs/`
+- `test-storage/`
+
+The repository is meant to track application code and docs, not personal library content.
+
+## 12. Verification
+
+This repo currently uses build verification:
 
 ```bash
 npm run build:package
@@ -281,48 +413,4 @@ cd mcp-server
 npm run build
 ```
 
-## Security and Privacy
-
-- Library data is local by default.
-- API keys are gitignored.
-- Uploaded content is gitignored.
-- MCP uses stdio and local filesystem/database access.
-- External AI providers only receive the content included in prompts or tool calls.
-
-## Troubleshooting
-
-### MCP Not Connected
-
-Run:
-
-```bash
-cd mcp-server
-npm run build
-npm run setup-codex
-npm run setup-cli
-codex mcp get librania
-claude mcp get librania
-```
-
-### Database Not Found
-
-Make sure the app has been started once and that `data/librania.db` exists.
-
-### Port Already Used
-
-Set another port:
-
-```bash
-set PORT=3002
-npm start
-```
-
-### Native Module Build Issues
-
-Rebuild native modules:
-
-```bash
-npm rebuild better-sqlite3 sharp
-```
-
-On Windows, install Visual Studio Build Tools if native rebuilds fail.
+The old tracked Vitest suite has been removed from the repository.
