@@ -13,16 +13,18 @@ MCP server exposing LibraNia knowledge base to Claude Desktop, Claude Code CLI, 
 - `list_tags` - List all tags
 
 **Agent Integration:**
-- MCP server provides instructions to Agent subagents
-- Agents auto-search LibraNia before web search
-- Save findings back to knowledge base
+- MCP server provides research instructions to agent clients
+- Agents search LibraNia before web search
+- Web findings must be written back to LibraNia before being used in a final answer
+- Save findings back to the knowledge base with Markdown notes, tags, and wiki-links
 - Build knowledge over time
 
 **Workflow:**
 1. Agent searches LibraNia first
 2. If insufficient → web search
-3. Create note with findings + [[backlinks]]
-4. Return answer with sources
+3. Create or update a LibraNia note with findings + [[backlinks]]
+4. Add tags
+5. Return answer with sources and note references
 
 ## Installation
 
@@ -75,7 +77,8 @@ The setup scripts:
 1. Build MCP server
 2. Register the stdio server for the selected client
 3. Pass `LIBRANIA_DATA_DIR` so every client uses the same database
-4. Show next steps
+4. Use the repository `AGENTS.md` / `CLAUDE.md` research protocol so Codex and Claude Code know to search LibraNia first and write web findings back
+5. Show next steps
 
 Claude Code and Codex each launch their own stdio MCP process when they connect.
 The MCP server implementation is shared; only the client registration command differs.
@@ -275,13 +278,14 @@ Returns: `{ tags: [{ id, name, count }] }`
 
 ## MCP Instructions
 
-Agent subagents receive these instructions automatically:
+Agent clients receive these instructions from the MCP server and from this repository's `AGENTS.md` / `CLAUDE.md` files:
 
 1. **Search LibraNia first** - check existing knowledge before web
-2. **Evaluate sufficiency** - use LibraNia as primary source if sufficient
-3. **Web search fallback** - only search web for gaps
-4. **Save findings** - create notes with sources, tags, [[backlinks]]
-5. **Return consolidated answer** - cite both LibraNia and web sources
+2. **Read relevant notes** - use `get_note` for relevant search results
+3. **Evaluate sufficiency** - use LibraNia as primary source if sufficient
+4. **Web search fallback** - only search web for gaps, stale information, or current/latest requests
+5. **Save before using web findings** - create or update notes with sources, tags, and [[backlinks]]
+6. **Return consolidated answer** - cite both LibraNia notes and web sources
 
 This ensures knowledge accumulates in LibraNia over time.
 

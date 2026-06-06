@@ -84,24 +84,25 @@ class LibraniaMCPServer {
         },
         instructions: `LibraNia Knowledge Base Integration
 
-When conducting research or gathering information:
+Mandatory research protocol:
 
-1. **Search LibraNia first**: Use search_notes to check existing knowledge base before web search
-2. **Evaluate sufficiency**: If LibraNia results answer the query, use them as primary source
-3. **Web search fallback**: Only search web if LibraNia lacks sufficient information
-4. **Save findings**: After web research, create_note to save findings with:
-   - Clear title describing the topic
-   - Markdown body with sources and key information
-   - Relevant tags for categorization
-   - [[Note Title]] links to related existing notes (search first to find them)
-5. **Return consolidated answer**: Combine LibraNia + web sources in response
+1. **Search LibraNia first**: Before any web search or external research, call search_notes for the user's topic and adjacent terms.
+2. **Read relevant notes**: If search_notes returns useful results, call get_note on the relevant note IDs before answering or researching externally.
+3. **Evaluate sufficiency**: If existing LibraNia notes answer the request, use them as the primary source and do not browse just to appear thorough.
+4. **Web search fallback**: Use web search only when the library is missing, incomplete, stale, or the user asks for current/latest information.
+5. **Write back before using web findings**: If web search is used and produces useful durable knowledge, save that knowledge to LibraNia with create_note or update_note before presenting it as the answer.
+6. **Connect the graph**: New or updated Markdown notes should include [[Exact Note Title]] links to related notes found with search_notes/get_note.
+7. **Tag saved knowledge**: Add concise lowercase tags with add_tags.
+8. **Report library actions**: In the final answer, mention which notes were used, created, or updated.
+
+Do not finish a research answer based on web findings without first saving useful durable findings back to LibraNia, unless the user explicitly says not to save anything.
 
 Example workflow:
 - Query: "Docker security best practices"
 - search_notes("Docker security") → found 2 notes
 - Evaluate: partial info, need more on container isolation
 - web_search("Docker container isolation security")
-- create_note with findings, link to existing [[Docker Basics]] note
+- create_note with findings, link to existing [[Docker Basics]] note before using those findings in the answer
 - Return answer citing both LibraNia notes and web sources
 
 This ensures knowledge accumulates in LibraNia over time.`,
@@ -143,7 +144,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
         tools: [
           {
             name: 'search_notes',
-            description: 'Search LibraNia knowledge base for relevant notes. Returns matching notes with snippets and tags. Use before creating new notes to find related content for linking.',
+            description: 'Search LibraNia knowledge base for relevant notes. Mandatory first step before web search or external research. Returns matching notes with snippets and tags. Use before creating new notes to find related content for linking.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -161,7 +162,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
           },
           {
             name: 'get_note',
-            description: 'Get full content of a specific note by ID',
+            description: 'Get full content of a specific note by ID. Use after search_notes when a result is relevant so answers and new notes can build on existing library knowledge.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -175,7 +176,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
           },
           {
             name: 'create_note',
-            description: 'Create a new note in LibraNia. Use after web search to save findings. IMPORTANT: Link to related notes using [[Note Title]] syntax in body to create bidirectional backlinks. Search for related notes first, then reference them.',
+            description: 'Create a new note in LibraNia. Required after web research when useful durable knowledge was found, before using those web findings in the final answer. Link related notes using [[Note Title]] syntax in body to create bidirectional backlinks. Search for related notes first, then reference them.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -198,7 +199,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
           },
           {
             name: 'update_note',
-            description: 'Update existing note content or add information',
+            description: 'Update existing note content or add information. Prefer this over create_note when web research improves, corrects, or extends an existing note.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -224,7 +225,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
           },
           {
             name: 'add_tags',
-            description: 'Add tags to a note',
+            description: 'Add tags to a note after creating or updating durable research knowledge.',
             inputSchema: {
               type: 'object',
               properties: {

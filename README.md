@@ -1,239 +1,129 @@
 # LibraNia
 
-**Library of Neuron Interface Atlas**
+LibraNia is a local-first AI knowledge workspace. It stores notes, files, links, agent sessions, and exports on your machine, then lets browser UI, Codex, Claude Code, and Blackboard agents work against the same library.
 
-AI-Powered Personal Knowledge Management System
+![LibraNia workflow and infrastructure](docs/images/librania-workflow.png)
 
-LibraNia is a local-first knowledge management system that visualizes information as an interconnected neural network. Ask questions, research topics with AI (Claude, GPT, DeepSeek), and store verified answers with rich context in your personal library. Knowledge nodes auto-link based on semantic relationships and display as an interactive 3D graph.
+## What It Does
 
-## ✨ Features
+- **Library**: Markdown notes, tags, backlinks, uploaded content, and full-text search.
+- **Graph**: Visual navigation through `[[wiki-links]]` and note relationships.
+- **Blackboard**: A collaborative agent workspace where agents can research, review, plan, link, and export session knowledge.
+- **Tool Builder**: Custom HTTP/static tools for agents, with a Playground for manual tool checks.
+- **MCP Server**: Exposes the local LibraNia library to Codex, Claude Code, Claude Desktop, and other MCP clients.
+- **Research Write-Back**: Research agents must search the library first. If they use web research, useful durable findings should be saved back to LibraNia before being used as final knowledge.
 
-### 📚 Knowledge Library
-- **Rich Note Editor**: Markdown editor with live preview, syntax highlighting, and image support
-- **Smart Linking**: Auto-link notes using `[[Note Title]]` syntax with bidirectional backlinks
-- **Tag Organization**: Categorize notes with tags for easy filtering and discovery
-- **Content Management**: Upload and manage images, documents, and other content files
-- **Full-Text Search**: Fast search across all notes with fuzzy matching and semantic search
+## Quick Start
 
-### 💬 AI Chat Interface
-- **Multi-Provider Support**: Claude (Anthropic), GPT (OpenAI), DeepSeek
-- **Conversation Management**: Create, rename, and organize multiple chat conversations
-- **Streaming Responses**: Real-time AI responses with WebSocket streaming
-- **Context-Aware**: AI can reference your knowledge library for better answers
+Requirements:
 
-### 🕸️ 3D Knowledge Graph
-- **Interactive Visualization**: Explore your knowledge as a 3D neural network
-- **Force-Directed Layout**: Physics-based graph layout with customizable forces
-- **Node Highlighting**: Click nodes to highlight neighbors and connections
-- **Search Integration**: Search and highlight nodes in the graph
-- **Minimap Navigation**: Quick navigation with 2D minimap overview
+- Node.js 18+
+- npm 7+
+- Native build tools for `better-sqlite3` and `sharp`
 
-### 🎨 Modern UI
-- **Dark/Light Theme**: Toggle between dark and light modes
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
-- **Collapsible Sidebar**: Maximize workspace with collapsible navigation
-- **Keyboard Shortcuts**: Quick navigation with Cmd/Ctrl+K
-
-### 🔒 Privacy-First
-- **Local Storage**: All data stored on your machine (SQLite + filesystem)
-- **No Cloud Lock-in**: Your data stays with you
-- **Offline Capable**: Core features work without internet connection
-
-## 🚀 Quick Start
-
-### Prerequisites
-- **Node.js** 18+ (LTS recommended)
-- **npm** 7+
-- **Build Tools** (for native modules):
-  - Windows: Visual Studio Build Tools
-  - macOS: Xcode Command Line Tools
-  - Linux: build-essential
-
-### Installation
+Install and run:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/LibraNia.git
-cd LibraNia
-
-# Install dependencies
 npm install
-
-# Build the application
-npm run build
-
-# Start the server
+npm run build:package
 npm start
 ```
 
-The web interface will be available at `http://localhost:3001`
-
-### Development Mode
+Windows shortcut:
 
 ```bash
-# Start backend dev server (with hot reload)
-npm run dev:backend
-
-# In another terminal, start frontend dev server
-npm run dev:frontend
+start.bat
 ```
 
-## 📖 Usage
+The app starts the local web server and opens the browser. If port `3001` is unavailable, the backend retries nearby ports.
 
-### Setting Up AI Providers
+## Data Model
 
-1. Navigate to **Settings** in the sidebar
-2. Configure your AI provider API keys:
-   - **Claude**: Get API key from [Anthropic Console](https://console.anthropic.com/)
-   - **OpenAI**: Get API key from [OpenAI Platform](https://platform.openai.com/)
-   - **DeepSeek**: Get API key from [DeepSeek Platform](https://platform.deepseek.com/)
+LibraNia is local-first by default:
 
-### Creating Notes
+- `data/librania.db`: SQLite database
+- `data/notes/`: Markdown note files with frontmatter
+- `content/`: uploaded files and imported images
+- `data/blackboard-exports/`: exported Blackboard session summaries
+- `.env` / `data/.env`: local provider configuration and API keys
 
-1. Go to **Library** in the sidebar
-2. Click **New Note** or press `Cmd/Ctrl+N`
-3. Write in Markdown with live preview
-4. Link to other notes using `[[Note Title]]` syntax
-5. Add tags for organization
+These paths are ignored by git so personal notes, uploaded files, and API keys do not get committed.
 
-### Using AI Chat
+## Research Policy
 
-1. Go to **Chat** in the sidebar
-2. Click **New Conversation**
-3. Select your AI provider (Claude, GPT, or DeepSeek)
-4. Start chatting! AI responses stream in real-time
+The repository includes both `AGENTS.md` and `CLAUDE.md` so Codex and Claude Code follow the same library workflow:
 
-### Exploring the Knowledge Graph
+1. Search LibraNia first.
+2. Read relevant notes.
+3. Use web search only when the library is missing, shallow, outdated, or the task asks for current information.
+4. If web search produces useful durable knowledge, create or update a LibraNia note before using that knowledge in the final answer.
+5. Add tags and `[[Exact Note Title]]` links so the graph stays connected.
 
-1. Go to **Graph** in the sidebar
-2. Use mouse to rotate, zoom, and pan the 3D graph
-3. Click nodes to view details and highlight connections
-4. Search for specific notes using the search box
-5. Use the minimap for quick navigation
+## MCP Setup
 
-## 🛠️ Technology Stack
-
-### Backend
-- **Node.js** - JavaScript runtime
-- **Express** - HTTP server
-- **Socket.IO** - WebSocket server for real-time streaming
-- **SQLite** - Local database (via better-sqlite3)
-- **sqlite-vec** - Vector search extension for semantic search
-- **Drizzle ORM** - Type-safe database queries
-
-### Frontend
-- **React 19** - UI framework with concurrent rendering
-- **TypeScript** - Type-safe development
-- **Vite 6** - Fast build tool and dev server
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **Three.js** - 3D graphics for graph visualization
-- **react-force-graph-3d** - 3D force-directed graph component
-- **TanStack Query** - Async state management
-- **Zustand** - Lightweight state management
-
-### AI Integration
-- **@anthropic-ai/sdk** - Claude API client
-- **openai** - OpenAI/DeepSeek API client
-- **@xenova/transformers** - Local embeddings generation
-
-## 📁 Project Structure
-
-```
-LibraNia/
-├── backend/           # Node.js backend server
-│   ├── api/          # HTTP API routes
-│   ├── database/     # SQLite database and schema
-│   ├── services/     # Business logic (AI, search, etc.)
-│   └── server.ts     # Express + Socket.IO server
-├── src/              # React frontend
-│   ├── api/          # API client functions
-│   ├── components/   # React components
-│   ├── hooks/        # Custom React hooks
-│   ├── routes/       # Page components
-│   └── main.tsx      # App entry point
-├── mcp-server/       # MCP server for Claude integration
-├── bin/              # CLI entry point
-└── package.json      # Dependencies and scripts
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-# Server Configuration
-PORT=3001
-HOST=localhost
-
-# AI Provider API Keys
-ANTHROPIC_API_KEY=your_claude_api_key
-OPENAI_API_KEY=your_openai_api_key
-DEEPSEEK_API_KEY=your_deepseek_api_key
-
-# Database
-DATABASE_PATH=./data/librania.db
-```
-
-### Database Location
-
-By default, LibraNia stores data in:
-- **Database**: `./data/librania.db`
-- **Content Files**: `./content/`
-
-You can change these paths in the `.env` file.
-
-## 📦 Building for Production
+Build and register the MCP server:
 
 ```bash
-# Build both backend and frontend
+cd mcp-server
+npm install
 npm run build
+npm run setup-codex
+npm run setup-cli
+```
 
-# Start production server
+Verify:
+
+```bash
+codex mcp get librania
+claude mcp get librania
+```
+
+MCP tools:
+
+- `search_notes`
+- `get_note`
+- `create_note`
+- `update_note`
+- `add_tags`
+- `list_tags`
+
+## Blackboard
+
+The Blackboard tab is a collaborative agent workspace, not a simple chatbot.
+
+- A session has a task, active agents, inactive agents, visible agent turns, and detailed response/tool traces.
+- Agents are selected by task fit and can mention inactive agents to bring them into the room.
+- Built-in agents include Librarian, Research Agent, Reviewer, Link Curator, Architecture Planner, Ideal Agent, and Export Agent.
+- Export Agent can summarize a complete Blackboard session to a library note, Markdown file, or both.
+
+## Architecture
+
+See [workflow.md](workflow.md) for the system workflow, infrastructure layout, MCP behavior, Blackboard behavior, and data flow.
+
+## Build Commands
+
+```bash
+npm run build:frontend
+npm run build:backend
+npm run build:package
 npm start
 ```
 
-## 🧪 Testing
+## Project Layout
 
-```bash
-# Run all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
+```text
+backend/       Express API, services, tools, Blackboard engine
+src/           React UI, routes, API clients, components
+mcp-server/    Stdio MCP server for Codex and Claude clients
+scripts/       startup and build helper scripts
+bin/           CLI entry point
+docs/images/   documentation image assets
+data/          local database and generated library data, gitignored
+content/       uploaded/imported content, gitignored
 ```
 
-## 🤝 Contributing
+## Notes
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Anthropic** - Claude AI API
-- **OpenAI** - GPT API
-- **Three.js** - 3D graphics library
-- **react-force-graph** - Graph visualization components
-- **sqlite-vec** - Vector search for SQLite
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/LibraNia/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/LibraNia/discussions)
-
----
-
-**Built with ❤️ for knowledge seekers**
+- API keys and personal data are intentionally local.
+- MCP is registered as a stdio server; clients start it when needed.
+- The app can use external AI providers, but the knowledge base remains local unless you explicitly export or sync it.
