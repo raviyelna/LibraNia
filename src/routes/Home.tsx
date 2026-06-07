@@ -5,10 +5,13 @@ import {
   BookOpen,
   Brain,
   Check,
+  ClipboardList,
   Clock3,
   Library,
+  LayoutDashboard,
   MessageSquare,
   Network,
+  RotateCcw,
   Settings2,
   Sparkles,
   Tags,
@@ -19,10 +22,14 @@ import { useGraph } from '../hooks/useGraph';
 import { useTags } from '../hooks/useTags';
 import { useConversations } from '../hooks/useConversations';
 
-type WidgetId = 'recentNotes' | 'graphHealth' | 'recentResearch' | 'tags';
+type WidgetId = 'quickActions' | 'metrics' | 'recentNotes' | 'graphHealth' | 'recentResearch' | 'tags';
+type DashboardDensity = 'comfortable' | 'compact';
 
 const DASHBOARD_WIDGETS_KEY = 'home-dashboard-widgets';
+const DASHBOARD_DENSITY_KEY = 'home-dashboard-density';
 const DEFAULT_WIDGETS: Record<WidgetId, boolean> = {
+  quickActions: true,
+  metrics: true,
   recentNotes: true,
   graphHealth: true,
   recentResearch: true,
@@ -30,6 +37,8 @@ const DEFAULT_WIDGETS: Record<WidgetId, boolean> = {
 };
 
 const widgetOptions: Array<{ id: WidgetId; label: string; description: string }> = [
+  { id: 'quickActions', label: 'Quick actions', description: 'Show primary navigation shortcuts.' },
+  { id: 'metrics', label: 'Workspace metrics', description: 'Show note, graph, tag, and research totals.' },
   { id: 'recentNotes', label: 'Recent notes', description: 'Continue reading your latest notes.' },
   { id: 'graphHealth', label: 'Graph health', description: 'Track connections across your library.' },
   { id: 'recentResearch', label: 'Recent research', description: 'Resume recent AI conversations.' },
@@ -56,15 +65,22 @@ export function Home() {
   const { conversations, loading: conversationsLoading } = useConversations();
   const [customizing, setCustomizing] = useState(false);
   const [widgets, setWidgets] = useState(DEFAULT_WIDGETS);
+  const [density, setDensity] = useState<DashboardDensity>('comfortable');
 
   useEffect(() => {
     const savedWidgets = localStorage.getItem(DASHBOARD_WIDGETS_KEY);
-    if (!savedWidgets) return;
+    const savedDensity = localStorage.getItem(DASHBOARD_DENSITY_KEY);
 
-    try {
-      setWidgets({ ...DEFAULT_WIDGETS, ...JSON.parse(savedWidgets) });
-    } catch {
-      localStorage.removeItem(DASHBOARD_WIDGETS_KEY);
+    if (savedWidgets) {
+      try {
+        setWidgets({ ...DEFAULT_WIDGETS, ...JSON.parse(savedWidgets) });
+      } catch {
+        localStorage.removeItem(DASHBOARD_WIDGETS_KEY);
+      }
+    }
+
+    if (savedDensity === 'compact' || savedDensity === 'comfortable') {
+      setDensity(savedDensity);
     }
   }, []);
 
@@ -74,6 +90,18 @@ export function Home() {
       localStorage.setItem(DASHBOARD_WIDGETS_KEY, JSON.stringify(next));
       return next;
     });
+  };
+
+  const setDashboardDensity = (nextDensity: DashboardDensity) => {
+    setDensity(nextDensity);
+    localStorage.setItem(DASHBOARD_DENSITY_KEY, nextDensity);
+  };
+
+  const resetDashboard = () => {
+    setWidgets(DEFAULT_WIDGETS);
+    setDensity('comfortable');
+    localStorage.setItem(DASHBOARD_WIDGETS_KEY, JSON.stringify(DEFAULT_WIDGETS));
+    localStorage.setItem(DASHBOARD_DENSITY_KEY, 'comfortable');
   };
 
   const recentNotes = useMemo(
@@ -86,37 +114,46 @@ export function Home() {
     : 0;
   const visibleWidgetCount = Object.values(widgets).filter(Boolean).length;
   const loading = notesLoading || graphLoading || tagsLoading || conversationsLoading;
+  const isCompact = density === 'compact';
+  const pagePadding = isCompact ? 'px-4 py-4 md:px-5 lg:px-6' : 'px-4 py-6 md:px-6 lg:px-8';
+  const sectionGap = isCompact ? 'mb-4' : 'mb-6';
 
   return (
-    <div className="h-full overflow-y-auto bg-muted/25">
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-6 lg:px-8">
-        <header className="mb-6 flex flex-col gap-4 rounded-2xl border border-border bg-background p-5 shadow-sm md:flex-row md:items-center md:justify-between md:p-7">
+    <div className="h-full overflow-y-auto bg-slate-50 dark:bg-muted/10">
+      <div className={`mx-auto max-w-7xl ${pagePadding}`}>
+        <header className={`${sectionGap} flex flex-col gap-4 rounded-xl border border-border bg-background p-4 shadow-sm md:flex-row md:items-center md:justify-between ${isCompact ? 'md:p-4' : 'md:p-5'}`}>
           <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-              <Brain size={28} />
+            <div className="rounded-lg bg-primary/10 p-2.5 text-primary">
+              <Brain size={24} />
             </div>
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Knowledge workspace</p>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">Your LibraNia dashboard</h1>
+            <div className="min-w-0">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-normal text-primary">Knowledge workspace</p>
+              <h1 className="truncate text-2xl font-bold tracking-tight text-foreground">Your LibraNia dashboard</h1>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-secondary">
                 Continue your research, inspect your knowledge graph, and keep your local library organized.
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setCustomizing(true)}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <Settings2 size={16} />
-            Customize
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-md border border-border bg-muted/50 px-2.5 py-1 text-xs text-secondary">
+              {density}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCustomizing(true)}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <Settings2 size={16} />
+              Customize
+            </button>
+          </div>
         </header>
 
-        <section aria-label="Quick actions" className="mb-6 grid gap-3 sm:grid-cols-3">
-          <Link to="/chat" className="group rounded-xl border border-primary/30 bg-primary p-4 text-white shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+        {widgets.quickActions && (
+        <section aria-label="Quick actions" className={`${sectionGap} grid gap-3 sm:grid-cols-2 xl:grid-cols-4`}>
+          <Link to="/chat" className={`group rounded-xl border border-primary/30 bg-primary text-white shadow-sm transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${isCompact ? 'p-3' : 'p-4'}`}>
             <MessageSquare size={20} />
-            <div className="mt-5 flex items-end justify-between gap-3">
+            <div className={`${isCompact ? 'mt-3' : 'mt-5'} flex items-end justify-between gap-3`}>
               <div>
                 <h2 className="font-semibold">Start AI research</h2>
                 <p className="mt-1 text-xs text-white/80">Ask, verify, and write knowledge back.</p>
@@ -124,9 +161,19 @@ export function Home() {
               <ArrowRight className="shrink-0 transition-transform group-hover:translate-x-1" size={18} />
             </div>
           </Link>
-          <Link to="/library" className="group rounded-xl border border-border bg-background p-4 shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary">
+          <Link to="/blackboard" className={`group rounded-xl border border-border bg-background shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary ${isCompact ? 'p-3' : 'p-4'}`}>
+            <ClipboardList className="text-primary" size={20} />
+            <div className={`${isCompact ? 'mt-3' : 'mt-5'} flex items-end justify-between gap-3`}>
+              <div>
+                <h2 className="font-semibold text-foreground">Open blackboard</h2>
+                <p className="mt-1 text-xs text-secondary">Assign tasks to agent teams.</p>
+              </div>
+              <ArrowRight className="shrink-0 text-primary transition-transform group-hover:translate-x-1" size={18} />
+            </div>
+          </Link>
+          <Link to="/library" className={`group rounded-xl border border-border bg-background shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary ${isCompact ? 'p-3' : 'p-4'}`}>
             <Library className="text-primary" size={20} />
-            <div className="mt-5 flex items-end justify-between gap-3">
+            <div className={`${isCompact ? 'mt-3' : 'mt-5'} flex items-end justify-between gap-3`}>
               <div>
                 <h2 className="font-semibold text-foreground">Open library</h2>
                 <p className="mt-1 text-xs text-secondary">Read, edit, and organize your notes.</p>
@@ -134,9 +181,9 @@ export function Home() {
               <ArrowRight className="shrink-0 text-primary transition-transform group-hover:translate-x-1" size={18} />
             </div>
           </Link>
-          <Link to="/graph" className="group rounded-xl border border-border bg-background p-4 shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary">
+          <Link to="/graph" className={`group rounded-xl border border-border bg-background shadow-sm transition-colors hover:border-primary/50 hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary ${isCompact ? 'p-3' : 'p-4'}`}>
             <Network className="text-primary" size={20} />
-            <div className="mt-5 flex items-end justify-between gap-3">
+            <div className={`${isCompact ? 'mt-3' : 'mt-5'} flex items-end justify-between gap-3`}>
               <div>
                 <h2 className="font-semibold text-foreground">Explore graph</h2>
                 <p className="mt-1 text-xs text-secondary">Reveal connections across your notes.</p>
@@ -145,13 +192,16 @@ export function Home() {
             </div>
           </Link>
         </section>
+        )}
 
-        <section aria-label="Workspace metrics" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {widgets.metrics && (
+        <section aria-label="Workspace metrics" className={`${sectionGap} grid grid-cols-2 gap-3 lg:grid-cols-4`}>
           <MetricCard icon={BookOpen} label="Notes" value={notes.length} loading={notesLoading} />
           <MetricCard icon={Network} label="Connections" value={graphData.links.length} loading={graphLoading} />
           <MetricCard icon={Tags} label="Tags" value={tags.length} loading={tagsLoading} />
           <MetricCard icon={Sparkles} label="Research threads" value={conversations.length} loading={conversationsLoading} />
         </section>
+        )}
 
         {visibleWidgetCount === 0 ? (
           <section className="rounded-2xl border border-dashed border-border bg-background p-10 text-center">
@@ -210,6 +260,29 @@ export function Home() {
                 <X size={18} />
               </button>
             </div>
+            <div className="mb-5 rounded-xl border border-border bg-muted/25 p-3">
+              <div className="mb-3 flex items-center gap-2">
+                <LayoutDashboard size={16} className="text-primary" />
+                <p className="text-sm font-semibold text-foreground">Dashboard density</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {(['comfortable', 'compact'] as DashboardDensity[]).map(option => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setDashboardDensity(option)}
+                    aria-pressed={density === option}
+                    className={`cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium capitalize transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
+                      density === option
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-secondary hover:bg-muted hover:text-foreground'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="space-y-3">
               {widgetOptions.map(option => (
                 <button
@@ -231,6 +304,14 @@ export function Home() {
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              onClick={resetDashboard}
+              className="mt-5 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <RotateCcw size={15} />
+              Reset dashboard
+            </button>
           </aside>
         </div>
       )}
@@ -250,7 +331,7 @@ function MetricCard({ icon: Icon, label, value, loading }: {
         <span className="text-xs font-medium uppercase tracking-wide text-secondary">{label}</span>
         <Icon className="text-primary" size={16} />
       </div>
-      <p className="mt-3 text-2xl font-bold tracking-tight text-foreground">{loading ? '–' : value}</p>
+      <p className="mt-3 text-2xl font-bold tracking-tight text-foreground">{loading ? '-' : value}</p>
     </div>
   );
 }
