@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1700" viewBox="0 0 2400 1700">
+  <defs>
+    <style>
+      .bg{fill:#f8fafc}.title{font:800 48px Arial,sans-serif;fill:#0f172a}.sub{font:400 22px Arial,sans-serif;fill:#475569}
+      .panel{fill:#fff;stroke:#cbd5e1;stroke-width:2}.head{font:800 24px Arial,sans-serif;fill:#0f172a}.h2{font:800 19px Arial,sans-serif;fill:#0f172a}
+      .txt{font:400 15px Arial,sans-serif;fill:#334155}.mono{font:700 14px Consolas,monospace;fill:#1e293b}.small{font:700 13px Arial,sans-serif;fill:#475569}
+      .blue{fill:#eff6ff;stroke:#2563eb}.purple{fill:#f5f3ff;stroke:#7c3aed}.green{fill:#ecfdf5;stroke:#059669}.orange{fill:#fff7ed;stroke:#ea580c}.amber{fill:#fffbeb;stroke:#d97706}.slate{fill:#f1f5f9;stroke:#64748b}.red{fill:#fef2f2;stroke:#dc2626}
+      .arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#arrow)}.soft{stroke:#94a3b8;stroke-width:2;fill:none;marker-end:url(#soft)}
+      .dash{stroke:#64748b;stroke-width:2;stroke-dasharray:8 7;fill:none;marker-end:url(#soft)}
+      .num{font:800 18px Arial,sans-serif;fill:#fff}.pill{fill:#0f172a}.label{font:800 14px Arial,sans-serif;fill:#0f172a}
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker>
+    <marker id="soft" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker>
+  </defs>
+  <rect class="bg" width="2400" height="1700"/>
+  <text class="title" x="80" y="86">LibraNia Library-First Research Workflow</text>
+  <text class="sub" x="82" y="126">Actual research control flow for Chat, Blackboard, Library Ask, and MCP clients. Web enrichment is optional; local write-back is mandatory for durable findings.</text>
+
+  <rect class="panel" x="70" y="165" width="2260" height="210" rx="18"/>
+  <text class="head" x="105" y="210">Entry points and task context</text>
+  <rect class="blue" x="105" y="235" width="300" height="95" rx="12"/><text class="h2" x="130" y="272">Chat research mode</text><text class="txt" x="130" y="300">Conversation plus provider/model.</text>
+  <rect class="blue" x="435" y="235" width="330" height="95" rx="12"/><text class="h2" x="460" y="272">Blackboard task</text><text class="txt" x="460" y="300">Session, active agents, @mentions.</text>
+  <rect class="blue" x="795" y="235" width="315" height="95" rx="12"/><text class="h2" x="820" y="272">Library Ask</text><text class="txt" x="820" y="300">Selected note and local context.</text>
+  <rect class="blue" x="1140" y="235" width="320" height="95" rx="12"/><text class="h2" x="1165" y="272">MCP clients</text><text class="txt" x="1165" y="300">Codex / Claude CLI via stdio tools.</text>
+  <rect class="slate" x="1510" y="225" width="760" height="120" rx="12"/>
+  <text class="h2" x="1540" y="262">Context packet</text>
+  <text class="txt" x="1540" y="292">Prompt, selected note, prior messages, Blackboard workspace, enabled tools,</text>
+  <text class="txt" x="1540" y="318">provider config, model, and response budget.</text>
+
+  <text class="head" x="90" y="435">Main research sequence</text>
+  <line class="soft" x1="180" y1="468" x2="2220" y2="468"/>
+
+  <rect class="purple" x="90" y="510" width="290" height="160" rx="14"/>
+  <circle class="pill" cx="125" cy="545" r="18"/><text class="num" x="120" y="552">1</text>
+  <text class="h2" x="155" y="552">Parse intent</text>
+  <text class="txt" x="120" y="590">Classify factual, current,</text><text class="txt" x="120" y="616">comparative, planning, idea,</text><text class="txt" x="120" y="642">or implementation request.</text>
+
+  <rect class="green" x="430" y="510" width="310" height="160" rx="14"/>
+  <circle class="pill" cx="465" cy="545" r="18"/><text class="num" x="460" y="552">2</text>
+  <text class="h2" x="495" y="552">Search library first</text>
+  <text class="mono" x="460" y="590">search_notes(query)</text>
+  <text class="txt" x="460" y="616">Exact topic, synonyms,</text><text class="txt" x="460" y="642">domain terms, nearby concepts.</text>
+
+  <rect class="green" x="790" y="510" width="310" height="160" rx="14"/>
+  <circle class="pill" cx="825" cy="545" r="18"/><text class="num" x="820" y="552">3</text>
+  <text class="h2" x="855" y="552">Read notes</text>
+  <text class="mono" x="820" y="590">get_note(noteId)</text>
+  <text class="txt" x="820" y="616">Open relevant notes only.</text><text class="txt" x="820" y="642">Use titles for wiki-links.</text>
+
+  <rect class="amber" x="1150" y="500" width="330" height="180" rx="14"/>
+  <circle class="pill" cx="1185" cy="540" r="18"/><text class="num" x="1180" y="547">4</text>
+  <text class="h2" x="1215" y="547">Coverage decision</text>
+  <text class="txt" x="1180" y="585">Is local knowledge enough?</text>
+  <text class="txt" x="1180" y="615">Is it current enough?</text>
+  <text class="txt" x="1180" y="645">Is it specific enough?</text>
+
+  <rect class="purple" x="1530" y="510" width="310" height="160" rx="14"/>
+  <circle class="pill" cx="1565" cy="545" r="18"/><text class="num" x="1560" y="552">5</text>
+  <text class="h2" x="1595" y="552">Synthesize</text>
+  <text class="txt" x="1560" y="590">Cluster facts into durable</text><text class="txt" x="1560" y="616">concepts. Choose update</text><text class="txt" x="1560" y="642">versus create.</text>
+
+  <rect class="slate" x="1890" y="510" width="330" height="160" rx="14"/>
+  <circle class="pill" cx="1925" cy="545" r="18"/><text class="num" x="1920" y="552">6</text>
+  <text class="h2" x="1955" y="552">Answer from library</text>
+  <text class="txt" x="1920" y="590">Use notes used, created,</text><text class="txt" x="1920" y="616">or updated as final source</text><text class="txt" x="1920" y="642">of durable knowledge.</text>
+
+  <path class="arrow" d="M380 590H430"/><path class="arrow" d="M740 590H790"/><path class="arrow" d="M1100 590H1150"/>
+  <path class="arrow" d="M1480 590H1530"/><path class="arrow" d="M1840 590H1890"/>
+
+  <rect class="panel" x="1150" y="735" width="1070" height="310" rx="18"/>
+  <text class="head" x="1185" y="780">Optional web enrichment branch</text>
+  <text class="txt" x="1185" y="812">Used only when local notes are missing, shallow, outdated, or the user explicitly asks for current/latest information.</text>
+  <rect class="orange" x="1185" y="845" width="300" height="135" rx="12"/>
+  <text class="h2" x="1210" y="882">A. Search web</text><text class="mono" x="1210" y="912">web_search(query)</text><text class="txt" x="1210" y="940">Prefer primary sources.</text>
+  <rect class="orange" x="1520" y="845" width="310" height="135" rx="12"/>
+  <text class="h2" x="1545" y="882">B. Source triage</text><text class="txt" x="1545" y="912">Keep title, URL, date, claim,</text><text class="txt" x="1545" y="940">relevance, and uncertainty.</text>
+  <rect class="orange" x="1865" y="845" width="310" height="135" rx="12"/>
+  <text class="h2" x="1890" y="882">C. Return evidence</text><text class="txt" x="1890" y="912">External facts go back to</text><text class="txt" x="1890" y="940">the synthesis step.</text>
+  <path class="arrow" d="M1485 912H1520"/><path class="arrow" d="M1830 912H1865"/>
+  <path class="dash" d="M1315 680V735"/><text class="label" x="1330" y="715">if not enough</text>
+  <path class="dash" d="M2020 845V705H1685V670"/><text class="label" x="1700" y="710">evidence returns</text>
+
+  <rect class="panel" x="90" y="735" width="980" height="590" rx="18"/>
+  <text class="head" x="125" y="780">Mandatory write-back path for durable findings</text>
+  <rect class="amber" x="125" y="835" width="420" height="170" rx="12"/>
+  <text class="h2" x="155" y="875">Create or update Markdown notes</text>
+  <text class="mono" x="155" y="907">create_note(title, body, imageUrls?)</text>
+  <text class="mono" x="155" y="935">update_note(noteId, appendBody/body)</text>
+  <text class="txt" x="155" y="965">One durable concept per note; no JSON-note schema.</text>
+  <rect class="amber" x="600" y="835" width="420" height="170" rx="12"/>
+  <text class="h2" x="630" y="875">Tag and connect graph</text>
+  <text class="mono" x="630" y="907">add_tags(noteId, tags)</text>
+  <text class="txt" x="630" y="935">Use lowercase kebab-case tags.</text>
+  <text class="txt" x="630" y="963">Use [[Exact Note Title]] wiki-links.</text>
+  <path class="arrow" d="M545 920H600"/>
+  <rect class="green" x="125" y="1060" width="895" height="195" rx="12"/>
+  <text class="h2" x="155" y="1100">Local persistence updated</text>
+  <text class="txt" x="155" y="1132">SQLite stores notes, tags, links, citations, conversations, Blackboard sessions, artifacts, content metadata, and embeddings.</text>
+  <text class="txt" x="155" y="1162">Markdown files, uploaded files, imported content, and Blackboard exports remain local under data/ and content/.</text>
+  <text class="txt" x="155" y="1192">Graph neighborhoods update from wiki-links, related notes, backlinks, and auto-linking.</text>
+  <path class="arrow" d="M810 1005V1060"/>
+  <path class="dash" d="M1685 670V720H810V835"/><text class="label" x="940" y="720">durable new knowledge must be written before final use</text>
+
+  <rect class="panel" x="90" y="1380" width="2130" height="200" rx="18"/>
+  <text class="head" x="125" y="1425">Operational guardrails</text>
+  <rect class="red" x="125" y="1460" width="450" height="80" rx="12"/><text class="h2" x="150" y="1492">Provider empty response</text><text class="txt" x="150" y="1518">Expose tool results/details; do not claim success.</text>
+  <rect class="red" x="620" y="1460" width="450" height="80" rx="12"/><text class="h2" x="645" y="1492">Tool budget exhausted</text><text class="txt" x="645" y="1518">Stop cleanly and ask for a narrower research task.</text>
+  <rect class="red" x="1115" y="1460" width="500" height="80" rx="12"/><text class="h2" x="1140" y="1492">Blocked image / weak source</text><text class="txt" x="1140" y="1518">Skip it; keep source URLs and uncertainty in the note.</text>
+  <rect class="red" x="1660" y="1460" width="500" height="80" rx="12"/><text class="h2" x="1685" y="1492">Duplicate risk</text><text class="txt" x="1685" y="1518">Read existing notes and update instead of duplicating.</text>
+
+  <rect class="panel" x="90" y="1605" width="2130" height="55" rx="14"/>
+  <text class="label" x="125" y="1640">Invariant: search local notes first. Web search enriches gaps. Useful durable findings are written back to local Markdown notes with tags and wiki-links before they become reusable final knowledge.</text>
+</svg>

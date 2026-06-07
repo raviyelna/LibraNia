@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Bot, Check, ChevronDown, ClipboardList, MessageSquareText, Pencil, Plus, Save, Send, Trash2, Users, Wrench, X } from 'lucide-react';
+import { Bot, Check, ChevronDown, ClipboardList, Database, FileText, MessageSquareText, Pencil, PlayCircle, Plus, Save, Send, Settings2, Trash2, Users, Wrench, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import toast from 'react-hot-toast';
@@ -476,6 +476,8 @@ export function BlackboardPage() {
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
   const [task, setTask] = useState('');
   const [taskPanelOpen, setTaskPanelOpen] = useState(true);
+  const [boardLeftOpen, setBoardLeftOpen] = useState(true);
+  const [boardRightOpen, setBoardRightOpen] = useState(true);
   const [sessionsPanelOpen, setSessionsPanelOpen] = useState(true);
   const [sessionContextOpen, setSessionContextOpen] = useState(false);
   const [artifactPanelOpen, setArtifactPanelOpen] = useState(true);
@@ -796,38 +798,81 @@ export function BlackboardPage() {
     td: ({ ...props }) => <td className="border border-border px-2 py-1 align-top" {...props} />,
   };
 
+  const activeAgents = agents.filter(agent => selectedAgentIds.includes(agent.id));
+  const runningSessions = sessions.filter(session => session.status === 'running').length;
+  const selectedAgentTurns = selectedSession?.messages.filter(item => item.role === 'agent').length || 0;
+  const selectedUserTurns = selectedSession?.messages.filter(item => item.role === 'user').length || 0;
+  const selectedStatusTone = selectedSession?.status === 'complete'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200'
+    : selectedSession?.status === 'failed'
+      ? 'border-destructive/30 bg-destructive/10 text-destructive'
+      : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/70 dark:bg-blue-950/30 dark:text-blue-200';
+  const tabItems: Array<{ id: typeof tab; label: string; icon: typeof ClipboardList; meta: string }> = [
+    { id: 'board', label: 'Board', icon: ClipboardList, meta: `${sessions.length} sessions` },
+    { id: 'agents', label: 'Agents', icon: Bot, meta: `${agents.length} total` },
+    { id: 'tools', label: 'Tools', icon: Wrench, meta: `${tools.length} custom` },
+    { id: 'playground', label: 'Playground', icon: PlayCircle, meta: 'test tools' },
+  ];
+
   return (
-    <div className="flex h-full min-h-0 flex-col bg-background text-foreground">
-      <header className="border-b border-border px-6 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Blackboard</h1>
-            <p className="text-sm text-secondary">Assign work to an active Blackboard agent team and inspect the shared workspace.</p>
+    <div className="flex h-full min-h-0 flex-col bg-slate-50 text-foreground dark:bg-background">
+      <header className="border-b border-border bg-background px-5 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-primary">
+                <ClipboardList size={18} />
+              </div>
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-semibold tracking-tight">Blackboard</h1>
+                <p className="truncate text-sm text-secondary">Collaborative agent room, shared workspace, and tool lab.</p>
+              </div>
+            </div>
           </div>
-          <div className="flex rounded-lg border border-border bg-muted/40 p-1">
-            <button onClick={() => setTab('board')} className={`flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${tab === 'board' ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:text-foreground'}`}>
-              <ClipboardList size={16} />
-              Board
-            </button>
-            <button onClick={() => setTab('agents')} className={`flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${tab === 'agents' ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:text-foreground'}`}>
-              <Bot size={16} />
-              Agent Management
-            </button>
-            <button onClick={() => setTab('tools')} className={`flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${tab === 'tools' ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:text-foreground'}`}>
-              <Wrench size={16} />
-              Tool Builder
-            </button>
-            <button onClick={() => setTab('playground')} className={`flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${tab === 'playground' ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:text-foreground'}`}>
-              <MessageSquareText size={16} />
-              Playground
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-md border border-border bg-muted/50 px-2.5 py-1 text-xs text-secondary">{sessions.length} sessions</span>
+            <span className="rounded-md border border-border bg-muted/50 px-2.5 py-1 text-xs text-secondary">{agents.length} agents</span>
+            {runningSessions > 0 && (
+              <span className="rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-800 dark:border-blue-900/70 dark:bg-blue-950/30 dark:text-blue-200">
+                {runningSessions} running
+              </span>
+            )}
           </div>
         </div>
+        <nav className="mt-3 flex flex-wrap gap-1 rounded-lg border border-border bg-muted/35 p-1" aria-label="Blackboard sections">
+          {tabItems.map(item => {
+            const Icon = item.icon;
+            const active = tab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setTab(item.id)}
+                title={`${item.label} - ${item.meta}`}
+                className={`flex h-8 min-w-0 cursor-pointer items-center gap-1.5 rounded-md px-2.5 text-left text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${active ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:bg-background hover:text-foreground'}`}
+              >
+                <Icon size={15} />
+                <span className="truncate font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </header>
 
       {tab === 'board' ? (
-        <main className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden bg-muted/20 lg:grid-cols-[340px_1fr]">
-          <aside className="min-h-0 overflow-y-auto border-r border-border bg-background p-3">
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-slate-50 dark:bg-muted/10 lg:flex-row">
+          {boardLeftOpen ? (
+          <aside className="min-h-0 w-full min-w-[260px] max-w-[460px] resize-x overflow-y-auto overflow-x-hidden border-r border-border bg-background p-3 lg:w-[300px]">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-normal text-secondary">Session rail</span>
+              <button
+                type="button"
+                onClick={() => setBoardLeftOpen(false)}
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-secondary transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Collapse session sidebar"
+              >
+                <ChevronDown size={15} className="rotate-90" />
+              </button>
+            </div>
             <section className="mb-3 rounded-lg border border-border bg-muted/20">
               <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2">
                 <button
@@ -873,6 +918,11 @@ export function BlackboardPage() {
                       <Users size={16} />
                       Active agents
                     </div>
+                    {activeAgents.length > 0 && (
+                      <p className="mb-2 line-clamp-2 text-xs text-secondary">
+                        {activeAgents.map(agent => agent.name).join(', ')}
+                      </p>
+                    )}
                     <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
                       {agents.map((agent, index) => {
                         const selected = selectedAgentIds.includes(agent.id);
@@ -961,94 +1011,41 @@ export function BlackboardPage() {
               )}
             </section>
           </aside>
+          ) : (
+            <aside className="hidden w-11 shrink-0 border-r border-border bg-background p-2 lg:flex lg:flex-col lg:items-center">
+              <button
+                type="button"
+                onClick={() => setBoardLeftOpen(true)}
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-secondary transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Expand session sidebar"
+                title="Expand sessions"
+              >
+                <ChevronDown size={16} className="-rotate-90" />
+              </button>
+              <span className="mt-3 [writing-mode:vertical-rl] text-xs font-medium text-secondary">Sessions</span>
+            </aside>
+          )}
 
-          <div className="flex min-h-0 flex-col overflow-hidden">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
               <div className="border-b border-border bg-background px-5 py-3">
                 {selectedSession ? (
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="mb-1 flex items-center gap-2">
                         <h2 className="truncate text-base font-semibold">{selectedSession.title}</h2>
-                        <p className="text-xs text-secondary">{new Date(selectedSession.createdAt).toLocaleString()} - {selectedSession.status}</p>
+                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium ${selectedStatusTone}`}>
+                          {selectedSession.status}
+                        </span>
                       </div>
-                      <span className="rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-medium text-secondary">
-                        {selectedSession.messages.filter(item => item.role === 'agent').length} agent turns
-                      </span>
+                      <p className="truncate text-xs text-secondary">
+                        Started {new Date(selectedSession.createdAt).toLocaleString()}
+                      </p>
                     </div>
-                    {(selectedSession.artifacts || []).length > 0 && (
-                      <div className="rounded-lg border border-border bg-background">
-                        <button
-                          type="button"
-                          onClick={() => setArtifactPanelOpen(open => !open)}
-                          className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                          aria-expanded={artifactPanelOpen}
-                        >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <ChevronDown size={15} className={`shrink-0 transition-transform ${artifactPanelOpen ? '' : '-rotate-90'}`} />
-                            <ClipboardList size={15} className="shrink-0 text-primary" />
-                            <span className="truncate">Shared Blackboard Workspace</span>
-                          </span>
-                          <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">{selectedSession.artifacts.length}</span>
-                        </button>
-                        {artifactPanelOpen && (
-                          <div className="grid max-h-96 gap-2 overflow-y-auto border-t border-border p-3 md:grid-cols-2">
-                            {selectedSession.artifacts.map(artifact => (
-                              <article key={artifact.id} className="rounded-md border border-border bg-muted/20 p-3">
-                                <div className="mb-2 flex items-start justify-between gap-2">
-                                  <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold">{artifact.title}</p>
-                                    <p className="text-xs text-secondary">{artifact.type} - {artifact.updatedBy}</p>
-                                  </div>
-                                  <span className="shrink-0 rounded bg-background px-2 py-0.5 text-[10px] text-secondary">
-                                    {new Date(artifact.updatedAt).toLocaleTimeString()}
-                                  </span>
-                                </div>
-                                <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                    {artifact.content}
-                                  </ReactMarkdown>
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {sessionContextMessages.length > 0 && (
-                      <div className="rounded-lg border border-border bg-muted/30">
-                        <button
-                          type="button"
-                          onClick={() => setSessionContextOpen(open => !open)}
-                          className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm font-medium transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
-                          aria-expanded={sessionContextOpen}
-                        >
-                          <span className="flex min-w-0 items-center gap-2">
-                            <ChevronDown size={15} className={`shrink-0 transition-transform ${sessionContextOpen ? '' : '-rotate-90'}`} />
-                            <ClipboardList size={15} className="shrink-0 text-secondary" />
-                            <span className="truncate">Assigned task and Blackboard context</span>
-                          </span>
-                          <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-xs text-secondary">{sessionContextMessages.length}</span>
-                        </button>
-                        {sessionContextOpen && (
-                          <div className="max-h-72 space-y-2 overflow-y-auto border-t border-border p-3">
-                            {sessionContextMessages.map(item => (
-                              <article key={item.id} className="rounded-md border border-border bg-background p-3">
-                                <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-secondary">
-                                  <ClipboardList size={13} />
-                                  {item.agentName}
-                                  <span className="ml-auto font-normal">{item.role}</span>
-                                </div>
-                                <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
-                                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                                    {item.content}
-                                  </ReactMarkdown>
-                                </div>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-secondary">
+                      <span className="rounded-md border border-border bg-muted/50 px-2 py-1">{selectedAgentTurns} agent turns</span>
+                      <span className="rounded-md border border-border bg-muted/50 px-2 py-1">{selectedUserTurns} user turns</span>
+                      <span className="rounded-md border border-border bg-muted/50 px-2 py-1">{selectedSession.artifacts?.length || 0} workspace items</span>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between gap-2">
@@ -1057,6 +1054,78 @@ export function BlackboardPage() {
                   </div>
                 )}
               </div>
+
+              {selectedSession && (
+                <div className="space-y-2 border-b border-border bg-muted/20 p-3 xl:hidden">
+                  {sessionContextMessages.length > 0 && (
+                    <div className="rounded-lg border border-border bg-background">
+                      <button
+                        type="button"
+                        onClick={() => setSessionContextOpen(open => !open)}
+                        className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                        aria-expanded={sessionContextOpen}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <ChevronDown size={15} className={`shrink-0 transition-transform ${sessionContextOpen ? '' : '-rotate-90'}`} />
+                          <FileText size={15} className="shrink-0 text-primary" />
+                          <span className="truncate">Assigned task</span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-secondary">{sessionContextMessages.length}</span>
+                      </button>
+                      {sessionContextOpen && (
+                        <div className="max-h-56 space-y-2 overflow-y-auto border-t border-border p-3">
+                          {sessionContextMessages.map(item => (
+                            <article key={item.id} className="rounded-md border border-border bg-muted/20 p-3">
+                              <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-secondary">
+                                <ClipboardList size={13} />
+                                <span className="truncate">{item.agentName}</span>
+                                <span className="ml-auto font-normal">{item.role}</span>
+                              </div>
+                              <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                  {item.content}
+                                </ReactMarkdown>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {(selectedSession.artifacts || []).length > 0 && (
+                    <div className="rounded-lg border border-border bg-background">
+                      <button
+                        type="button"
+                        onClick={() => setArtifactPanelOpen(open => !open)}
+                        className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                        aria-expanded={artifactPanelOpen}
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <ChevronDown size={15} className={`shrink-0 transition-transform ${artifactPanelOpen ? '' : '-rotate-90'}`} />
+                          <Database size={15} className="shrink-0 text-primary" />
+                          <span className="truncate">Shared workspace</span>
+                        </span>
+                        <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">{selectedSession.artifacts.length}</span>
+                      </button>
+                      {artifactPanelOpen && (
+                        <div className="max-h-64 space-y-2 overflow-y-auto border-t border-border p-3">
+                          {selectedSession.artifacts.map(artifact => (
+                            <article key={artifact.id} className="rounded-md border border-border bg-muted/20 p-3">
+                              <p className="truncate text-sm font-semibold">{artifact.title}</p>
+                              <p className="mb-2 text-xs text-secondary">{artifact.type} - {artifact.updatedBy}</p>
+                              <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                                  {artifact.content}
+                                </ReactMarkdown>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
                 {!selectedSession ? (
@@ -1146,10 +1215,114 @@ export function BlackboardPage() {
                 </div>
               )}
             </div>
+
+          {boardRightOpen ? (
+          <aside className="hidden min-h-0 w-[360px] min-w-[280px] max-w-[520px] resize-x overflow-y-auto overflow-x-hidden border-l border-border bg-background p-3 xl:block">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-normal text-secondary">Workspace inspector</span>
+              <button
+                type="button"
+                onClick={() => setBoardRightOpen(false)}
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-secondary transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Collapse workspace sidebar"
+              >
+                <ChevronDown size={15} className="-rotate-90" />
+              </button>
+            </div>
+            <div className="mb-3 rounded-lg border border-border bg-muted/20">
+              <button
+                type="button"
+                onClick={() => setSessionContextOpen(open => !open)}
+                className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-expanded={sessionContextOpen}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <ChevronDown size={15} className={`shrink-0 transition-transform ${sessionContextOpen ? '' : '-rotate-90'}`} />
+                  <FileText size={15} className="shrink-0 text-primary" />
+                  <span className="truncate">Assigned task</span>
+                </span>
+                <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-xs text-secondary">{sessionContextMessages.length}</span>
+              </button>
+              {sessionContextOpen && (
+                <div className="max-h-80 space-y-2 overflow-y-auto border-t border-border p-3">
+                  {sessionContextMessages.length === 0 ? (
+                    <p className="rounded-md border border-dashed border-border bg-background p-3 text-sm text-secondary">No task context selected.</p>
+                  ) : sessionContextMessages.map(item => (
+                    <article key={item.id} className="rounded-md border border-border bg-background p-3">
+                      <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-secondary">
+                        <ClipboardList size={13} />
+                        <span className="truncate">{item.agentName}</span>
+                        <span className="ml-auto font-normal">{item.role}</span>
+                      </div>
+                      <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                          {item.content}
+                        </ReactMarkdown>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/20">
+              <button
+                type="button"
+                onClick={() => setArtifactPanelOpen(open => !open)}
+                className="flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm font-semibold transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-expanded={artifactPanelOpen}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <ChevronDown size={15} className={`shrink-0 transition-transform ${artifactPanelOpen ? '' : '-rotate-90'}`} />
+                  <Database size={15} className="shrink-0 text-primary" />
+                  <span className="truncate">Shared workspace</span>
+                </span>
+                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">{selectedSession?.artifacts?.length || 0}</span>
+              </button>
+              {artifactPanelOpen && (
+                <div className="max-h-[calc(100vh-24rem)] space-y-2 overflow-y-auto border-t border-border p-3">
+                  {!selectedSession || (selectedSession.artifacts || []).length === 0 ? (
+                    <p className="rounded-md border border-dashed border-border bg-background p-3 text-sm text-secondary">No workspace artifacts yet.</p>
+                  ) : selectedSession.artifacts.map(artifact => (
+                    <article key={artifact.id} className="rounded-md border border-border bg-background p-3">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold">{artifact.title}</p>
+                          <p className="text-xs text-secondary">{artifact.type} - {artifact.updatedBy}</p>
+                        </div>
+                        <span className="shrink-0 rounded bg-muted px-2 py-0.5 text-[10px] text-secondary">
+                          {new Date(artifact.updatedAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className="prose prose-sm max-w-none text-foreground dark:prose-invert">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                          {artifact.content}
+                        </ReactMarkdown>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          </aside>
+          ) : (
+            <aside className="hidden w-11 shrink-0 border-l border-border bg-background p-2 xl:flex xl:flex-col xl:items-center">
+              <button
+                type="button"
+                onClick={() => setBoardRightOpen(true)}
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-secondary transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label="Expand workspace sidebar"
+                title="Expand workspace"
+              >
+                <ChevronDown size={16} className="rotate-90" />
+              </button>
+              <span className="mt-3 [writing-mode:vertical-rl] text-xs font-medium text-secondary">Workspace</span>
+            </aside>
+          )}
         </main>
       ) : tab === 'tools' ? (
-        <main className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[320px_1fr]">
-          <aside className="min-h-0 overflow-y-auto border-r border-border p-4">
+        <main className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden bg-slate-50 dark:bg-muted/10 lg:grid-cols-[320px_1fr]">
+          <aside className="min-h-0 overflow-y-auto border-r border-border bg-background p-4">
             <Button onClick={() => setEditingTool(EMPTY_TOOL)} className="mb-3 w-full gap-2">
               <Plus size={16} />
               New Tool
@@ -1186,6 +1359,21 @@ export function BlackboardPage() {
 
           <section className="min-h-0 overflow-y-auto p-5">
             <div className="mx-auto max-w-4xl space-y-4">
+              <div className="rounded-lg border border-border bg-background p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Wrench size={18} className="text-primary" />
+                      <h2 className="text-base font-semibold">Tool Builder</h2>
+                    </div>
+                    <p className="mt-1 text-sm text-secondary">Create deterministic tools or HTTP tools that agents can call during Blackboard work.</p>
+                  </div>
+                  <div className="flex gap-2 text-xs text-secondary">
+                    <span className="rounded-md border border-border bg-muted/50 px-2 py-1">{BUILTIN_TOOL_DEFINITIONS.length} built-in</span>
+                    <span className="rounded-md border border-border bg-muted/50 px-2 py-1">{tools.length} custom</span>
+                  </div>
+                </div>
+              </div>
               <div className="rounded-lg border border-border bg-muted/20">
                 <button
                   type="button"
@@ -1341,9 +1529,21 @@ export function BlackboardPage() {
           </section>
         </main>
       ) : tab === 'playground' ? (
-        <main className="min-h-0 flex-1 overflow-y-auto p-5">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-5 dark:bg-muted/10">
           <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[320px_1fr]">
-            <aside className="rounded-lg border border-border p-4">
+            <div className="lg:col-span-2 rounded-lg border border-border bg-background p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <PlayCircle size={18} className="text-primary" />
+                    <h2 className="text-base font-semibold">Tool Playground</h2>
+                  </div>
+                  <p className="mt-1 text-sm text-secondary">Run built-in and custom tools with explicit JSON input before enabling them for agents.</p>
+                </div>
+                <span className="rounded-md border border-border bg-muted/50 px-2 py-1 text-xs text-secondary">{playgroundTools.length} tools available</span>
+              </div>
+            </div>
+            <aside className="rounded-lg border border-border bg-background p-4">
               <label className="mb-2 block text-sm font-medium">Tool</label>
               <select value={selectedPlaygroundTool?.id || ''} onChange={event => setPlaygroundToolId(event.target.value)} className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                 {playgroundTools.map(tool => (
@@ -1363,7 +1563,7 @@ export function BlackboardPage() {
               )}
             </aside>
 
-            <section className="space-y-4 rounded-lg border border-border p-4">
+            <section className="space-y-4 rounded-lg border border-border bg-background p-4">
               <div>
                 <label className="mb-1 block text-sm font-medium">Input JSON</label>
                 <textarea value={toolTestInput} onChange={event => setToolTestInput(event.target.value)} className="min-h-48 w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -1384,8 +1584,8 @@ export function BlackboardPage() {
           </div>
         </main>
       ) : (
-        <main className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[320px_1fr]">
-          <aside className="min-h-0 overflow-y-auto border-r border-border p-4">
+        <main className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden bg-slate-50 dark:bg-muted/10 lg:grid-cols-[320px_1fr]">
+          <aside className="min-h-0 overflow-y-auto border-r border-border bg-background p-4">
             <Button onClick={() => setEditingAgent(EMPTY_AGENT)} className="mb-3 w-full gap-2">
               <Plus size={16} />
               New Agent
@@ -1402,6 +1602,18 @@ export function BlackboardPage() {
 
           <section className="min-h-0 overflow-y-auto p-5">
             <div className="mx-auto max-w-3xl space-y-4">
+              <div className="rounded-lg border border-border bg-background p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Settings2 size={18} className="text-primary" />
+                      <h2 className="text-base font-semibold">Agent Management</h2>
+                    </div>
+                    <p className="mt-1 text-sm text-secondary">Tune an agent role, response budget, tool access, and custom tool instructions.</p>
+                  </div>
+                  <span className="rounded-md border border-border bg-muted/50 px-2 py-1 text-xs text-secondary">{availableToolNames.length} tools can be assigned</span>
+                </div>
+              </div>
               <div className="grid gap-4 md:grid-cols-[1fr_1fr_160px]">
                 <div>
                   <label className="mb-1 block text-sm font-medium">Name</label>
