@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NotesList } from '../components/Notes/NotesList';
 import { NoteEditor } from '../components/Notes/NoteEditor';
 import { LibraryContextPanel } from '../components/Notes/LibraryContextPanel';
@@ -20,9 +20,40 @@ export function LibraryPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [librarianOpen, setLibrarianOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const savedWidth = Number(localStorage.getItem('librania:notes-sidebar-width'));
+    return Number.isFinite(savedWidth) && savedWidth >= 220 && savedWidth <= 520 ? savedWidth : 288;
+  });
+  const resizingRef = useRef(false);
 
   const { content, loading: contentLoading, refetch: refetchContent } = useContent(selectedNoteId);
   const { deleteContent } = useDeleteContent();
+
+  useEffect(() => {
+    localStorage.setItem('librania:notes-sidebar-width', String(sidebarWidth));
+  }, [sidebarWidth]);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!resizingRef.current) return;
+      setSidebarWidth(Math.min(520, Math.max(220, event.clientX)));
+    };
+
+    const stopResize = () => {
+      resizingRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', stopResize);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', stopResize);
+      stopResize();
+    };
+  }, []);
 
   const handleUploadComplete = async () => {
     await refetchContent();
@@ -44,9 +75,12 @@ export function LibraryPage() {
       </button>
 
       {/* Left sidebar - notes list */}
-      <aside className={`notes-sidebar w-64 border-r border-border overflow-y-auto scrollable bg-background
+      <aside
+        style={{ width: sidebarWidth, maxWidth: '85vw' }}
+        className={`notes-sidebar relative shrink-0 border-r border-border overflow-y-auto scrollable bg-background
         fixed lg:static inset-y-0 left-0 z-40 transform transition-transform duration-200
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      >
         <div className="border-b border-border p-4">
           <button
             onClick={() => setExportDialogOpen(true)}
@@ -63,6 +97,19 @@ export function LibraryPage() {
             setSidebarOpen(false); // Close sidebar on mobile after selection
           }}
         />
+        <button
+          type="button"
+          aria-label="Resize notes sidebar"
+          title="Resize notes sidebar"
+          onMouseDown={() => {
+            resizingRef.current = true;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+          }}
+          className="absolute right-0 top-0 hidden h-full w-2 translate-x-1 cursor-col-resize items-center justify-center outline-none transition-colors hover:bg-primary/20 focus:bg-primary/20 lg:flex"
+        >
+          <span className="h-12 w-1 rounded-full bg-border" />
+        </button>
       </aside>
 
       {/* Overlay for mobile sidebar */}

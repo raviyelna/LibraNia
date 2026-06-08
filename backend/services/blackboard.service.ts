@@ -1313,6 +1313,8 @@ function getTaskDateWindow(task: string): { label: string; start: Date; end: Dat
 }
 
 function bucketNote(note: Awaited<ReturnType<typeof getAllNotes>>[number]): string {
+  if (note.group) return note.group;
+
   const text = `${note.title} ${note.body}`.toLocaleLowerCase();
   const title = note.title.toLocaleLowerCase();
   return title.match(/multi-agent malware|malware analysis framework/)
@@ -1351,11 +1353,13 @@ function noteRelevanceScore(task: string, note: Awaited<ReturnType<typeof getAll
   const taskLower = task.toLocaleLowerCase();
   const title = note.title.toLocaleLowerCase();
   const body = note.body.toLocaleLowerCase();
+  const group = (note.group || '').toLocaleLowerCase();
   let score = 0;
 
   for (const term of terms) {
     if (title.includes(term)) score += 5;
     if (body.includes(term)) score += 1;
+    if (group.includes(term)) score += 4;
   }
 
   if (/\bmalware\b/i.test(taskLower)) {
@@ -1446,7 +1450,7 @@ function buildGeneralBlackboardObservation(
 ): string {
   const relevantNotes = relevantNotesForTask(task, notes);
   const noteLines = relevantNotes.map(note =>
-    `- ${note.title}`
+    `- ${note.title}${note.group ? ` (${note.group})` : ''}`
   );
   const agentLines = agents.map(agent => `- ${agent.name}: ${agent.description || 'No description'}`);
 
@@ -2133,6 +2137,7 @@ function buildNoteContextFromNotes(notes: Awaited<ReturnType<typeof getAllNotes>
     .map(note => [
       `- title: ${note.title}`,
       `  id: ${note.id}`,
+      `  group: ${note.group || 'None'}`,
       `  created_at: ${formatDate(note.created_at)}`,
       `  updated_at: ${formatDate(note.updated_at)}`,
       `  excerpt: ${note.body.replace(/\s+/g, ' ').slice(0, 220)}`,
