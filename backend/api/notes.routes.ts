@@ -43,7 +43,7 @@ router.post('/api/notes', async (req, res) => {
       });
     }
 
-    if (!body || typeof body !== 'string') {
+    if (body === undefined || body === null || typeof body !== 'string') {
       return res.status(400).json({
         success: false,
         error: 'Missing or invalid required field: body',

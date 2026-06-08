@@ -1,5 +1,5 @@
 import { eq, isNull, isNotNull, desc, and } from 'drizzle-orm';
-import { notes } from '../database/schema.js';
+import { notes, noteTags, tags } from '../database/schema.js';
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import * as schema from '../database/schema.js';
 import { updateNoteLinks, createSemanticLinks, deleteSemanticLinks } from './links.service.js';
@@ -27,6 +27,23 @@ export interface Note {
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;
+}
+
+export interface NoteWithTags extends Note {
+  tags: string[];
+  group: string | null;
+}
+
+export function getNoteGroupFromMetadata(metadata: string | null | undefined): string | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata);
+    return typeof parsed.noteGroup === 'string' && parsed.noteGroup.trim()
+      ? parsed.noteGroup.trim()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -256,14 +273,33 @@ export async function getNoteById(
  */
 export async function getAllNotes(
   db: BetterSQLite3Database<typeof schema>
-): Promise<Note[]> {
+): Promise<NoteWithTags[]> {
   const allNotes = await db
     .select()
     .from(notes)
     .where(isNull(notes.deleted_at))
     .orderBy(desc(notes.updated_at));
 
-  return allNotes as Note[];
+  const tagRows = await db
+    .select({
+      noteId: noteTags.note_id,
+      tagName: tags.name,
+    })
+    .from(noteTags)
+    .innerJoin(tags, eq(noteTags.tag_id, tags.id));
+
+  const tagsByNoteId = new Map<string, string[]>();
+  for (const row of tagRows) {
+    const noteTagNames = tagsByNoteId.get(row.noteId) ?? [];
+    noteTagNames.push(row.tagName);
+    tagsByNoteId.set(row.noteId, noteTagNames);
+  }
+
+  return allNotes.map((note) => ({
+    ...note,
+    tags: tagsByNoteId.get(note.id) ?? [],
+    group: getNoteGroupFromMetadata(note.metadata),
+  })) as NoteWithTags[];
 }
 
 /**

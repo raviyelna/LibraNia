@@ -47,6 +47,18 @@ function mergeImages(images: RemoteNoteImage[]): RemoteNoteImage[] {
   return [...new Map(images.map(image => [image.url, image])).values()];
 }
 
+function getNoteGroupFromMetadata(metadata: string | null | undefined): string | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata);
+    return typeof parsed.noteGroup === 'string' && parsed.noteGroup.trim()
+      ? parsed.noteGroup.trim()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export const RESEARCH_TOOLS: Tool[] = [
   {
     name: 'search_notes',
@@ -191,24 +203,25 @@ export async function executeToolCall(
     case 'search_notes': {
       const query = toolInput.query.toLowerCase();
       const results = db.prepare(`
-        SELECT id, title, body, created_at, updated_at
+        SELECT id, title, body, metadata, created_at, updated_at
         FROM notes
         WHERE deleted_at IS NULL
-          AND (title LIKE ? OR body LIKE ?)
+          AND (title LIKE ? OR body LIKE ? OR metadata LIKE ?)
         ORDER BY updated_at DESC
         LIMIT 10
-      `).all(`%${query}%`, `%${query}%`);
+      `).all(`%${query}%`, `%${query}%`, `%${query}%`);
 
       return results.map((note: any) => ({
         id: note.id,
         title: note.title,
         body: note.body.substring(0, 200) + '...',
+        group: getNoteGroupFromMetadata(note.metadata),
       }));
     }
 
     case 'get_note': {
       const note = db.prepare(`
-        SELECT id, title, body, created_at, updated_at
+        SELECT id, title, body, metadata, created_at, updated_at
         FROM notes
         WHERE id = ? AND deleted_at IS NULL
       `).get(noteId);
@@ -216,7 +229,10 @@ export async function executeToolCall(
       if (!note) {
         throw new Error(`Note not found: ${noteId}`);
       }
-      return note;
+      return {
+        ...(note as any),
+        group: getNoteGroupFromMetadata((note as any).metadata),
+      };
     }
 
     case 'get_backlinks': {

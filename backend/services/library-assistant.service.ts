@@ -2,7 +2,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { getORM } from '../database/connection.js';
 import { links, notes } from '../database/schema.js';
 import { getRelatedNotes } from './links.service.js';
-import { getNoteById } from './notes.service.js';
+import { getNoteById, getNoteGroupFromMetadata } from './notes.service.js';
 import { getNoteTags } from './tags.service.js';
 
 export async function buildLibraryAssistantContext(noteId: string): Promise<string> {
@@ -29,6 +29,7 @@ Write an answer that can stand alone if the reader chooses to save it.
 ## Current Note
 Title: ${note.title}
 Tags: ${tags.map(tag => tag.name).join(', ') || 'None'}
+Group: ${getNoteGroupFromMetadata(note.metadata) || 'None'}
 
 ${note.body.slice(0, 20_000)}
 

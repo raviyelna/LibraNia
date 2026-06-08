@@ -9,6 +9,8 @@ export interface Note {
   title: string;
   body: string;
   metadata?: string;
+  tags?: string[];
+  group?: string | null;
   created_at: string;
   updated_at: string;
   deleted_at?: string | null;
