@@ -15,7 +15,8 @@ npm run setup-cli
 1. Builds MCP server
 2. Adds the LibraNia MCP server to Claude Code
 3. Passes `LIBRANIA_DATA_DIR` so Claude Code uses the local LibraNia database
-4. Uses this repository's `CLAUDE.md` research protocol:
+4. Launches through `bin/librania-mcp.cjs`, which checks and repairs native MCP dependencies for the current OS before starting `dist/index.js`
+5. Uses this repository's `CLAUDE.md` research protocol:
    - search LibraNia first
    - use web only when needed
    - write useful web findings back to LibraNia before answering
@@ -30,7 +31,7 @@ Edit `~/.claude/settings.json`:
     "librania": {
       "command": "node",
       "args": [
-        "D:\\sourcecode\\vibe\\LibraNia_v2\\LibraNia\\mcp-server\\dist\\index.js"
+        "D:\\sourcecode\\vibe\\LibraNia_v2\\LibraNia\\mcp-server\\bin\\librania-mcp.cjs"
       ]
     }
   }

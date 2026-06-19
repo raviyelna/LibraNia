@@ -16,6 +16,7 @@ const isGlobal = process.argv.includes('--global');
 const scope = isGlobal ? 'user' : 'local';
 const PROJECT_ROOT = path.join(__dirname, '..');
 const MCP_SERVER_PATH = path.join(__dirname, 'dist', 'index.js');
+const MCP_LAUNCHER_PATH = path.join(__dirname, 'bin', 'librania-mcp.cjs');
 const DATA_DIR = process.env.LIBRANIA_DATA_DIR || path.join(PROJECT_ROOT, 'data');
 const DB_PATH = path.join(DATA_DIR, 'librania.db');
 
@@ -65,7 +66,7 @@ function main() {
   const serverConfig = JSON.stringify({
     type: 'stdio',
     command: 'node',
-    args: [MCP_SERVER_PATH],
+    args: [MCP_LAUNCHER_PATH],
     env: {
       LIBRANIA_DATA_DIR: DATA_DIR,
     },
@@ -86,6 +87,7 @@ function main() {
   log('\nSetup complete.');
   log('Restart Claude Code, then ask: "Search my LibraNia notes about [topic]"');
   log('Research policy is in CLAUDE.md: search LibraNia first, then write useful web findings back before answering.');
+  log(`MCP launcher: ${MCP_LAUNCHER_PATH}`);
   log(`MCP server: ${MCP_SERVER_PATH}`);
   log(`Data directory: ${DATA_DIR}`);
 }

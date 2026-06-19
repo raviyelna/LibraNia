@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "librania-mcp": "dist/index.js"
+    "librania-mcp": "bin/librania-mcp.cjs"
   },
   "scripts": {
     "build": "tsc",

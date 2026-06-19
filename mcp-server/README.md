@@ -82,13 +82,14 @@ The setup scripts:
 
 Claude Code and Codex each launch their own stdio MCP process when they connect.
 The MCP server implementation is shared; only the client registration command differs.
+Registrations use `bin/librania-mcp.cjs`, a launcher that verifies native dependencies such as `better-sqlite3` for the current OS before starting `dist/index.js`.
 
 For manual Codex setup, register the stdio server and its data directory:
 
 ```bash
 codex mcp add librania \
   --env LIBRANIA_DATA_DIR=D:\sourcecode\vibe\LibraNia_v2\LibraNia\data \
-  -- node D:\sourcecode\vibe\LibraNia_v2\LibraNia\mcp-server\dist\index.js
+  -- node D:\sourcecode\vibe\LibraNia_v2\LibraNia\mcp-server\bin\librania-mcp.cjs
 ```
 
 Verify the registration with:
@@ -101,7 +102,7 @@ For manual Claude Code CLI setup:
 
 ```bash
 claude mcp add -e LIBRANIA_DATA_DIR=D:\sourcecode\vibe\LibraNia_v2\LibraNia\data \
-  librania -- node D:\sourcecode\vibe\LibraNia_v2\LibraNia\mcp-server\dist\index.js
+  librania -- node D:\sourcecode\vibe\LibraNia_v2\LibraNia\mcp-server\bin\librania-mcp.cjs
 ```
 
 Verify the Claude Code registration with:
@@ -120,7 +121,7 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json`:
     "librania": {
       "command": "node",
       "args": [
-        "D:\\sourcecode\\vibe\\LibraNia_v2\\LibraNia\\mcp-server\\dist\\index.js"
+        "D:\\sourcecode\\vibe\\LibraNia_v2\\LibraNia\\mcp-server\\bin\\librania-mcp.cjs"
       ],
       "env": {
         "LIBRANIA_DATA_DIR": "D:\\sourcecode\\vibe\\LibraNia_v2\\LibraNia\\data"
@@ -196,7 +197,7 @@ npm start      # Run server
 
 ```bash
 # Test with MCP Inspector
-npx @modelcontextprotocol/inspector node dist/index.js
+npx @modelcontextprotocol/inspector node bin/librania-mcp.cjs
 ```
 
 ## Architecture

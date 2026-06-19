@@ -11,6 +11,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const MCP_SERVER_PATH = path.join(__dirname, 'dist', 'index.js');
+const MCP_LAUNCHER_PATH = path.join(__dirname, 'bin', 'librania-mcp.cjs');
 const DATA_DIR = process.env.LIBRANIA_DATA_DIR || path.join(__dirname, '..', 'data');
 const DB_PATH = path.join(DATA_DIR, 'librania.db');
 
@@ -67,7 +68,7 @@ function main() {
     `LIBRANIA_DATA_DIR=${DATA_DIR}`,
     '--',
     'node',
-    MCP_SERVER_PATH,
+    MCP_LAUNCHER_PATH,
   ]);
 
   if (add.error && add.error.code === 'ENOENT') {
@@ -80,6 +81,7 @@ function main() {
   log('\nSetup complete.');
   log('Restart Codex, then ask: "Search my LibraNia notes about [topic]"');
   log('Research policy is in AGENTS.md: search LibraNia first, then write useful web findings back before answering.');
+  log(`MCP launcher: ${MCP_LAUNCHER_PATH}`);
   log(`MCP server: ${MCP_SERVER_PATH}`);
   log(`Data directory: ${DATA_DIR}`);
 }
