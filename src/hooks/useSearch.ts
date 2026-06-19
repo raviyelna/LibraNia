@@ -1,4 +1,6 @@
 import { useState, useCallback } from 'react';
+import { searchAPI } from '../api';
+import { handleAPIError } from '../utils/toast';
 
 interface SearchResult {
   id: string;
@@ -39,23 +41,20 @@ export function useSearch() {
       let data;
 
       switch (mode) {
-        case 'quickNav':
-          data = await window.api.search.quickNav(query);
-          break;
-        case 'fullText':
-          data = await window.api.search.fullText(query);
-          break;
-        case 'fuzzy':
-          data = await window.api.search.fuzzy(query);
-          break;
         case 'semantic':
-          data = await window.api.search.semantic(query);
+          data = await searchAPI.semantic(query);
+          break;
+        case 'quickNav':
+        case 'fullText':
+        case 'fuzzy':
+        default:
+          data = await searchAPI.search(query, mode);
           break;
       }
 
       setResults(data);
     } catch (err) {
-      console.error('Search error:', err);
+      handleAPIError(err);
       setResults([]);
     } finally {
       setLoading(false);

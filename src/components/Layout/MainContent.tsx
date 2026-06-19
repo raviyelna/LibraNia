@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface MainContentProps {
   children: ReactNode;
@@ -6,10 +7,15 @@ interface MainContentProps {
 }
 
 export function MainContent({ children, sidebarCollapsed = false }: MainContentProps) {
-  const marginLeft = sidebarCollapsed ? 'ml-16' : 'ml-60';
+  const location = useLocation();
+  const marginLeft = sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60';
+
+  // Graph page needs full viewport without padding
+  const isGraphPage = location.pathname === '/graph';
+  const paddingClass = isGraphPage ? '' : '';
 
   return (
-    <main className={`flex-1 p-6 bg-background transition-all duration-200 ${marginLeft} min-h-screen`}>
+    <main className={`flex-1 bg-background transition-all duration-200 ${marginLeft} ${paddingClass} h-screen overflow-hidden`}>
       {children}
     </main>
   );

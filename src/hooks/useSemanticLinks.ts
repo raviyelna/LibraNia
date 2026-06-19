@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { apiClient } from '../lib/api-client';
+import { DATA_EVENTS, subscribeDataUpdated } from '../utils/data-events';
 
 interface Backlink {
   id: string;
@@ -9,7 +11,8 @@ interface Backlink {
 interface SemanticLink {
   id: string;
   title: string;
-  similarity: number;
+  relationship: 'linked' | 'semantic' | 'missing';
+  similarity?: number;
 }
 
 export function useSemanticLinks(noteId: string) {
@@ -20,14 +23,8 @@ export function useSemanticLinks(noteId: string) {
   const fetchSemanticLinks = useCallback(async () => {
     try {
       setLoading(true);
-      const data: Backlink[] = await window.api.links.getSemanticLinks(noteId);
-      // Convert Backlink to SemanticLink (linkCount → similarity)
-      const semanticLinks: SemanticLink[] = data.map(link => ({
-        id: link.id,
-        title: link.title,
-        similarity: link.linkCount / 10, // Normalize linkCount to similarity score
-      }));
-      setLinks(semanticLinks);
+      const data = await apiClient.links.getRelated(noteId);
+      setLinks(data);
       setError(null);
     } catch (err) {
       setError(err as Error);
@@ -40,6 +37,11 @@ export function useSemanticLinks(noteId: string) {
   useEffect(() => {
     fetchSemanticLinks();
   }, [fetchSemanticLinks]);
+
+  useEffect(
+    () => subscribeDataUpdated(DATA_EVENTS.notes, fetchSemanticLinks),
+    [fetchSemanticLinks]
+  );
 
   return { links, loading, error, refetch: fetchSemanticLinks };
 }

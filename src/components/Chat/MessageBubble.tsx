@@ -18,7 +18,7 @@ interface MessageBubbleProps {
   provider_id?: string;
   model?: string;
   citations?: Citation[];
-  created_at: Date;
+  created_at: Date | string;
 }
 
 export function MessageBubble({
@@ -32,17 +32,20 @@ export function MessageBubble({
   const isUser = role === 'user';
   const isAssistant = role === 'assistant';
 
+  // Convert string to Date if needed
+  const timestamp = typeof created_at === 'string' ? new Date(created_at) : created_at;
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`} data-testid="message-bubble-container">
       <div
-        className={`max-w-[80%] rounded-lg p-4 ${
+        className={`min-w-0 max-w-[92%] overflow-hidden rounded-lg p-4 shadow-sm sm:max-w-[80%] ${
           isUser
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-foreground'
+            ? 'bg-primary text-white'
+            : 'bg-muted text-foreground border border-border'
         }`}
       >
         {isAssistant ? (
-          <div className="message-content prose prose-sm dark:prose-invert max-w-none">
+          <div className="message-content prose prose-sm dark:prose-invert max-w-none break-words">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeSanitize]}
@@ -68,14 +71,14 @@ export function MessageBubble({
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="message-content whitespace-pre-wrap">{content}</div>
+          <div className="message-content whitespace-pre-wrap break-words">{content}</div>
         )}
 
         {citations.length > 0 && <CitationList citations={citations} />}
 
         <div className="message-footer mt-2 flex items-center justify-between gap-2">
           <span className="text-xs text-secondary">
-            {created_at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
           {isAssistant && provider_id && model && (
             <ProviderBadge provider_id={provider_id} model={model} />

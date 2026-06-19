@@ -28,7 +28,7 @@ export function Layout() {
   }, []);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-x-hidden">
       <Sidebar />
       <MainContent sidebarCollapsed={sidebarCollapsed}>
         <Outlet />

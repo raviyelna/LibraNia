@@ -29,7 +29,7 @@ export function MessageInput({ onSend, disabled = false, isSending = false }: Me
   };
 
   return (
-    <div className="message-input border-t border-border p-4">
+    <div className="message-input shrink-0 border-t border-border bg-background p-4">
       <div className="text-xs text-secondary mb-2">
         Tip: Use <code className="bg-muted px-1 py-0.5 rounded">/research [query]</code> to search notes and research topics
       </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Library, MessageSquare, Settings, ChevronLeft, ChevronRight, Sun, Moon, Network } from 'lucide-react';
+import { Home, Library, MessageSquare, Settings, ChevronLeft, ChevronRight, Sun, Moon, Network, Menu, X, ClipboardList } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -8,12 +8,14 @@ const navigationItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Library, label: 'Library', path: '/library' },
   { icon: MessageSquare, label: 'Chat', path: '/chat' },
+  { icon: ClipboardList, label: 'Blackboard', path: '/blackboard' },
   { icon: Network, label: 'Graph', path: '/graph' },
   { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   // Load collapsed state from localStorage on mount
@@ -34,12 +36,30 @@ export function Sidebar() {
   const sidebarWidth = collapsed ? 'w-16' : 'w-60';
 
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen bg-background border-r border-border transition-all duration-200 ${sidebarWidth} flex flex-col`}
-    >
+    <>
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-background border border-border rounded-md shadow-lg"
+      >
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 h-screen bg-background border-r border-border transition-all duration-200 ${sidebarWidth} flex flex-col z-40
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      >
       {/* Header with logo and toggle */}
       <div className="flex items-center justify-between p-4 border-b border-border">
-        {!collapsed && <h1 className="text-xl font-bold text-foreground">LibraNia</h1>}
+        {!collapsed && <h1 className="text-xl font-bold text-primary">LibraNia</h1>}
         <Button
           variant="ghost"
           size="icon"
@@ -59,16 +79,17 @@ export function Sidebar() {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => setMobileOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors duration-200 ${
                   isActive
-                    ? 'bg-primary text-white'
-                    : 'text-foreground hover:bg-muted'
+                    ? 'bg-primary text-white font-medium'
+                    : 'text-foreground hover:bg-muted hover:text-primary'
                 } ${collapsed ? 'justify-center' : ''}`
               }
             >
               <Icon className="h-5 w-5 flex-shrink-0" role="img" aria-hidden="true" />
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span className="text-sm">{item.label}</span>}
             </NavLink>
           );
         })}
@@ -88,9 +109,10 @@ export function Sidebar() {
           ) : (
             <Moon className="h-5 w-5 flex-shrink-0" role="img" aria-hidden="true" />
           )}
-          {!collapsed && <span>Toggle Theme</span>}
+          {!collapsed && <span className="text-sm">Toggle Theme</span>}
         </Button>
       </div>
     </aside>
+    </>
   );
 }

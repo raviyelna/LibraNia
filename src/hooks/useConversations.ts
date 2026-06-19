@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import { conversationsAPI, Conversation } from '../api';
+import { handleAPIError } from '../utils/toast';
 
 interface Message {
   id: string;
@@ -19,15 +21,6 @@ interface Citation {
   position: number;
 }
 
-interface Conversation {
-  id: string;
-  title: string;
-  created_at: Date;
-  updated_at: Date;
-  messages?: Message[];
-  citations?: Citation[];
-}
-
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +29,7 @@ export function useConversations() {
   const fetchConversations = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.conversation.getAll();
+      const data = await conversationsAPI.getAll();
       // Sort by updated_at DESC (most recent first) per D-10
       const sorted = [...data].sort((a, b) =>
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
@@ -44,6 +37,7 @@ export function useConversations() {
       setConversations(sorted);
       setError(null);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -65,10 +59,11 @@ export function useConversation(id: string) {
   const fetchConversation = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.conversation.get(id);
+      const data = await conversationsAPI.getById(id);
       setConversation(data);
       setError(null);
     } catch (err) {
+      handleAPIError(err);
       setError(err as Error);
     } finally {
       setLoading(false);
@@ -88,7 +83,10 @@ export function useDeleteConversation() {
   const deleteConversation = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      await window.api.conversation.delete(id);
+      await conversationsAPI.delete(id);
+    } catch (err) {
+      handleAPIError(err);
+      throw err;
     } finally {
       setLoading(false);
     }

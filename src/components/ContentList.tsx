@@ -15,7 +15,7 @@ export const ContentList: React.FC<ContentListProps> = ({ content, onDelete, onS
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const formatDate = (date: Date): string => {
+  const formatDate = (date: Date | string): string => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
@@ -89,6 +89,7 @@ export const ContentList: React.FC<ContentListProps> = ({ content, onDelete, onS
             <div className="text-xs text-secondary space-y-1">
               <div>{formatDate(item.created_at)}</div>
               <div>{formatFileSize(item.file_size)}</div>
+              <div className="break-all" title={item.file_path}>Local path: {item.file_path}</div>
             </div>
           </div>
 

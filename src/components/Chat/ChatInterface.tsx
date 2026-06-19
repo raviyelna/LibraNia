@@ -3,6 +3,8 @@ import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { useAIProviders } from '../../hooks/useAIProviders';
 import { PROVIDER_MODELS } from '../../constants/models';
+import { chatAPI } from '../../api/chat';
+import { useSocket } from '../../contexts/SocketContext';
 
 interface ChatInterfaceProps {
   conversationId?: string;
@@ -17,23 +19,50 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   const [customModel, setCustomModel] = useState<string>('');
   const [useCustomModel, setUseCustomModel] = useState<boolean>(false);
   const { providers } = useAIProviders();
+  const { socket, connected } = useSocket();
 
-  // Listen for progress updates
+  // Listen for Socket.IO progress updates
   useEffect(() => {
+    if (!socket || !conversationId) return;
+
     const handleProgress = (data: { conversationId: string; status: string }) => {
       if (data.conversationId === conversationId) {
+        console.log('[ChatInterface] Progress:', data.status);
         setProgressStatus(data.status);
       }
     };
 
-    // @ts-ignore - ai:progress event
-    window.electronAPI?.on?.('ai:progress', handleProgress);
+    const handleComplete = async (data: { conversationId: string; content: string }) => {
+      if (data.conversationId === conversationId) {
+        console.log('[ChatInterface] Complete');
+        setProgressStatus('');
+        // Reload messages from DB
+        const reloadResponse = await chatAPI.getMessages(conversationId);
+        if (reloadResponse.success && reloadResponse.messages) {
+          setMessages(reloadResponse.messages);
+        }
+        setIsSending(false);
+      }
+    };
+
+    const handleError = (data: { conversationId: string; error: string }) => {
+      if (data.conversationId === conversationId) {
+        console.error('[ChatInterface] Error:', data.error);
+        setProgressStatus('');
+        setIsSending(false);
+      }
+    };
+
+    socket.on('ai:progress', handleProgress);
+    socket.on('ai:complete', handleComplete);
+    socket.on('ai:error', handleError);
 
     return () => {
-      // @ts-ignore
-      window.electronAPI?.off?.('ai:progress', handleProgress);
+      socket.off('ai:progress', handleProgress);
+      socket.off('ai:complete', handleComplete);
+      socket.off('ai:error', handleError);
     };
-  }, [conversationId]);
+  }, [socket, conversationId]);
 
   // Update model when provider changes
   useEffect(() => {
@@ -65,7 +94,7 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
     const loadMessages = async () => {
       try {
         console.log('[ChatInterface] Loading messages for:', conversationId);
-        const response = await window.api.ai.getMessages(conversationId);
+        const response = await chatAPI.getMessages(conversationId);
         if (response.success && response.messages) {
           console.log('[ChatInterface] Loaded messages:', response.messages.length);
           setMessages(response.messages);
@@ -121,48 +150,70 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
       console.log('[ChatInterface] Calling AI:', {
         provider: selectedProvider,
         model: modelToUse,
-        researchMode: isResearchMode
-      });
-      const response = await window.api.ai.chat({
-        conversationId,
-        messages: updatedMessages.map(m => ({
-          role: m.role,
-          content: m.content
-        })),
-        providerId: selectedProvider,
-        model: modelToUse,
-        researchMode: isResearchMode
+        researchMode: isResearchMode,
+        useWebSocket: isResearchMode && connected
       });
 
-      console.log('[ChatInterface] AI response:', response);
-
-      if (response.success && response.content) {
-        // Reload messages from DB to get saved IDs
-        const reloadResponse = await window.api.ai.getMessages(conversationId);
-        if (reloadResponse.success && reloadResponse.messages) {
-          setMessages(reloadResponse.messages);
-        }
+      // Use WebSocket for research mode to show tool progress
+      if (isResearchMode && socket && connected) {
+        setProgressStatus('Starting research...');
+        socket.emit('ai:chat', {
+          conversationId,
+          messages: updatedMessages.map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          providerId: selectedProvider,
+          model: modelToUse,
+          researchMode: true,
+        });
+        // Response handled by socket listeners
       } else {
-        console.error('[ChatInterface] AI error:', response.error);
-        // Show error message
-        const errorMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant' as const,
-          content: `Error: ${response.error || 'Failed to get response'}`,
-          created_at: new Date(),
-        };
-        setMessages([...updatedMessages, errorMessage]);
+        // Use HTTP for regular chat
+        const response = await chatAPI.chat({
+          conversationId,
+          messages: updatedMessages.map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          providerId: selectedProvider,
+          model: modelToUse,
+          researchMode: isResearchMode
+        });
+
+        console.log('[ChatInterface] AI response:', response);
+
+        if (response.success && response.content) {
+          // Reload messages from DB to get saved IDs
+          const reloadResponse = await chatAPI.getMessages(conversationId);
+          if (reloadResponse.success && reloadResponse.messages) {
+            setMessages(reloadResponse.messages);
+          }
+        } else {
+          console.error('[ChatInterface] AI error:', response.error);
+          // Show error message
+          const errorMessage = {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant' as const,
+            content: `Error: ${response.error || 'Failed to get response'}`,
+            created_at: new Date(),
+          };
+          setMessages([...updatedMessages, errorMessage]);
+        }
+        setIsSending(false);
       }
     } catch (error) {
       console.error('[ChatInterface] Failed to send message:', error);
-    } finally {
       setIsSending(false);
+      setProgressStatus('');
     }
+    // Note: Don't set isSending(false) in finally for WebSocket path
+    // It's handled by ai:complete/ai:error listeners
   };
 
   if (!conversationId) {
     return (
-      <div className="chat-interface flex flex-col h-full bg-background text-foreground">
+      <div className="chat-interface flex h-full min-h-0 flex-col bg-background text-foreground">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center text-secondary">
             <p>Select a conversation or start a new one</p>
@@ -173,9 +224,9 @@ export function ChatInterface({ conversationId }: ChatInterfaceProps) {
   }
 
   return (
-    <div className="chat-interface flex flex-col h-full bg-background text-foreground">
+    <div className="chat-interface flex h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
       {/* Provider and model selector */}
-      <div className="border-b border-border p-3">
+      <div className="shrink-0 border-b border-border p-3">
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <label className="text-sm text-secondary">Provider:</label>

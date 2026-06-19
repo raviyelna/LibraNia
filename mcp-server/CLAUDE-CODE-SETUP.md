@@ -13,9 +13,12 @@ npm run setup-cli
 ## What It Does
 
 1. Builds MCP server
-2. Finds Claude Code config at `~/.claude/settings.json`
-3. Adds LibraNia MCP server
-4. Restarts Claude Code (if running)
+2. Adds the LibraNia MCP server to Claude Code
+3. Passes `LIBRANIA_DATA_DIR` so Claude Code uses the local LibraNia database
+4. Uses this repository's `CLAUDE.md` research protocol:
+   - search LibraNia first
+   - use web only when needed
+   - write useful web findings back to LibraNia before answering
 
 ## Manual Setup
 
@@ -47,9 +50,10 @@ Search my LibraNia notes about Docker
 
 Claude Code will:
 1. Call `search_notes` tool
-2. Return results from knowledge base
-3. If insufficient → suggest web search
-4. Create note with findings
+2. Call `get_note` for relevant matches
+3. If insufficient, use web search
+4. Create or update a note with useful web findings before answering
+5. Return results from the knowledge base and saved sources
 
 ## Tools Available
 

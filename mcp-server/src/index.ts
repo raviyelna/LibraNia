@@ -31,17 +31,28 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 
-// Database path
-const DB_PATH = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'librania.db');
-const NOTES_DIR = path.join(os.homedir(), 'AppData', 'Roaming', 'LibraNia', 'notes');
+// Database path - match backend priority: LIBRANIA_DB_PATH > LIBRANIA_DATA_DIR/librania.db > ./data/librania.db
+function getDatabasePath(): string {
+  if (process.env.LIBRANIA_DB_PATH) {
+    return process.env.LIBRANIA_DB_PATH;
+  }
+  if (process.env.LIBRANIA_DATA_DIR) {
+    return path.join(process.env.LIBRANIA_DATA_DIR, 'librania.db');
+  }
+  return path.join(process.cwd(), 'data', 'librania.db');
+}
+
+const DB_PATH = getDatabasePath();
+const NOTES_DIR = path.join(path.dirname(DB_PATH), 'notes');
 
 interface Note {
   id: string;
   title: string;
   body: string;
-  created_at: string;
-  updated_at: string;
-  deleted_at: string | null;
+  metadata?: string | null;
+  created_at: number | string;
+  updated_at: number | string;
+  deleted_at: number | string | null;
 }
 
 interface Tag {
@@ -55,7 +66,104 @@ interface SearchResult {
   body: string;
   snippet: string;
   tags: string[];
+  group: string | null;
   relevance: number;
+}
+
+const SEARCH_STOPWORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'are',
+  'as',
+  'at',
+  'be',
+  'by',
+  'for',
+  'from',
+  'how',
+  'in',
+  'is',
+  'it',
+  'of',
+  'on',
+  'or',
+  'the',
+  'to',
+  'what',
+  'when',
+  'where',
+  'why',
+  'with',
+  'work',
+  'works',
+]);
+
+function tokenizeSearchQuery(query: string): string[] {
+  const tokens = query
+    .toLowerCase()
+    .split(/[^a-z0-9+#.-]+/i)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 2 && !SEARCH_STOPWORDS.has(token));
+
+  return [...new Set(tokens)];
+}
+
+function nowUnixSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+function timestampToIso(value: number | string | null | undefined): string {
+  if (value === null || value === undefined || value === '') {
+    return new Date().toISOString();
+  }
+
+  if (typeof value === 'number') {
+    const millis = value > 100000000000 ? value : value * 1000;
+    return new Date(millis).toISOString();
+  }
+
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) {
+    const millis = numeric > 100000000000 ? numeric : numeric * 1000;
+    return new Date(millis).toISOString();
+  }
+
+  const parsed = Date.parse(value);
+  if (Number.isFinite(parsed)) {
+    return new Date(parsed).toISOString();
+  }
+
+  return new Date().toISOString();
+}
+
+function createSnippet(body: string, title: string, phrase: string, tokens: string[]): string {
+  const haystacks = [phrase.toLowerCase(), ...tokens];
+  const bodyLower = body.toLowerCase();
+  const titleLower = title.toLowerCase();
+  const match = haystacks.find((term) => term && bodyLower.includes(term)) ||
+    haystacks.find((term) => term && titleLower.includes(term));
+
+  if (!match || !bodyLower.includes(match)) {
+    return body.substring(0, 240) + (body.length > 240 ? '...' : '');
+  }
+
+  const index = bodyLower.indexOf(match);
+  const start = Math.max(0, index - 120);
+  const end = Math.min(body.length, index + 280);
+  return `${start > 0 ? '...' : ''}${body.substring(start, end)}${end < body.length ? '...' : ''}`;
+}
+
+function getNoteGroupFromMetadata(metadata: string | null | undefined): string | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata);
+    return typeof parsed.noteGroup === 'string' && parsed.noteGroup.trim()
+      ? parsed.noteGroup.trim()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 class LibraniaMCPServer {
@@ -72,6 +180,30 @@ class LibraniaMCPServer {
         capabilities: {
           tools: {},
         },
+        instructions: `LibraNia Knowledge Base Integration
+
+Mandatory research protocol:
+
+1. **Search LibraNia first**: Before any web search or external research, call search_notes for the user's topic and adjacent terms.
+2. **Read relevant notes**: If search_notes returns useful results, call get_note on the relevant note IDs before answering or researching externally.
+3. **Evaluate sufficiency**: If existing LibraNia notes answer the request, use them as the primary source and do not browse just to appear thorough.
+4. **Web search fallback**: Use web search only when the library is missing, incomplete, stale, or the user asks for current/latest information.
+5. **Write back before using web findings**: If web search is used and produces useful durable knowledge, save that knowledge to LibraNia with create_note or update_note before presenting it as the answer.
+6. **Connect the graph**: New or updated Markdown notes should include [[Exact Note Title]] links to related notes found with search_notes/get_note.
+7. **Tag saved knowledge**: Add concise lowercase tags with add_tags.
+8. **Report library actions**: In the final answer, mention which notes were used, created, or updated.
+
+Do not finish a research answer based on web findings without first saving useful durable findings back to LibraNia, unless the user explicitly says not to save anything.
+
+Example workflow:
+- Query: "Docker security best practices"
+- search_notes("Docker security") → found 2 notes
+- Evaluate: partial info, need more on container isolation
+- web_search("Docker container isolation security")
+- create_note with findings, link to existing [[Docker Basics]] note before using those findings in the answer
+- Return answer citing both LibraNia notes and web sources
+
+This ensures knowledge accumulates in LibraNia over time.`,
       }
     );
 
@@ -110,7 +242,7 @@ class LibraniaMCPServer {
         tools: [
           {
             name: 'search_notes',
-            description: 'Search LibraNia knowledge base for relevant notes. Returns matching notes with snippets and tags. Use before creating new notes to find related content for linking.',
+            description: 'Search LibraNia knowledge base for relevant notes. Mandatory first step before web search or external research. Returns matching notes with snippets and tags. Use before creating new notes to find related content for linking.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -128,7 +260,7 @@ class LibraniaMCPServer {
           },
           {
             name: 'get_note',
-            description: 'Get full content of a specific note by ID',
+            description: 'Get full content of a specific note by ID. Use after search_notes when a result is relevant so answers and new notes can build on existing library knowledge.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -142,7 +274,7 @@ class LibraniaMCPServer {
           },
           {
             name: 'create_note',
-            description: 'Create a new note in LibraNia. Use after web search to save findings. IMPORTANT: Link to related notes using [[Note Title]] syntax in body to create bidirectional backlinks. Search for related notes first, then reference them.',
+            description: 'Create a new note in LibraNia. Required after web research when useful durable knowledge was found, before using those web findings in the final answer. Link related notes using [[Note Title]] syntax in body to create bidirectional backlinks. Search for related notes first, then reference them.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -165,7 +297,7 @@ class LibraniaMCPServer {
           },
           {
             name: 'update_note',
-            description: 'Update existing note content or add information',
+            description: 'Update existing note content or add information. Prefer this over create_note when web research improves, corrects, or extends an existing note.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -191,7 +323,7 @@ class LibraniaMCPServer {
           },
           {
             name: 'add_tags',
-            description: 'Add tags to a note',
+            description: 'Add tags to a note after creating or updating durable research knowledge.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -275,53 +407,120 @@ class LibraniaMCPServer {
 
   private async searchNotes(query: string, limit: number): Promise<any> {
     const db = this.connectDB();
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = query.toLowerCase().trim();
+    const tokens = tokenizeSearchQuery(query);
 
-    // Search in notes
+    if (!lowerQuery || tokens.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({ query, count: 0, results: [] }, null, 2),
+          },
+        ],
+      };
+    }
+
     const notes = db
       .prepare(
-        `SELECT id, title, body, created_at, updated_at
+        `SELECT id, title, body, metadata, created_at, updated_at
          FROM notes
          WHERE deleted_at IS NULL
-         AND (LOWER(title) LIKE ? OR LOWER(body) LIKE ?)
-         ORDER BY updated_at DESC
-         LIMIT ?`
+         ORDER BY updated_at DESC`
       )
-      .all(`%${lowerQuery}%`, `%${lowerQuery}%`, limit) as Note[];
+      .all() as Note[];
 
-    // Get tags for each note
-    const results: SearchResult[] = notes.map((note) => {
-      const tags = db
-        .prepare(
-          `SELECT t.name
-           FROM tags t
-           JOIN note_tags nt ON t.id = nt.tag_id
-           WHERE nt.note_id = ?`
-        )
-        .all(note.id)
-        .map((row: any) => row.name);
+    const tagRows = db
+      .prepare(
+        `SELECT nt.note_id, t.name
+         FROM note_tags nt
+         JOIN tags t ON t.id = nt.tag_id`
+      )
+      .all() as Array<{ note_id: string; name: string }>;
 
-      // Create snippet
-      const bodyLower = note.body.toLowerCase();
-      const queryIndex = bodyLower.indexOf(lowerQuery);
-      let snippet = '';
-      if (queryIndex !== -1) {
-        const start = Math.max(0, queryIndex - 100);
-        const end = Math.min(note.body.length, queryIndex + 200);
-        snippet = '...' + note.body.substring(start, end) + '...';
-      } else {
-        snippet = note.body.substring(0, 200) + '...';
+    const tagsByNote = new Map<string, string[]>();
+    for (const row of tagRows) {
+      const noteTags = tagsByNote.get(row.note_id) || [];
+      noteTags.push(row.name);
+      tagsByNote.set(row.note_id, noteTags);
+    }
+
+    const results: SearchResult[] = notes
+      .map((note) => {
+        const tags = tagsByNote.get(note.id) || [];
+        const titleLower = note.title.toLowerCase();
+        const bodyLower = note.body.toLowerCase();
+        const tagsLower = tags.join(' ').toLowerCase();
+        const group = getNoteGroupFromMetadata(note.metadata);
+        const groupLower = (group || '').toLowerCase();
+
+        let relevance = 0;
+        if (titleLower.includes(lowerQuery)) relevance += 80;
+        if (bodyLower.includes(lowerQuery)) relevance += 35;
+        if (tagsLower.includes(lowerQuery)) relevance += 25;
+        if (groupLower.includes(lowerQuery)) relevance += 30;
+
+        for (const token of tokens) {
+          if (titleLower.includes(token)) relevance += 20;
+          if (bodyLower.includes(token)) relevance += 6;
+          if (tagsLower.includes(token)) relevance += 10;
+          if (groupLower.includes(token)) relevance += 12;
+        }
+
+        // Prefer notes that match multiple query concepts over one repeated term.
+        const matchedTokenCount = tokens.filter((token) =>
+          titleLower.includes(token) || bodyLower.includes(token) || tagsLower.includes(token) || groupLower.includes(token)
+        ).length;
+        relevance += matchedTokenCount * 5;
+
+        return {
+          id: note.id,
+          title: note.title,
+          body: note.body,
+          snippet: createSnippet(note.body, note.title, lowerQuery, tokens),
+          tags,
+          group,
+          relevance,
+        };
+      })
+      .filter((result) => result.relevance > 0)
+      .sort((a, b) => b.relevance - a.relevance)
+      .slice(0, limit);
+
+    if (results.length < limit) {
+      try {
+        const ftsQuery = tokens.map((token) => `${token}*`).join(' OR ');
+        const existingIds = new Set(results.map((result) => result.id));
+        const ftsResults = db
+          .prepare(
+            `SELECT n.id, n.title, n.body, n.metadata, n.created_at, n.updated_at, notes_fts.rank
+             FROM notes_fts
+             JOIN notes n ON notes_fts.rowid = n.rowid
+             WHERE notes_fts MATCH ?
+               AND n.deleted_at IS NULL
+             ORDER BY notes_fts.rank
+             LIMIT ?`
+          )
+          .all(ftsQuery, limit) as Array<Note & { rank: number }>;
+
+        for (const note of ftsResults) {
+          if (existingIds.has(note.id) || results.length >= limit) continue;
+          const tags = tagsByNote.get(note.id) || [];
+          results.push({
+            id: note.id,
+            title: note.title,
+            body: note.body,
+            snippet: createSnippet(note.body, note.title, lowerQuery, tokens),
+            tags,
+            group: getNoteGroupFromMetadata(note.metadata),
+            relevance: Math.max(1, 10 - Math.abs(note.rank || 0)),
+          });
+          existingIds.add(note.id);
+        }
+      } catch {
+        // FTS tables may be unavailable in older databases; token scoring above is the primary path.
       }
-
-      return {
-        id: note.id,
-        title: note.title,
-        body: note.body,
-        snippet,
-        tags,
-        relevance: 1.0,
-      };
-    });
+    }
 
     return {
       content: [
@@ -336,6 +535,7 @@ class LibraniaMCPServer {
                 title: r.title,
                 snippet: r.snippet,
                 tags: r.tags,
+                group: r.group,
               })),
             },
             null,
@@ -351,7 +551,7 @@ class LibraniaMCPServer {
 
     const note = db
       .prepare(
-        `SELECT id, title, body, created_at, updated_at
+        `SELECT id, title, body, metadata, created_at, updated_at
          FROM notes
          WHERE id = ? AND deleted_at IS NULL`
       )
@@ -381,8 +581,9 @@ class LibraniaMCPServer {
               title: note.title,
               body: note.body,
               tags,
-              created_at: note.created_at,
-              updated_at: note.updated_at,
+              group: getNoteGroupFromMetadata(note.metadata),
+              created_at: timestampToIso(note.created_at),
+              updated_at: timestampToIso(note.updated_at),
             },
             null,
             2
@@ -395,7 +596,8 @@ class LibraniaMCPServer {
   private async createNote(title: string, body: string, tagNames: string[]): Promise<any> {
     const db = this.connectDB();
     const noteId = this.generateId();
-    const now = new Date().toISOString();
+    const now = nowUnixSeconds();
+    const nowIso = timestampToIso(now);
 
     // Insert note
     db.prepare(
@@ -404,11 +606,12 @@ class LibraniaMCPServer {
     ).run(noteId, title, body, now, now);
 
     // Write markdown file with frontmatter
+    fs.mkdirSync(NOTES_DIR, { recursive: true });
     const notePath = path.join(NOTES_DIR, `${noteId}.md`);
     const frontmatter = `---
 title: ${title}
-created_at: ${now}
-updated_at: ${now}
+created_at: ${nowIso}
+updated_at: ${nowIso}
 tags: ${JSON.stringify(tagNames)}
 ---
 
@@ -456,7 +659,8 @@ ${body}`;
       throw new Error(`Note not found: ${noteId}`);
     }
 
-    const now = new Date().toISOString();
+    const now = nowUnixSeconds();
+    const nowIso = timestampToIso(now);
     const newTitle = title || note.title;
     let newBody = body || note.body;
 
@@ -472,6 +676,7 @@ ${body}`;
     ).run(newTitle, newBody, now, noteId);
 
     // Update markdown file with frontmatter
+    fs.mkdirSync(NOTES_DIR, { recursive: true });
     const notePath = path.join(NOTES_DIR, `${noteId}.md`);
 
     // Get tags for frontmatter
@@ -487,8 +692,8 @@ ${body}`;
 
     const frontmatter = `---
 title: ${newTitle}
-created_at: ${note.created_at}
-updated_at: ${now}
+created_at: ${timestampToIso(note.created_at)}
+updated_at: ${nowIso}
 tags: ${JSON.stringify(tags)}
 ---
 
@@ -525,7 +730,7 @@ ${newBody}`;
 
       if (!tag) {
         const tagId = this.generateId();
-        const now = new Date().toISOString();
+        const now = nowUnixSeconds();
         db.prepare('INSERT INTO tags (id, name, created_at) VALUES (?, ?, ?)').run(
           tagId,
           tagName,

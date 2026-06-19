@@ -8,23 +8,31 @@ import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { keymap } from '@codemirror/view';
 import { useNote, useUpdateNote, useDeleteNote } from '../../hooks/useNotes';
-import { BacklinksPanel } from './BacklinksPanel';
-import { RelatedPanel } from './RelatedPanel';
-import { Eye, Edit, Columns } from 'lucide-react';
+import { Eye, Edit, Columns, Save, Trash2, Link2 } from 'lucide-react';
+import { contentAPI } from '../../api/content';
+import { notesAPI } from '../../api/notes';
+import toast from 'react-hot-toast';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { DATA_EVENTS, emitDataUpdated } from '../../utils/data-events';
 
 interface NoteEditorProps {
   noteId: string;
+  defaultViewMode?: ViewMode;
+  compact?: boolean;
 }
 
 type ViewMode = 'edit' | 'preview' | 'split';
 
-export function NoteEditor({ noteId }: NoteEditorProps) {
+export function NoteEditor({ noteId, defaultViewMode = 'split', compact = false }: NoteEditorProps) {
   const { note, loading } = useNote(noteId);
-  const { updateNote } = useUpdateNote();
+  const { updateNote, loading: saving } = useUpdateNote();
   const { deleteNote } = useDeleteNote();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('split');
+  const [savedContent, setSavedContent] = useState({ title: '', body: '' });
+  const [viewMode, setViewMode] = useState<ViewMode>(defaultViewMode);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [autoLinking, setAutoLinking] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const editorViewRef = useRef<EditorView | null>(null);
 
@@ -33,6 +41,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     if (note) {
       setTitle(note.title);
       setBody(note.body);
+      setSavedContent({ title: note.title, body: note.body });
     }
   }, [note]);
 
@@ -75,7 +84,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
 
                 try {
                   // Save image to disk
-                  const result = await window.api.content.saveImage({
+                  const result = await contentAPI.saveImage({
                     buffer: arrayBuffer,
                     filename: file.name || 'image.png',
                     noteId: noteId,
@@ -92,7 +101,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
                   }
                 } catch (error) {
                   console.error('Failed to save pasted image:', error);
-                  alert('Failed to save image. Please try again.');
+                  toast.error('Failed to save image. Please try again.');
                 }
               };
               reader.readAsArrayBuffer(file);
@@ -160,29 +169,73 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
     }
   }, [note]);
 
-  // Auto-save after 2 seconds of inactivity
-  useEffect(() => {
-    if (!note) return;
+  const hasPendingChanges = title !== savedContent.title || body !== savedContent.body;
 
-    const timer = setTimeout(() => {
-      if (title !== note.title || body !== note.body) {
-        updateNote({ id: noteId, title, body });
-      }
-    }, 2000);
+  const replaceEditorBody = (nextBody: string) => {
+    const view = editorViewRef.current;
+    if (!view) return;
+    const currentDoc = view.state.doc.toString();
+    if (currentDoc === nextBody) return;
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: currentDoc.length,
+        insert: nextBody,
+      },
+    });
+  };
 
-    return () => clearTimeout(timer);
-  }, [title, body, note, noteId, updateNote]);
+  const handleSave = async () => {
+    if (!hasPendingChanges || saving) return;
 
-  const handleDelete = async () => {
-    if (confirm(`Delete note "${title}"?`)) {
-      await deleteNote(noteId, false); // Soft delete
+    try {
+      const updatedNote = await updateNote({ id: noteId, title, body });
+      setSavedContent({ title: updatedNote.title, body: updatedNote.body });
+    } catch {
+      // useUpdateNote already reports API errors to the user.
     }
   };
 
-  const handleNavigate = (targetNoteId: string) => {
-    // Navigation will be handled by parent component or router
-    // For now, just log the navigation intent
-    console.log('Navigate to note:', targetNoteId);
+  const handleAutoLink = async () => {
+    if (autoLinking || saving) return;
+
+    setAutoLinking(true);
+    try {
+      if (hasPendingChanges) {
+        await handleSave();
+      }
+
+      const result = await notesAPI.autoLink(noteId);
+      setTitle(result.note.title);
+      setBody(result.note.body);
+      setSavedContent({ title: result.note.title, body: result.note.body });
+      replaceEditorBody(result.note.body);
+      emitDataUpdated(DATA_EVENTS.notes);
+      toast.success(result.addedLinks.length > 0
+        ? `Added ${result.addedLinks.length} link${result.addedLinks.length === 1 ? '' : 's'}`
+        : 'No new neighboring notes found');
+    } catch (error) {
+      console.error('Auto Link failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Auto Link failed');
+    } finally {
+      setAutoLinking(false);
+    }
+  };
+
+  // Auto-save after 2 seconds of inactivity
+  useEffect(() => {
+    if (!note || !hasPendingChanges || saving) return;
+
+    const timer = setTimeout(() => {
+      void handleSave();
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [title, body, note, hasPendingChanges, saving]);
+
+  const handleDelete = async () => {
+    await deleteNote(noteId); // Soft delete
+    setDeleteDialogOpen(false);
   };
 
   if (loading) {
@@ -204,20 +257,23 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
   return (
     <div className="note-editor flex h-full">
       <div className="editor-main flex-1 flex flex-col">
-        <div className="editor-header p-4 border-b border-border">
+        <div className="editor-header sticky top-0 z-20 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Note title"
-            className="w-full px-3 py-2 mb-3 text-2xl font-bold bg-background border-none text-foreground placeholder-secondary focus:outline-none"
+            aria-label="Note title"
+            className={`w-full bg-transparent px-1 py-1 font-bold tracking-tight text-foreground placeholder-secondary focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+              compact ? 'mb-2 text-xl' : 'mb-3 text-2xl md:text-3xl'
+            }`}
           />
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1 border border-border rounded-md">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1 rounded-lg border border-border bg-muted/40 p-1" role="group" aria-label="Note view mode">
               <button
                 onClick={() => setViewMode('edit')}
-                className={`px-3 py-1.5 text-sm flex items-center gap-1 rounded-l-md transition-colors ${
-                  viewMode === 'edit' ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
+                className={`flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
+                  viewMode === 'edit' ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:bg-background/70 hover:text-foreground'
                 }`}
                 title="Edit mode"
               >
@@ -226,8 +282,8 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
               </button>
               <button
                 onClick={() => setViewMode('split')}
-                className={`px-3 py-1.5 text-sm flex items-center gap-1 transition-colors ${
-                  viewMode === 'split' ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
+                className={`flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
+                  viewMode === 'split' ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:bg-background/70 hover:text-foreground'
                 }`}
                 title="Split mode"
               >
@@ -236,8 +292,8 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
               </button>
               <button
                 onClick={() => setViewMode('preview')}
-                className={`px-3 py-1.5 text-sm flex items-center gap-1 rounded-r-md transition-colors ${
-                  viewMode === 'preview' ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
+                className={`flex cursor-pointer items-center gap-1 rounded-md px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary ${
+                  viewMode === 'preview' ? 'bg-background text-primary shadow-sm' : 'text-secondary hover:bg-background/70 hover:text-foreground'
                 }`}
                 title="Preview mode"
               >
@@ -246,26 +302,49 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
               </button>
             </div>
             <button
-              onClick={handleDelete}
-              className="ml-auto px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+              onClick={() => void handleSave()}
+              disabled={!hasPendingChanges || saving}
+              className="flex cursor-pointer items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+              title="Save note"
             >
+              <Save size={14} />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={() => void handleAutoLink()}
+              disabled={autoLinking || saving}
+              className="flex cursor-pointer items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+              title="Auto Link"
+            >
+              <Link2 size={14} />
+              {autoLinking ? 'Linking...' : 'Auto Link'}
+            </button>
+            <button
+              onClick={() => setDeleteDialogOpen(true)}
+              className="ml-auto flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10 focus:outline-none focus:ring-2 focus:ring-destructive"
+              title="Delete note"
+            >
+              <Trash2 size={14} />
               Delete
             </button>
           </div>
         </div>
 
-        <div className="editor-body flex-1 overflow-hidden flex">
-          {/* Editor pane */}
-          {(viewMode === 'edit' || viewMode === 'split') && (
-            <div className={`editor-pane ${viewMode === 'split' ? 'w-1/2 border-r border-border' : 'w-full'} overflow-y-auto p-4`}>
-              <div ref={editorRef} className="editor-container" />
-            </div>
-          )}
+        <div className="editor-body flex-1 overflow-hidden flex flex-col md:flex-row">
+          {/* Editor pane - always mounted but hidden when not needed */}
+          <div
+            className={`editor-pane ${viewMode === 'split' ? 'md:w-1/2 md:border-r border-border' : 'w-full'} overflow-y-auto bg-muted/20 p-4`}
+            style={{ display: viewMode === 'preview' ? 'none' : 'block' }}
+          >
+            <div ref={editorRef} className="editor-container" />
+          </div>
 
           {/* Preview pane */}
           {(viewMode === 'preview' || viewMode === 'split') && (
-            <div className={`preview-pane ${viewMode === 'split' ? 'w-1/2' : 'w-full'} overflow-y-auto p-4`}>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className={`preview-pane ${viewMode === 'split' ? 'md:w-1/2' : 'w-full'} overflow-y-auto bg-muted/20 p-4 md:p-6`}>
+              <article className={`note-reading-surface mx-auto rounded-xl border border-border bg-background shadow-sm ${
+                compact ? 'max-w-3xl px-5 py-6' : 'max-w-4xl px-5 py-7 md:px-10 md:py-10'
+              }`}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeRaw]}
@@ -277,7 +356,7 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
                         imgSrc = `librania://${src.replace(/\\/g, '/')}`;
                       }
                       return (
-                        <img {...props} src={imgSrc} className="max-w-full h-auto rounded" loading="lazy" />
+                        <img {...props} src={imgSrc} className="h-auto max-w-full rounded-lg border border-border shadow-sm" loading="lazy" />
                       );
                     },
                     code: ({ node, className, children, ...props }) => {
@@ -296,16 +375,19 @@ export function NoteEditor({ noteId }: NoteEditorProps) {
                 >
                   {body}
                 </ReactMarkdown>
-              </div>
+              </article>
             </div>
           )}
         </div>
       </div>
-
-      <div className="editor-sidebar w-80 border-l border-border overflow-y-auto">
-        <BacklinksPanel noteId={noteId} onNavigate={handleNavigate} />
-        <RelatedPanel noteId={noteId} onNavigate={handleNavigate} />
-      </div>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete note?"
+        description={`Delete "${title}"? You can restore it from the archive if needed.`}
+        confirmLabel="Delete note"
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
   );
 }

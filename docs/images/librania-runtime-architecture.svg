@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="1600" viewBox="0 0 2400 1600">
+  <defs>
+    <style>
+      .bg{fill:#f8fafc}.title{font:800 48px Arial,sans-serif;fill:#0f172a}.sub{font:400 22px Arial,sans-serif;fill:#475569}
+      .panel{fill:#fff;stroke:#cbd5e1;stroke-width:2}.h{font:800 24px Arial,sans-serif;fill:#0f172a}.h2{font:800 18px Arial,sans-serif;fill:#0f172a}
+      .txt{font:400 15px Arial,sans-serif;fill:#334155}.small{font:700 13px Arial,sans-serif;fill:#475569}.mono{font:700 14px Consolas,monospace;fill:#1e293b}
+      .blue{fill:#eff6ff;stroke:#2563eb}.green{fill:#ecfdf5;stroke:#059669}.purple{fill:#f5f3ff;stroke:#7c3aed}.amber{fill:#fffbeb;stroke:#d97706}.red{fill:#fef2f2;stroke:#dc2626}.slate{fill:#f1f5f9;stroke:#64748b}
+      .arrow{stroke:#475569;stroke-width:3;fill:none;marker-end:url(#arrow)}.soft{stroke:#94a3b8;stroke-width:2;fill:none;marker-end:url(#soft)}
+      .dash{stroke:#64748b;stroke-width:2;stroke-dasharray:8 7;fill:none;marker-end:url(#soft)}.num{font:800 17px Arial,sans-serif;fill:#fff}.pill{fill:#0f172a}
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker>
+    <marker id="soft" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker>
+  </defs>
+  <rect class="bg" width="2400" height="1600"/>
+  <text class="title" x="80" y="86">LibraNia Runtime Architecture</text>
+  <text class="sub" x="82" y="126">Code-accurate deployment and request flow: React UI, Express API, services, local storage, AI providers, Blackboard, and MCP.</text>
+
+  <rect class="panel" x="70" y="165" width="2260" height="180" rx="18"/>
+  <text class="h" x="105" y="210">Process startup and runtime boundary</text>
+  <rect class="amber" x="105" y="235" width="430" height="80" rx="12"/><text class="h2" x="130" y="268">start.bat</text><text class="txt" x="130" y="294">Build app, fix ESM imports, build MCP, start supervisor.</text>
+  <rect class="amber" x="575" y="235" width="430" height="80" rx="12"/><text class="h2" x="600" y="268">scripts/start-supervisor.js</text><text class="txt" x="600" y="294">Starts app services and centralizes shutdown behavior.</text>
+  <rect class="green" x="1045" y="235" width="430" height="80" rx="12"/><text class="h2" x="1070" y="268">start.js / backend/server.ts</text><text class="txt" x="1070" y="294">Serves dist, mounts REST API, Socket.IO, static files.</text>
+  <rect class="slate" x="1515" y="235" width="760" height="80" rx="12"/><text class="h2" x="1540" y="268">Configuration boundary</text><text class="txt" x="1540" y="294">Provider and Tavily keys are read from data/.env. Browser never reads keys or SQLite directly.</text>
+  <path class="arrow" d="M535 275H575"/><path class="arrow" d="M1005 275H1045"/><path class="arrow" d="M1475 275H1515"/>
+
+  <text class="h" x="90" y="410">Primary browser request flow</text>
+  <rect class="blue" x="90" y="445" width="350" height="410" rx="16"/>
+  <circle class="pill" cx="125" cy="485" r="17"/><text class="num" x="120" y="491">1</text>
+  <text class="h2" x="155" y="492">React/Vite UI</text>
+  <text class="txt" x="125" y="530">Routes:</text>
+  <text class="txt" x="145" y="558">Home dashboard</text><text class="txt" x="145" y="584">Library</text><text class="txt" x="145" y="610">Chat</text><text class="txt" x="145" y="636">Blackboard</text><text class="txt" x="145" y="662">Graph</text><text class="txt" x="145" y="688">Settings</text>
+  <text class="txt" x="125" y="730">Providers:</text><text class="txt" x="145" y="758">ThemeProvider</text><text class="txt" x="145" y="784">SocketProvider</text><text class="txt" x="145" y="810">Toaster + OfflineIndicator</text>
+
+  <rect class="blue" x="500" y="445" width="350" height="410" rx="16"/>
+  <circle class="pill" cx="535" cy="485" r="17"/><text class="num" x="530" y="491">2</text>
+  <text class="h2" x="565" y="492">Frontend clients</text>
+  <text class="txt" x="535" y="530">src/api/* REST clients</text>
+  <text class="txt" x="535" y="558">Hooks:</text>
+  <text class="txt" x="555" y="586">useNotes, useTags, useGraph</text>
+  <text class="txt" x="555" y="612">useConversations</text>
+  <text class="txt" x="555" y="638">useAIProviders</text>
+  <text class="txt" x="535" y="678">Socket.IO context</text>
+  <text class="txt" x="535" y="706">localStorage UI state</text>
+
+  <rect class="green" x="910" y="445" width="350" height="410" rx="16"/>
+  <circle class="pill" cx="945" cy="485" r="17"/><text class="num" x="940" y="491">3</text>
+  <text class="h2" x="975" y="492">Express API routes</text>
+  <text class="mono" x="945" y="530">/api/notes /tags /search</text>
+  <text class="mono" x="945" y="558">/api/content /export /graph</text>
+  <text class="mono" x="945" y="586">/api/conversations /chat</text>
+  <text class="mono" x="945" y="614">/api/library/ask</text>
+  <text class="mono" x="945" y="642">/api/providers /config /ai</text>
+  <text class="mono" x="945" y="670">/api/blackboard/*</text>
+  <text class="txt" x="945" y="716">Route files live in backend/api.</text>
+
+  <rect class="slate" x="1320" y="445" width="350" height="410" rx="16"/>
+  <circle class="pill" cx="1355" cy="485" r="17"/><text class="num" x="1350" y="491">4</text>
+  <text class="h2" x="1385" y="492">Service layer</text>
+  <text class="txt" x="1355" y="530">Library: notes, tags, links, graph,</text><text class="txt" x="1355" y="556">search, content, export, import.</text>
+  <text class="txt" x="1355" y="596">AI: chat, providers, web search,</text><text class="txt" x="1355" y="622">research tools, embeddings.</text>
+  <text class="txt" x="1355" y="662">Blackboard: sessions, agents,</text><text class="txt" x="1355" y="688">tools, artifacts, export.</text>
+  <text class="txt" x="1355" y="728">Config: env.store reads data/.env.</text>
+
+  <rect class="amber" x="1730" y="445" width="350" height="410" rx="16"/>
+  <circle class="pill" cx="1765" cy="485" r="17"/><text class="num" x="1760" y="491">5</text>
+  <text class="h2" x="1795" y="492">Local storage</text>
+  <text class="mono" x="1765" y="530">data/librania.db</text>
+  <text class="mono" x="1765" y="558">data/.env</text>
+  <text class="mono" x="1765" y="586">data/notes</text>
+  <text class="mono" x="1765" y="614">data/uploads</text>
+  <text class="mono" x="1765" y="642">data/blackboard-exports</text>
+  <text class="mono" x="1765" y="670">data/models</text>
+  <text class="mono" x="1765" y="698">content/</text>
+  <text class="txt" x="1765" y="738">All user data stays local by default.</text>
+
+  <rect class="red" x="2125" y="445" width="205" height="410" rx="16"/>
+  <circle class="pill" cx="2160" cy="485" r="17"/><text class="num" x="2155" y="491">6</text>
+  <text class="h2" x="2190" y="492">External</text>
+  <text class="txt" x="2160" y="530">Claude</text><text class="txt" x="2160" y="558">OpenAI</text><text class="txt" x="2160" y="586">DeepSeek</text><text class="txt" x="2160" y="614">Custom provider</text><text class="txt" x="2160" y="642">Tavily / web</text>
+
+  <path class="arrow" d="M440 650H500"/><path class="arrow" d="M850 650H910"/><path class="arrow" d="M1260 650H1320"/><path class="arrow" d="M1670 650H1730"/><path class="arrow" d="M2080 650H2125"/>
+
+  <rect class="panel" x="90" y="910" width="690" height="380" rx="18"/>
+  <text class="h" x="125" y="955">Blackboard subsystem</text>
+  <rect class="purple" x="125" y="985" width="290" height="130" rx="12"/><text class="h2" x="150" y="1022">UI route</text><text class="txt" x="150" y="1050">Session rail, chat room, inspector,</text><text class="txt" x="150" y="1076">Agent Management, Tool Builder,</text><text class="txt" x="150" y="1100">and Playground.</text>
+  <rect class="purple" x="455" y="985" width="285" height="130" rx="12"/><text class="h2" x="480" y="1022">API</text><text class="mono" x="480" y="1050">/api/blackboard/*</text><text class="txt" x="480" y="1076">Agents, tools, sessions, messages, assign.</text>
+  <rect class="purple" x="125" y="1145" width="290" height="105" rx="12"/><text class="h2" x="150" y="1182">Service</text><text class="txt" x="150" y="1210">Observation building, @mentions, tool executor.</text>
+  <rect class="purple" x="455" y="1145" width="285" height="105" rx="12"/><text class="h2" x="480" y="1182">Persistence</text><text class="txt" x="480" y="1210">Sessions, agents, tools, artifacts, exports.</text>
+  <path class="soft" d="M415 1050H455"/><path class="soft" d="M598 1115V1145"/><path class="soft" d="M415 1198H455"/>
+
+  <rect class="panel" x="850" y="910" width="690" height="380" rx="18"/>
+  <text class="h" x="885" y="955">MCP and external agent access</text>
+  <rect class="purple" x="885" y="985" width="300" height="130" rx="12"/><text class="h2" x="910" y="1022">MCP clients</text><text class="txt" x="910" y="1050">Codex and Claude CLI start</text><text class="txt" x="910" y="1076">the LibraNia MCP server over stdio.</text>
+  <rect class="purple" x="1220" y="985" width="280" height="130" rx="12"/><text class="h2" x="1245" y="1022">MCP tools</text><text class="mono" x="1245" y="1050">search_notes, get_note</text><text class="mono" x="1245" y="1076">create_note, update_note</text><text class="mono" x="1245" y="1102">add_tags, list_tags</text>
+  <rect class="green" x="885" y="1145" width="615" height="105" rx="12"/><text class="h2" x="910" y="1182">Same local data</text><text class="txt" x="910" y="1210">setup-codex and setup-cli register LIBRANIA_DATA_DIR.</text><text class="txt" x="910" y="1234">MCP clients use the same data/librania.db.</text>
+  <path class="soft" d="M1185 1050H1220"/><path class="soft" d="M1360 1115V1145"/>
+
+  <rect class="panel" x="1610" y="910" width="720" height="380" rx="18"/>
+  <text class="h" x="1645" y="955">Data model and security boundary</text>
+  <rect class="amber" x="1645" y="985" width="315" height="240" rx="12"/>
+  <text class="h2" x="1670" y="1022">SQLite stores</text>
+  <text class="txt" x="1670" y="1050">notes, tags, note links, versions</text><text class="txt" x="1670" y="1076">conversations, messages, citations</text><text class="txt" x="1670" y="1102">content metadata, embeddings</text><text class="txt" x="1670" y="1128">Blackboard sessions, agents, tools</text><text class="txt" x="1670" y="1154">artifacts and workflow state</text>
+  <rect class="red" x="1995" y="985" width="300" height="240" rx="12"/>
+  <text class="h2" x="2020" y="1022">Boundary rules</text>
+  <text class="txt" x="2020" y="1050">Browser calls API only.</text><text class="txt" x="2020" y="1076">Provider keys stay in data/.env.</text><text class="txt" x="2020" y="1102">Web search needs Tavily key.</text><text class="txt" x="2020" y="1128">Custom HTTP tools resolve</text><text class="txt" x="2020" y="1154">relative /api URLs on backend.</text>
+
+  <rect class="panel" x="90" y="1360" width="2240" height="110" rx="18"/>
+  <text class="h" x="125" y="1405">Runtime contract</text>
+  <text class="txt" x="125" y="1438">UI state and requests flow through React clients, Express routes, and service modules. Durable state is local: SQLite, Markdown/content files, Blackboard exports, and data/.env provider configuration.</text>
+</svg>

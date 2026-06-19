@@ -1,10 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-
-interface Tag {
-  id: string;
-  name: string;
-  created_at: Date;
-}
+import { tagsAPI, Tag } from '../api';
+import { handleAPIError } from '../utils/toast';
+import { DATA_EVENTS, emitDataUpdated, subscribeDataUpdated } from '../utils/data-events';
 
 export function useTags() {
   const [tags, setTags] = useState<Tag[]>([]);
@@ -13,10 +10,10 @@ export function useTags() {
   const fetchTags = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.tags.getAll();
+      const data = await tagsAPI.getAll();
       setTags(data);
     } catch (err) {
-      console.error('Failed to fetch tags:', err);
+      handleAPIError(err);
       setTags([]);
     } finally {
       setLoading(false);
@@ -26,6 +23,8 @@ export function useTags() {
   useEffect(() => {
     fetchTags();
   }, [fetchTags]);
+
+  useEffect(() => subscribeDataUpdated(DATA_EVENTS.tags, fetchTags), [fetchTags]);
 
   return { tags, loading, refetch: fetchTags };
 }
@@ -37,10 +36,10 @@ export function useNoteTags(noteId: string) {
   const fetchTags = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await window.api.tags.getForNote(noteId);
+      const data = await tagsAPI.getByNote(noteId);
       setTags(data);
     } catch (err) {
-      console.error('Failed to fetch note tags:', err);
+      handleAPIError(err);
       setTags([]);
     } finally {
       setLoading(false);
@@ -51,21 +50,25 @@ export function useNoteTags(noteId: string) {
     fetchTags();
   }, [fetchTags]);
 
+  useEffect(() => subscribeDataUpdated(DATA_EVENTS.tags, fetchTags), [fetchTags]);
+
   const addTag = useCallback(async (tagName: string) => {
     try {
-      await window.api.tags.addToNote(noteId, [tagName]);
+      await tagsAPI.addToNote(noteId, tagName);
       await fetchTags();
+      emitDataUpdated(DATA_EVENTS.tags);
     } catch (err) {
-      console.error('Failed to add tag:', err);
+      handleAPIError(err);
     }
   }, [noteId, fetchTags]);
 
   const removeTag = useCallback(async (tagId: string) => {
     try {
-      await window.api.tags.removeFromNote(noteId, tagId);
+      await tagsAPI.removeFromNote(noteId, tagId);
       await fetchTags();
+      emitDataUpdated(DATA_EVENTS.tags);
     } catch (err) {
-      console.error('Failed to remove tag:', err);
+      handleAPIError(err);
     }
   }, [noteId, fetchTags]);
 

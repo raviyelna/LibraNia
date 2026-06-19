@@ -1,0 +1,29 @@
+# Exclude TypeScript source files
+electron/**/*.ts
+src/**/*.ts
+src/**/*.tsx
+
+# Force-include compiled JS files (override .gitignore)
+!electron/**/*.js
+
+# Exclude test files
+**/*.test.ts
+**/*.test.tsx
+**/*.test.js
+
+# Exclude build configs
+tsconfig*.json
+vite.config.ts
+vitest.config.ts
+
+# Exclude development files
+.env*
+.git*
+.claude/
+
+# Exclude duplicate compiled output (TypeScript bug creates electron/electron/)
+electron/electron/
+electron/src/
+
+# Exclude other build artifacts
+node_modules/
