@@ -28,21 +28,34 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import Database from 'better-sqlite3';
 import * as path from 'path';
-import * as os from 'os';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
 
-// Database path - match backend priority: LIBRANIA_DB_PATH > LIBRANIA_DATA_DIR/librania.db > ./data/librania.db
-function getDatabasePath(): string {
-  if (process.env.LIBRANIA_DB_PATH) {
-    return process.env.LIBRANIA_DB_PATH;
-  }
-  if (process.env.LIBRANIA_DATA_DIR) {
-    return path.join(process.env.LIBRANIA_DATA_DIR, 'librania.db');
-  }
-  return path.join(process.cwd(), 'data', 'librania.db');
+const SERVER_DIR = path.dirname(fileURLToPath(import.meta.url));
+
+function uniquePaths(paths: string[]): string[] {
+  return [...new Set(paths.map((candidate) => path.resolve(candidate)))];
 }
 
-const DB_PATH = getDatabasePath();
+// Database path - match backend priority first, then fall back to common MCP launch directories.
+function getDatabaseCandidates(): string[] {
+  if (process.env.LIBRANIA_DB_PATH) {
+    return [process.env.LIBRANIA_DB_PATH];
+  }
+  if (process.env.LIBRANIA_DATA_DIR) {
+    return [path.join(process.env.LIBRANIA_DATA_DIR, 'librania.db')];
+  }
+
+  return uniquePaths([
+    path.join(process.cwd(), 'data', 'librania.db'),
+    path.join(process.cwd(), '..', 'data', 'librania.db'),
+    path.join(SERVER_DIR, '..', 'data', 'librania.db'),
+    path.join(SERVER_DIR, '..', '..', 'data', 'librania.db'),
+  ]);
+}
+
+const DB_CANDIDATES = getDatabaseCandidates();
+const DB_PATH = DB_CANDIDATES.find((candidate) => fs.existsSync(candidate)) || DB_CANDIDATES[0];
 const NOTES_DIR = path.join(path.dirname(DB_PATH), 'notes');
 
 interface Note {
@@ -214,7 +227,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
   private connectDB(): Database.Database {
     if (!this.db) {
       if (!fs.existsSync(DB_PATH)) {
-        throw new Error(`LibraNia database not found at ${DB_PATH}`);
+        throw new Error(`LibraNia database not found. Tried: ${DB_CANDIDATES.join(', ')}`);
       }
       this.db = new Database(DB_PATH, { readonly: false });
     }

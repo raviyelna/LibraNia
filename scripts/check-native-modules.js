@@ -1,11 +1,35 @@
 import process from 'process';
 
-const nativeModules = ['better-sqlite3', 'sharp'];
+const nativeModuleChecks = [
+  {
+    moduleName: 'better-sqlite3',
+    check: async () => {
+      const { default: Database } = await import('better-sqlite3');
+      const db = new Database(':memory:');
+      db.prepare('select 1 as ok').get();
+      db.close();
+    },
+  },
+  {
+    moduleName: 'sharp',
+    check: async () => {
+      const { default: sharp } = await import('sharp');
+      await sharp({
+        create: {
+          width: 1,
+          height: 1,
+          channels: 4,
+          background: { r: 0, g: 0, b: 0, alpha: 0 },
+        },
+      }).metadata();
+    },
+  },
+];
 const failures = [];
 
-for (const moduleName of nativeModules) {
+for (const { moduleName, check } of nativeModuleChecks) {
   try {
-    await import(moduleName);
+    await check();
   } catch (error) {
     failures.push({ moduleName, message: error.message || String(error) });
   }

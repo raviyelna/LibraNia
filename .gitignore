@@ -8,6 +8,7 @@ out
 .idea
 .claude/
 .codex/
+.self-decide/
 *.local
 *.sqlite
 *.sqlite-shm

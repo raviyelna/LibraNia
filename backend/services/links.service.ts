@@ -24,6 +24,12 @@ export interface RelatedNote {
   similarity?: number;
 }
 
+interface ActiveNoteLinkSource {
+  id: string;
+  title: string;
+  body: string;
+}
+
 /**
  * Parse wiki-style links from text
  * Extracts [[title]] and [[title|alias]] patterns
@@ -169,14 +175,17 @@ export async function getRelatedNotes(
 
   // Some notes are imported or created outside the normal note service. Resolve
   // their live wiki-links too so Graph and the reader rail report the same links.
-  const activeNotes = await db
+  const activeNotes: ActiveNoteLinkSource[] = await db
     .select({ id: notes.id, title: notes.title, body: notes.body })
     .from(notes)
     .where(isNull(notes.deleted_at));
   const currentNote = activeNotes.find(note => note.id === noteId);
 
   if (currentNote) {
-    const notesByTitle = new Map(activeNotes.map(note => [note.title.toLocaleLowerCase(), note]));
+    const notesByTitle = new Map<string, ActiveNoteLinkSource>();
+    for (const note of activeNotes) {
+      notesByTitle.set(note.title.toLocaleLowerCase(), note);
+    }
 
     for (const wikiLink of parseWikiLinks(currentNote.body)) {
       const related = notesByTitle.get(wikiLink.title.toLocaleLowerCase());

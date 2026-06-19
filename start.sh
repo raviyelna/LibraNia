@@ -3,54 +3,87 @@ set -euo pipefail
 
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")"
 ROOT_DIR="$(pwd)"
-SERVER_PID=""
-MCP_PID=""
+LOG_DIR="$ROOT_DIR/test-logs"
+LOG_FILE="$LOG_DIR/librania-start.log"
+PID_FILE="$LOG_DIR/librania-supervisor.pid"
 
-cleanup() {
-  if [[ -n "${SERVER_PID}" ]]; then
-    kill "${SERVER_PID}" 2>/dev/null || true
-  fi
-  if [[ -n "${MCP_PID}" ]]; then
-    kill "${MCP_PID}" 2>/dev/null || true
-  fi
+check_mcp_native_dependencies() {
+  (cd mcp-server && node -e "const { default: Database } = await import('better-sqlite3'); const db = new Database(':memory:'); db.prepare('select 1').get(); db.close();")
 }
 
-trap cleanup EXIT INT TERM
+ensure_root_dependencies() {
+  if [[ ! -d node_modules ]]; then
+    echo "Root dependencies are missing. Installing..."
+    npm install
+  fi
 
-if [[ ! -d node_modules ]]; then
-  echo "Root dependencies are missing. Run: npm install"
-  exit 1
-fi
+  echo "Checking native dependencies..."
+  if node scripts/check-native-modules.js; then
+    return
+  fi
 
-if [[ ! -d mcp-server/node_modules ]]; then
-  echo "MCP server dependencies are missing. Run: (cd mcp-server && npm install)"
-  exit 1
-fi
+  echo "Root dependencies are not usable on this OS. Cleaning and reinstalling..."
+  rm -rf node_modules
+  npm install
+  node scripts/check-native-modules.js
+}
 
-echo "Checking native dependencies..."
-node scripts/check-native-modules.js
+ensure_mcp_dependencies() {
+  if [[ ! -d mcp-server/node_modules ]]; then
+    echo "MCP server dependencies are missing. Installing..."
+    (cd mcp-server && npm install)
+  fi
 
-echo "Checking MCP native dependencies..."
-(cd mcp-server && node -e "import('better-sqlite3')")
+  echo "Checking MCP native dependencies..."
+  if check_mcp_native_dependencies; then
+    return
+  fi
+
+  echo "MCP dependencies are not usable on this OS. Cleaning and reinstalling..."
+  rm -rf mcp-server/node_modules
+  (cd mcp-server && npm install)
+  check_mcp_native_dependencies
+}
+
+ensure_root_dependencies
+ensure_mcp_dependencies
 
 echo "Building..."
-npm run build:package
+node node_modules/vite/bin/vite.js build
+node node_modules/typescript/bin/tsc -p tsconfig.backend.json --noEmitOnError false
+node scripts/fix-esm-imports.js
 
 echo "Building MCP server..."
-cd mcp-server
-npm run build
-cd ..
+(cd mcp-server && node node_modules/typescript/bin/tsc)
 
 echo "Starting LibraNia server and MCP server..."
-node bin/librania.js start --port 3001 --data-dir "$ROOT_DIR/data" --no-browser &
-SERVER_PID=$!
+mkdir -p "$LOG_DIR"
+nohup node scripts/start-supervisor.js > "$LOG_FILE" 2>&1 &
+SUPERVISOR_PID=$!
+echo "$SUPERVISOR_PID" > "$PID_FILE"
 
-cd mcp-server
-LIBRANIA_DATA_DIR="$ROOT_DIR/data" node dist/index.js &
-MCP_PID=$!
-cd ..
+SERVER_URL=""
+for _ in {1..30}; do
+  if ! kill -0 "$SUPERVISOR_PID" 2>/dev/null; then
+    echo "LibraNia failed to start. Last log lines:"
+    tail -n 40 "$LOG_FILE" 2>/dev/null || true
+    exit 1
+  fi
 
-echo "LibraNia server (PID: $SERVER_PID) and MCP server (PID: $MCP_PID) running"
-echo "Press Ctrl+C to stop both servers"
+  SERVER_URL="$(grep -Eo 'http://localhost:[0-9]+' "$LOG_FILE" 2>/dev/null | tail -n 1 || true)"
+  if [[ -n "$SERVER_URL" ]]; then
+    break
+  fi
 
-wait -n "$SERVER_PID" "$MCP_PID"
+  sleep 1
+done
+
+echo "LibraNia supervisor running in background (PID: $SUPERVISOR_PID)"
+if [[ -n "$SERVER_URL" ]]; then
+  echo "URL: $SERVER_URL"
+else
+  echo "URL: http://localhost:3001"
+  echo "Server is still starting; check logs if the URL is not reachable yet."
+fi
+echo "Logs: $LOG_FILE"
+echo "PID file: $PID_FILE"
