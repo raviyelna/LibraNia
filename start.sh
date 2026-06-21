@@ -122,7 +122,7 @@ echo "LibraNia supervisor running in background (PID: $SUPERVISOR_PID)"
 if [[ -n "$SERVER_URL" ]]; then
   echo "URL: $SERVER_URL"
 else
-  echo "URL: http://localhost:3001"
+  echo "URL: http://localhost:${LIBRANIA_PORT:-3001}"
   echo "Server is still starting; check logs if the URL is not reachable yet."
 fi
 echo "Logs: $LOG_FILE"

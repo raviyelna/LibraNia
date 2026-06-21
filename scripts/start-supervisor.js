@@ -11,6 +11,8 @@ const dataDir = path.join(root, 'data');
 const logsDir = path.join(root, 'test-logs');
 const mcpDir = path.join(root, 'mcp-server');
 const mcpLogPath = path.join(logsDir, 'mcp-server.log');
+const defaultPort = process.platform === 'win32' ? 4100 : 3001;
+const webPort = process.env.LIBRANIA_PORT ? parseInt(process.env.LIBRANIA_PORT, 10) : defaultPort;
 
 let mcpProcess = null;
 let serverInstance = null;
@@ -73,7 +75,7 @@ process.on('SIGTERM', () => void shutdown(0));
 try {
   process.env.LIBRANIA_DATA_DIR = dataDir;
   startMcpServer();
-  serverInstance = await startServer(3001, path.join(root, 'dist'));
+  serverInstance = await startServer(webPort, path.join(root, 'dist'));
   console.log(`\nLibraNia server running at http://localhost:${serverInstance.port}`);
   console.log('Press Ctrl+C once to stop\n');
 } catch (error) {

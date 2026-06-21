@@ -88,9 +88,9 @@ export async function startServer(
       }
     });
 
-    // Start server with port retry logic (up to 5 attempts)
+    // Start server with port retry logic.
     return new Promise((resolve, reject) => {
-      const maxRetries = 5;
+      const maxRetries = 50;
       let attempt = 0;
 
       const tryPort = (portToTry: number) => {
@@ -148,9 +148,9 @@ export async function startServer(
       }
     });
 
-    // Start server with port retry logic (up to 5 attempts)
+    // Start server with port retry logic.
     return new Promise((resolve, reject) => {
-      const maxRetries = 5;
+      const maxRetries = 50;
       let attempt = 0;
 
       const tryPort = (portToTry: number) => {
