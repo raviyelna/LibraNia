@@ -43,6 +43,19 @@ node scripts\start-supervisor.js
 exit /b !errorlevel!
 
 :EnsureRootDependencies
+echo Syncing root dependencies...
+call npm install --include=optional --no-audit --no-fund
+if errorlevel 1 (
+    echo Root dependency sync failed. Cleaning and reinstalling...
+    if exist node_modules rmdir /s /q node_modules
+    if exist node_modules (
+        echo Failed to remove node_modules. Stop Windows and WSL Node processes that use this checkout, then try again.
+        exit /b 1
+    )
+    call npm install --include=optional
+    if errorlevel 1 exit /b !errorlevel!
+)
+
 if not exist node_modules (
     echo Root dependencies are missing. Installing...
     call npm install
@@ -92,6 +105,25 @@ node scripts\check-native-modules.js
 exit /b !errorlevel!
 
 :EnsureMcpDependencies
+echo Syncing MCP server dependencies...
+pushd mcp-server
+call npm install --no-audit --no-fund
+set "INSTALL_RESULT=!errorlevel!"
+popd
+if not "!INSTALL_RESULT!"=="0" (
+    echo MCP dependency sync failed. Cleaning and reinstalling...
+    if exist mcp-server\node_modules rmdir /s /q mcp-server\node_modules
+    if exist mcp-server\node_modules (
+        echo Failed to remove mcp-server\node_modules. Stop Windows and WSL Node processes that use this checkout, then try again.
+        exit /b 1
+    )
+    pushd mcp-server
+    call npm install
+    set "INSTALL_RESULT=!errorlevel!"
+    popd
+    if not "!INSTALL_RESULT!"=="0" exit /b !INSTALL_RESULT!
+)
+
 if not exist mcp-server\node_modules (
     echo MCP server dependencies are missing. Installing...
     pushd mcp-server

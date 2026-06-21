@@ -25,6 +25,36 @@ mcp_dependencies_missing() {
     [[ ! -f mcp-server/node_modules/typescript/bin/tsc ]]
 }
 
+sync_root_dependencies() {
+  echo "Syncing root dependencies..."
+  if npm install --include=optional --no-audit --no-fund; then
+    return
+  fi
+
+  echo "Root dependency sync failed. Cleaning and reinstalling..."
+  if ! rm -rf node_modules; then
+    echo "Failed to remove node_modules."
+    echo "Stop Windows and WSL Node processes that use this checkout, then try again."
+    exit 1
+  fi
+  npm install --include=optional
+}
+
+sync_mcp_dependencies() {
+  echo "Syncing MCP server dependencies..."
+  if (cd mcp-server && npm install --no-audit --no-fund); then
+    return
+  fi
+
+  echo "MCP dependency sync failed. Cleaning and reinstalling..."
+  if ! rm -rf mcp-server/node_modules; then
+    echo "Failed to remove mcp-server/node_modules."
+    echo "Stop Windows and WSL Node processes that use this checkout, then try again."
+    exit 1
+  fi
+  (cd mcp-server && npm install)
+}
+
 clean_install_root_dependencies() {
   echo "Root dependencies are not usable on this OS. Rebuilding native modules..."
   if npm rebuild better-sqlite3 sharp && node scripts/check-native-modules.js; then
@@ -58,6 +88,8 @@ clean_install_mcp_dependencies() {
 }
 
 ensure_root_dependencies() {
+  sync_root_dependencies
+
   if root_dependencies_missing; then
     echo "Root dependencies are missing or incomplete. Installing..."
     npm install
@@ -72,6 +104,8 @@ ensure_root_dependencies() {
 }
 
 ensure_mcp_dependencies() {
+  sync_mcp_dependencies
+
   if mcp_dependencies_missing; then
     echo "MCP server dependencies are missing or incomplete. Installing..."
     (cd mcp-server && npm install)
