@@ -11,6 +11,38 @@ check_mcp_native_dependencies() {
   (cd mcp-server && node -e "const { default: Database } = await import('better-sqlite3'); const db = new Database(':memory:'); db.prepare('select 1').get(); db.close();")
 }
 
+clean_install_root_dependencies() {
+  echo "Root dependencies are not usable on this OS. Rebuilding native modules..."
+  if npm rebuild better-sqlite3 sharp && node scripts/check-native-modules.js; then
+    return
+  fi
+
+  echo "Rebuild failed. Cleaning and reinstalling root dependencies..."
+  if ! rm -rf node_modules; then
+    echo "Failed to remove node_modules."
+    echo "If this checkout is under /mnt, stop Windows Node processes or use a Linux-native checkout under your WSL home directory."
+    exit 1
+  fi
+  npm install
+  node scripts/check-native-modules.js
+}
+
+clean_install_mcp_dependencies() {
+  echo "MCP dependencies are not usable on this OS. Rebuilding native modules..."
+  if (cd mcp-server && npm rebuild better-sqlite3) && check_mcp_native_dependencies; then
+    return
+  fi
+
+  echo "Rebuild failed. Cleaning and reinstalling MCP dependencies..."
+  if ! rm -rf mcp-server/node_modules; then
+    echo "Failed to remove mcp-server/node_modules."
+    echo "If this checkout is under /mnt, stop Windows Node processes or use a Linux-native checkout under your WSL home directory."
+    exit 1
+  fi
+  (cd mcp-server && npm install)
+  check_mcp_native_dependencies
+}
+
 ensure_root_dependencies() {
   if [[ ! -d node_modules ]]; then
     echo "Root dependencies are missing. Installing..."
@@ -22,10 +54,7 @@ ensure_root_dependencies() {
     return
   fi
 
-  echo "Root dependencies are not usable on this OS. Cleaning and reinstalling..."
-  rm -rf node_modules
-  npm install
-  node scripts/check-native-modules.js
+  clean_install_root_dependencies
 }
 
 ensure_mcp_dependencies() {
@@ -39,10 +68,7 @@ ensure_mcp_dependencies() {
     return
   fi
 
-  echo "MCP dependencies are not usable on this OS. Cleaning and reinstalling..."
-  rm -rf mcp-server/node_modules
-  (cd mcp-server && npm install)
-  check_mcp_native_dependencies
+  clean_install_mcp_dependencies
 }
 
 ensure_root_dependencies

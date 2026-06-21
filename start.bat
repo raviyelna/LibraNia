@@ -53,8 +53,19 @@ echo Checking native dependencies...
 node scripts\check-native-modules.js
 if %errorlevel% equ 0 exit /b 0
 
-echo Root dependencies are not usable on this OS. Cleaning and reinstalling...
+echo Root dependencies are not usable on this OS. Rebuilding native modules...
+call npm rebuild better-sqlite3 sharp
+if not errorlevel 1 (
+    node scripts\check-native-modules.js
+    if !errorlevel! equ 0 exit /b 0
+)
+
+echo Rebuild failed. Cleaning and reinstalling root dependencies...
 if exist node_modules rmdir /s /q node_modules
+if exist node_modules (
+    echo Failed to remove node_modules. Stop other Node processes and try again.
+    exit /b 1
+)
 call npm install
 if errorlevel 1 exit /b !errorlevel!
 node scripts\check-native-modules.js
@@ -77,8 +88,23 @@ set "MCP_CHECK_RESULT=!errorlevel!"
 popd
 if "!MCP_CHECK_RESULT!"=="0" exit /b 0
 
-echo MCP dependencies are not usable on this OS. Cleaning and reinstalling...
+echo MCP dependencies are not usable on this OS. Rebuilding native modules...
+pushd mcp-server
+call npm rebuild better-sqlite3
+set "REBUILD_RESULT=!errorlevel!"
+if "!REBUILD_RESULT!"=="0" (
+    node -e "const { default: Database } = await import('better-sqlite3'); const db = new Database(':memory:'); db.prepare('select 1').get(); db.close();"
+    set "REBUILD_RESULT=!errorlevel!"
+)
+popd
+if "!REBUILD_RESULT!"=="0" exit /b 0
+
+echo Rebuild failed. Cleaning and reinstalling MCP dependencies...
 if exist mcp-server\node_modules rmdir /s /q mcp-server\node_modules
+if exist mcp-server\node_modules (
+    echo Failed to remove mcp-server\node_modules. Stop other Node processes and try again.
+    exit /b 1
+)
 pushd mcp-server
 call npm install
 set "INSTALL_RESULT=!errorlevel!"

@@ -19,7 +19,7 @@ let shuttingDown = false;
 function startMcpServer() {
   fs.mkdirSync(logsDir, { recursive: true });
   const logStream = fs.createWriteStream(mcpLogPath, { flags: 'a' });
-  mcpProcess = spawn(process.execPath, ['dist/index.js'], {
+  mcpProcess = spawn(process.execPath, ['bin/librania-mcp.cjs'], {
     cwd: mcpDir,
     env: {
       ...process.env,
