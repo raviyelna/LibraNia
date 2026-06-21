@@ -104,7 +104,7 @@ export async function startServer(
         });
 
         server.once('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE') {
+          if (error.code === 'EADDRINUSE' || error.code === 'EACCES') {
             attempt++;
             if (attempt < maxRetries) {
               const nextPort = port + attempt;
@@ -164,7 +164,7 @@ export async function startServer(
         });
 
         server.once('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE') {
+          if (error.code === 'EADDRINUSE' || error.code === 'EACCES') {
             attempt++;
             if (attempt < maxRetries) {
               const nextPort = port + attempt;
