@@ -11,6 +11,20 @@ check_mcp_native_dependencies() {
   (cd mcp-server && node -e "const { default: Database } = await import('better-sqlite3'); const db = new Database(':memory:'); db.prepare('select 1').get(); db.close();")
 }
 
+root_dependencies_missing() {
+  [[ ! -d node_modules ]] ||
+    [[ ! -d node_modules/better-sqlite3 ]] ||
+    [[ ! -d node_modules/sharp ]] ||
+    [[ ! -f node_modules/typescript/bin/tsc ]] ||
+    [[ ! -f node_modules/vite/bin/vite.js ]]
+}
+
+mcp_dependencies_missing() {
+  [[ ! -d mcp-server/node_modules ]] ||
+    [[ ! -d mcp-server/node_modules/better-sqlite3 ]] ||
+    [[ ! -f mcp-server/node_modules/typescript/bin/tsc ]]
+}
+
 clean_install_root_dependencies() {
   echo "Root dependencies are not usable on this OS. Rebuilding native modules..."
   if npm rebuild better-sqlite3 sharp && node scripts/check-native-modules.js; then
@@ -44,8 +58,8 @@ clean_install_mcp_dependencies() {
 }
 
 ensure_root_dependencies() {
-  if [[ ! -d node_modules ]]; then
-    echo "Root dependencies are missing. Installing..."
+  if root_dependencies_missing; then
+    echo "Root dependencies are missing or incomplete. Installing..."
     npm install
   fi
 
@@ -58,8 +72,8 @@ ensure_root_dependencies() {
 }
 
 ensure_mcp_dependencies() {
-  if [[ ! -d mcp-server/node_modules ]]; then
-    echo "MCP server dependencies are missing. Installing..."
+  if mcp_dependencies_missing; then
+    echo "MCP server dependencies are missing or incomplete. Installing..."
     (cd mcp-server && npm install)
   fi
 

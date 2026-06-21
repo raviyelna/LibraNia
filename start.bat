@@ -48,6 +48,26 @@ if not exist node_modules (
     call npm install
     if errorlevel 1 exit /b !errorlevel!
 )
+if not exist node_modules\better-sqlite3 (
+    echo Root dependencies are incomplete. Installing...
+    call npm install
+    if errorlevel 1 exit /b !errorlevel!
+)
+if not exist node_modules\sharp (
+    echo Root dependencies are incomplete. Installing...
+    call npm install
+    if errorlevel 1 exit /b !errorlevel!
+)
+if not exist node_modules\typescript\bin\tsc (
+    echo Root dependencies are incomplete. Installing...
+    call npm install
+    if errorlevel 1 exit /b !errorlevel!
+)
+if not exist node_modules\vite\bin\vite.js (
+    echo Root dependencies are incomplete. Installing...
+    call npm install
+    if errorlevel 1 exit /b !errorlevel!
+)
 
 echo Checking native dependencies...
 node scripts\check-native-modules.js
@@ -74,6 +94,22 @@ exit /b !errorlevel!
 :EnsureMcpDependencies
 if not exist mcp-server\node_modules (
     echo MCP server dependencies are missing. Installing...
+    pushd mcp-server
+    call npm install
+    set "INSTALL_RESULT=!errorlevel!"
+    popd
+    if not "!INSTALL_RESULT!"=="0" exit /b !INSTALL_RESULT!
+)
+if not exist mcp-server\node_modules\better-sqlite3 (
+    echo MCP server dependencies are incomplete. Installing...
+    pushd mcp-server
+    call npm install
+    set "INSTALL_RESULT=!errorlevel!"
+    popd
+    if not "!INSTALL_RESULT!"=="0" exit /b !INSTALL_RESULT!
+)
+if not exist mcp-server\node_modules\typescript\bin\tsc (
+    echo MCP server dependencies are incomplete. Installing...
     pushd mcp-server
     call npm install
     set "INSTALL_RESULT=!errorlevel!"
