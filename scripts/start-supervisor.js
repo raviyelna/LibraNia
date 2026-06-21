@@ -11,7 +11,7 @@ const dataDir = path.join(root, 'data');
 const logsDir = path.join(root, 'test-logs');
 const mcpDir = path.join(root, 'mcp-server');
 const mcpLogPath = path.join(logsDir, 'mcp-server.log');
-const defaultPort = process.platform === 'win32' ? 4100 : 3001;
+const defaultPort = 3001;
 const webPort = process.env.LIBRANIA_PORT ? parseInt(process.env.LIBRANIA_PORT, 10) : defaultPort;
 
 let mcpProcess = null;
