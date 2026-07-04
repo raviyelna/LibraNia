@@ -208,15 +208,27 @@ Mandatory research protocol:
 
 Do not finish a research answer based on web findings without first saving useful durable findings back to LibraNia, unless the user explicitly says not to save anything.
 
+Visual template (mandatory for every note body):
+
+The note viewer renders Markdown through react-markdown with remark-gfm + rehype-raw, so raw HTML and inline SVG embedded in the body render live in the preview pane — use this, don't just write flat prose. Every create_note / update_note body should include:
+- A one-line eyebrow/kicker right under the title (e.g. "Research Note — <topic>") and a one-sentence dek before the first heading.
+- At least one GFM table when the note compares options, maps a claim to evidence, or lists structured facts — never bullet-list something that is actually tabular.
+- An inline SVG diagram (plain \`<svg>\` with \`<rect>\`/\`<path>\`/\`<text>\`, no external assets) whenever the note describes a process, pipeline, architecture, or cycle — a labeled flow reads faster than a paragraph describing the same flow. Use \`currentColor\` / no hardcoded hex fills so it stays legible in both light and dark theme; wrap it in a \`<div>\` so long diagrams can scroll horizontally instead of overflowing.
+- A \`<blockquote>\` for any direct quote from a source, with the attribution on its own line.
+- A callout block (a \`<div>\` with a left border, built from plain inline style, no hardcoded hex — border-left: 3px solid currentColor is enough) for the single most important caveat, risk, or "reading against the grain" point in the note — every research note should have exactly one of these, not zero and not five.
+- A "Sources" section at the end with links, and a "Related" section linking \`[[Other Note Title]]\` for graph connectivity.
+
+This is the same structure as a well-designed research write-up, expressed in the Markdown+raw-HTML subset the note viewer actually renders — not a separate deliverable. Skip the diagram or callout only when the note is genuinely a short reference fact with no process, comparison, or caveat to show.
+
 Example workflow:
 - Query: "Docker security best practices"
 - search_notes("Docker security") → found 2 notes
 - Evaluate: partial info, need more on container isolation
 - web_search("Docker container isolation security")
-- create_note with findings, link to existing [[Docker Basics]] note before using those findings in the answer
+- create_note with findings (table comparing isolation techniques, inline SVG of the container/host boundary, callout on the one biggest misconfiguration risk), link to existing [[Docker Basics]] note before using those findings in the answer
 - Return answer citing both LibraNia notes and web sources
 
-This ensures knowledge accumulates in LibraNia over time.`,
+This ensures knowledge accumulates in LibraNia over time, in a form that's actually pleasant to read back.`,
       }
     );
 
@@ -287,7 +299,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
           },
           {
             name: 'create_note',
-            description: 'Create a new note in LibraNia. Required after web research when useful durable knowledge was found, before using those web findings in the final answer. Link related notes using [[Note Title]] syntax in body to create bidirectional backlinks. Search for related notes first, then reference them.',
+            description: 'Create a new note in LibraNia. Required after web research when useful durable knowledge was found, before using those web findings in the final answer. Link related notes using [[Note Title]] syntax in body to create bidirectional backlinks. Search for related notes first, then reference them. The viewer renders body Markdown with rehype-raw, so use the visual template: eyebrow + dek under the title, a GFM table for any comparison/structured facts, an inline SVG (currentColor, no external assets) for any process/architecture/cycle, a blockquote for direct quotes, and one callout div (border-left: 3px solid currentColor) for the single most important caveat. Do not ship a flat wall of prose when the content has structure to show.',
             inputSchema: {
               type: 'object',
               properties: {
@@ -297,7 +309,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
                 },
                 body: {
                   type: 'string',
-                  description: 'Note content in Markdown. Use [[Note Title]] to link to other notes (creates automatic backlinks).',
+                  description: 'Note content in Markdown, may include raw HTML/inline SVG (rendered via rehype-raw). Use [[Note Title]] to link to other notes (creates automatic backlinks). Should follow the server\'s visual template: eyebrow/dek, tables for structured comparisons, an inline SVG diagram for any process or architecture, blockquotes for quotes, and exactly one callout for the key caveat.',
                 },
                 tags: {
                   type: 'array',
@@ -310,7 +322,7 @@ This ensures knowledge accumulates in LibraNia over time.`,
           },
           {
             name: 'update_note',
-            description: 'Update existing note content or add information. Prefer this over create_note when web research improves, corrects, or extends an existing note.',
+            description: 'Update existing note content or add information. Prefer this over create_note when web research improves, corrects, or extends an existing note. When rewriting body/appendBody, bring the note up to the same visual template as create_note: eyebrow + dek, tables for structured comparisons, an inline SVG diagram for any process/architecture described, blockquotes for quotes, and one callout for the key caveat — the viewer renders raw HTML/SVG via rehype-raw, so a flat prose note is a missed upgrade, not a neutral edit.',
             inputSchema: {
               type: 'object',
               properties: {
