@@ -1,6 +1,6 @@
 ---
 name: librania-research
-description: "Research workflow with LibraNia knowledge base integration. Auto-searches LibraNia before web, saves findings back. Use when: user asks research questions, needs information gathering, wants to learn about topics, requests documentation lookup, or says 'research X', 'find info about Y', 'what is Z', 'look up A'."
+description: "Mandatory first step for ANY research, investigation, explanation, planning, comparison, or lookup task in this project (per CLAUDE.md). Auto-searches LibraNia before web, saves findings back. Triggers broadly, not just on exact phrasing — covers: factual/conceptual questions ('what is X', 'why does X happen', 'how does X work'), explain/describe/clarify requests, comparisons ('X vs Y', 'difference between'), documentation/API/reference lookups, learning requests, meta/architecture questions about tools or concepts, investigation of behavior or root causes, and planning/decision questions that need background context. If the request is asking to understand or find out something rather than to write/edit/run code, this skill applies."
 ---
 
 # LibraNia Research Workflow
@@ -15,12 +15,15 @@ Trigger this skill when user requests:
 - Documentation: "Show me docs for...", "What's the API for..."
 - Learning: "Teach me...", "I want to learn about..."
 - Comparison: "Compare X vs Y", "What's the difference between..."
+- Investigation/explanation: "Why does X happen/behave this way?", "Why doesn't X do Y?"
+- Meta/conceptual questions: questions about tools, architecture, concepts, or terminology that aren't tied to editing this repo's code (e.g. "why does Claude behave differently from Codex here?", "what's the difference between a skill and a harness?")
+- Any question phrased as a plain "why/what/how" without an explicit "research" verb — if the user wants to *understand* or *find out* something rather than have code written, this skill still applies
 
 **Do NOT use for:**
 - Code implementation (use normal workflow)
 - File operations (use Read/Write tools)
-- Debugging (use systematic-debugging skill)
-- Planning (use brainstorming/writing-plans skills)
+- Debugging a failing test/bug in this repo's code (use systematic-debugging skill)
+- Planning a multi-step implementation (use brainstorming/writing-plans skills) — but background research feeding into that plan still goes through this skill first
 
 ## Workflow
 
